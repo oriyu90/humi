@@ -66,3 +66,62 @@
 "settings.appearance.hint" = "Applied to open sessions immediately. Humi uses the light (Hum) theme.";
 
 "session.home" = "Home";
+
+/* v1.1 — settings panes */
+"settings.tab.terminal" = "Terminal";
+"settings.tab.profiles" = "Profiles";
+"settings.tab.snippets" = "Snippets";
+"settings.tab.shortcuts" = "Shortcuts";
+"settings.tab.statusbar" = "Status Bar";
+"settings.tab.advanced" = "Advanced";
+
+"appearance.mode" = "Mode";
+"appearance.mode.light" = "Light";
+"appearance.mode.dark" = "Dark";
+"appearance.mode.system" = "System";
+"appearance.theme" = "Theme";
+"appearance.font_family" = "Font";
+"appearance.font_family.system" = "System Monospaced";
+"appearance.cjk_font" = "Japanese / CJK font";
+"appearance.cjk_font.none" = "None";
+"appearance.cursor_shape" = "Cursor shape";
+"appearance.cursor.block" = "Block";
+"appearance.cursor.underline" = "Underline";
+"appearance.cursor.bar" = "Bar";
+"appearance.cursor_blink" = "Blink the cursor";
+"appearance.bright_bold" = "Use bright colors for bold text";
+"appearance.colors" = "Colors";
+"appearance.color.background" = "Background";
+"appearance.color.foreground" = "Text";
+"appearance.color.cursor" = "Cursor";
+"appearance.color.selection" = "Selection";
+"appearance.ansi" = "ANSI 16 colors";
+"appearance.ansi.normal" = "Normal";
+"appearance.ansi.bright" = "Bright";
+"appearance.duplicate" = "Duplicate to edit";
+"appearance.delete" = "Delete";
+"appearance.import" = "Import…";
+"appearance.export" = "Export…";
+"appearance.builtin_note" = "Built-in themes can't be edited. Use “Duplicate to edit” to make a custom theme.";
+
+"terminal.option_as_meta" = "Send Option as Meta/Alt";
+"terminal.mouse_reporting" = "Send mouse events to apps (vim, etc.)";
+"terminal.scroll_sensitivity" = "Scroll sensitivity";
+"terminal.scrollbar" = "Scrollbar";
+"terminal.scrollbar.overlay" = "Overlay";
+"terminal.scrollbar.legacy" = "Always shown";
+"terminal.copy_on_select" = "Copy on selection";
+"terminal.confirm_paste" = "Confirm before pasting multiple lines";
+"terminal.bell" = "Bell";
+"terminal.bell.off" = "Off";
+"terminal.bell.sound" = "Sound";
+"terminal.bell.visual" = "Visual";
+"terminal.bell.notify" = "Notification";
+"terminal.margin" = "Inner margin";
+"terminal.unlimited_scrollback" = "Unlimited scrollback";
+"terminal.editor_command" = "Editor command";
+"terminal.editor_command.hint" = "Run to open “path:line” from terminal output. {file} and {line} are substituted. Falls back to Finder if unset or not installed.";
+"terminal.confirm_close" = "Confirm before closing a session";
+"terminal.confirm_close.never" = "Never";
+"terminal.confirm_close.busy" = "Only when busy";
+"terminal.confirm_close.always" = "Always";

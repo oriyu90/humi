@@ -145,6 +145,62 @@ suite("Persistence") {
           "missing file → nil")
 }
 
+// MARK: Theme
+
+suite("Theme") {
+    check(Theme.builtIns.count == 6, "6 built-in themes")
+    for th in Theme.builtIns {
+        check(th.ansi.count == 16, "\(th.name): 16 ANSI colours")
+        check(th.isBuiltIn, "\(th.name): marked built-in")
+    }
+    // HexColor round-trips through its integer encoding.
+    let hc = HexColor(0x4FB7E8)
+    let data = try! JSONEncoder().encode(hc)
+    check((try? JSONDecoder().decode(HexColor.self, from: data)) == hc, "HexColor codec round-trip")
+    check(HexColor(hexString: "#4fb7e8") == hc, "HexColor parses #rrggbb")
+    check(hc.hexString == "#4fb7e8", "HexColor formats #rrggbb")
+    check(hc.r == 0x4F && hc.g == 0xB7 && hc.b == 0xE8, "HexColor channel split")
+
+    // Theme round-trips (and a partial dict still decodes).
+    let full = try! JSONEncoder().encode(Theme.humDark)
+    let back = try? JSONDecoder().decode(Theme.self, from: full)
+    check(back?.name == "Hum Dark", "Theme codec round-trip")
+    check(back?.ansi.count == 16, "Theme codec keeps 16 ANSI")
+    let partial = "{\"name\":\"P\",\"background\":16777215,\"foreground\":0}".data(using: .utf8)!
+    let p = try? JSONDecoder().decode(Theme.self, from: partial)
+    check(p != nil, "partial .humitheme still decodes")
+    check(p?.ansi.count == 16, "partial theme gets default ANSI")
+
+    // CursorSpec → SwiftTerm mapping is total.
+    for shape in CursorSpec.Shape.allCases {
+        for blink in [true, false] {
+            let spec = CursorSpec(shape: shape, blink: blink)
+            _ = spec.swiftTerm
+            check(true, "CursorSpec(\(shape), blink:\(blink)) maps")
+        }
+    }
+}
+
+MainActor.assumeIsolated {
+    suite("ThemeStore.resolve") {
+        let s = ThemeStore.shared
+        s.setActive("Hum Light")
+        check(s.mode == .light, "picking a light family snaps mode to light")
+        check(s.resolvedTheme.name == "Hum Light", "light family resolves to itself")
+        s.setMode(.dark)
+        check(s.resolvedTheme.appAppearance == .dark, "dark mode → a dark theme")
+        check(s.resolvedTheme.name == "Hum Dark", "dark mode → paired sibling of Hum Light")
+        s.setActive("Nord")
+        check(s.mode == .dark, "picking a dark family snaps mode to dark")
+        check(s.resolvedTheme.name == "Nord", "dark family resolves to itself")
+        s.setActive("Hum Light")
+        s.setMode(.dark)
+        check(s.resolvedTheme.name == "Hum Dark", "Hum Light + forced dark → Hum Dark sibling")
+        s.setActive("Hum Light")
+        s.setMode(.system)
+    }
+}
+
 // MARK: GridLayout
 
 suite("GridLayout") {

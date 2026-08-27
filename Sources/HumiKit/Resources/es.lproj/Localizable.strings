@@ -66,3 +66,62 @@
 "settings.appearance.hint" = "Se aplica de inmediato a las sesiones abiertas. Humi usa el tema claro (Hum).";
 
 "session.home" = "Carpeta personal";
+
+/* v1.1 — settings panes */
+"settings.tab.terminal" = "Terminal";
+"settings.tab.profiles" = "Perfiles";
+"settings.tab.snippets" = "Fragmentos";
+"settings.tab.shortcuts" = "Atajos";
+"settings.tab.statusbar" = "Barra de estado";
+"settings.tab.advanced" = "Avanzado";
+
+"appearance.mode" = "Modo";
+"appearance.mode.light" = "Claro";
+"appearance.mode.dark" = "Oscuro";
+"appearance.mode.system" = "Sistema";
+"appearance.theme" = "Tema";
+"appearance.font_family" = "Fuente";
+"appearance.font_family.system" = "Monoespaciada del sistema";
+"appearance.cjk_font" = "Fuente japonesa / CJK";
+"appearance.cjk_font.none" = "Ninguna";
+"appearance.cursor_shape" = "Forma del cursor";
+"appearance.cursor.block" = "Bloque";
+"appearance.cursor.underline" = "Subrayado";
+"appearance.cursor.bar" = "Barra";
+"appearance.cursor_blink" = "Parpadeo del cursor";
+"appearance.bright_bold" = "Usar colores vivos para el texto en negrita";
+"appearance.colors" = "Colores";
+"appearance.color.background" = "Fondo";
+"appearance.color.foreground" = "Texto";
+"appearance.color.cursor" = "Cursor";
+"appearance.color.selection" = "Selección";
+"appearance.ansi" = "16 colores ANSI";
+"appearance.ansi.normal" = "Normal";
+"appearance.ansi.bright" = "Vivos";
+"appearance.duplicate" = "Duplicar para editar";
+"appearance.delete" = "Eliminar";
+"appearance.import" = "Importar…";
+"appearance.export" = "Exportar…";
+"appearance.builtin_note" = "Los temas integrados no se pueden editar. Usa «Duplicar para editar» para crear un tema personalizado.";
+
+"terminal.option_as_meta" = "Enviar Opción como Meta/Alt";
+"terminal.mouse_reporting" = "Enviar eventos del ratón a las apps (vim, etc.)";
+"terminal.scroll_sensitivity" = "Sensibilidad del desplazamiento";
+"terminal.scrollbar" = "Barra de desplazamiento";
+"terminal.scrollbar.overlay" = "Superpuesta";
+"terminal.scrollbar.legacy" = "Siempre visible";
+"terminal.copy_on_select" = "Copiar al seleccionar";
+"terminal.confirm_paste" = "Confirmar antes de pegar varias líneas";
+"terminal.bell" = "Timbre";
+"terminal.bell.off" = "Desactivado";
+"terminal.bell.sound" = "Sonido";
+"terminal.bell.visual" = "Visual";
+"terminal.bell.notify" = "Notificación";
+"terminal.margin" = "Margen interior";
+"terminal.unlimited_scrollback" = "Historial de desplazamiento ilimitado";
+"terminal.editor_command" = "Comando del editor";
+"terminal.editor_command.hint" = "Se ejecuta para abrir «ruta:línea» de la salida del terminal. Se sustituyen {file} y {line}. Usa el Finder si no está definido o instalado.";
+"terminal.confirm_close" = "Confirmar antes de cerrar una sesión";
+"terminal.confirm_close.never" = "Nunca";
+"terminal.confirm_close.busy" = "Solo cuando está ocupada";
+"terminal.confirm_close.always" = "Siempre";

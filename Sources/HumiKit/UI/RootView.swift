@@ -15,6 +15,7 @@ public struct RootView: View {
     @ObservedObject private var notes = NotesStore.shared
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var loc = Localization.shared
+    @ObservedObject private var themes = ThemeStore.shared
 
     @State private var showingNewSheet = false
     @State private var pendingFolder: String?
@@ -32,6 +33,7 @@ public struct RootView: View {
         }
         .background(Hum.paper2)
         .environment(\.locale, loc.locale)
+        .preferredColorScheme(themes.resolvedTheme.appAppearance == .dark ? .dark : .light)
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 HStack(spacing: Hum.Space.sm) {

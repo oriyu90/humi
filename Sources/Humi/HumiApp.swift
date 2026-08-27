@@ -11,6 +11,14 @@ struct HumiApp: App {
         AppSettings.shared.onFontSizeChange = { size in
             TerminalRegistry.shared.setFontSize(size)
         }
+        // …and on any theme change (family / mode / edit / OS light-dark flip).
+        ThemeStore.shared.onChange = {
+            TerminalRegistry.shared.applyTheme()
+        }
+        // …and on terminal-behaviour prefs (option-as-meta, mouse reporting, …).
+        AppSettings.shared.onTerminalPrefsChange = {
+            TerminalRegistry.shared.applyTerminalPrefs()
+        }
     }
 
     var body: some Scene {

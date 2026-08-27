@@ -66,3 +66,62 @@
 "settings.appearance.hint" = "開いているセッションへ即座に反映されます。Humi はライトテーマ（Hum）です。";
 
 "session.home" = "ホーム";
+
+/* v1.1 — settings panes */
+"settings.tab.terminal" = "ターミナル";
+"settings.tab.profiles" = "プロファイル";
+"settings.tab.snippets" = "スニペット";
+"settings.tab.shortcuts" = "ショートカット";
+"settings.tab.statusbar" = "ステータスバー";
+"settings.tab.advanced" = "詳細";
+
+"appearance.mode" = "モード";
+"appearance.mode.light" = "ライト";
+"appearance.mode.dark" = "ダーク";
+"appearance.mode.system" = "システム";
+"appearance.theme" = "テーマ";
+"appearance.font_family" = "フォント";
+"appearance.font_family.system" = "システム等幅";
+"appearance.cjk_font" = "日本語・CJK フォント";
+"appearance.cjk_font.none" = "指定なし";
+"appearance.cursor_shape" = "カーソル形状";
+"appearance.cursor.block" = "ブロック";
+"appearance.cursor.underline" = "アンダーライン";
+"appearance.cursor.bar" = "バー";
+"appearance.cursor_blink" = "カーソルを点滅";
+"appearance.bright_bold" = "太字に明色を使う";
+"appearance.colors" = "配色";
+"appearance.color.background" = "背景";
+"appearance.color.foreground" = "文字";
+"appearance.color.cursor" = "カーソル";
+"appearance.color.selection" = "選択範囲";
+"appearance.ansi" = "ANSI 16 色";
+"appearance.ansi.normal" = "通常";
+"appearance.ansi.bright" = "明るい";
+"appearance.duplicate" = "複製して編集";
+"appearance.delete" = "削除";
+"appearance.import" = "読み込み…";
+"appearance.export" = "書き出し…";
+"appearance.builtin_note" = "組み込みテーマは編集できません。「複製して編集」で自作テーマを作成します。";
+
+"terminal.option_as_meta" = "Option キーを Meta/Alt として送る";
+"terminal.mouse_reporting" = "マウス入力をアプリへ送る（vim 等）";
+"terminal.scroll_sensitivity" = "スクロール感度";
+"terminal.scrollbar" = "スクロールバー";
+"terminal.scrollbar.overlay" = "オーバーレイ";
+"terminal.scrollbar.legacy" = "常時表示";
+"terminal.copy_on_select" = "選択した瞬間にコピー";
+"terminal.confirm_paste" = "複数行の貼り付け前に確認";
+"terminal.bell" = "ベル";
+"terminal.bell.off" = "なし";
+"terminal.bell.sound" = "音";
+"terminal.bell.visual" = "視覚";
+"terminal.bell.notify" = "通知";
+"terminal.margin" = "余白";
+"terminal.unlimited_scrollback" = "スクロールバックを無制限に";
+"terminal.editor_command" = "エディタ起動コマンド";
+"terminal.editor_command.hint" = "出力内の「パス:行番号」を開くときに実行します。{file} と {line} が置換されます。未設定・未インストール時は Finder で表示します。";
+"terminal.confirm_close" = "セッションを閉じる前に確認";
+"terminal.confirm_close.never" = "しない";
+"terminal.confirm_close.busy" = "実行中のときだけ";
+"terminal.confirm_close.always" = "常に";

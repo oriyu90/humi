@@ -17,22 +17,32 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
     var onDirectory: ((String?) -> Void)?
     var onExit: ((Int32?) -> Void)?
 
-    init(sessionID: UUID, fontSize: CGFloat, scrollback: Int) {
+    private var theme: Theme
+    private var fontSize: CGFloat
+
+    init(sessionID: UUID, theme: Theme, fontSize: CGFloat, scrollback: Int) {
         self.sessionID = sessionID
+        self.theme = theme
+        self.fontSize = fontSize
         let options = TerminalOptions(scrollback: max(0, scrollback))
-        self.terminalView = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 640, height: 400),
-                                                     font: TerminalController.monoFont(fontSize),
-                                                     options: options)
+        self.terminalView = LocalProcessTerminalView(
+            frame: NSRect(x: 0, y: 0, width: 640, height: 400),
+            font: FontResolver.terminalFont(family: theme.fontFamily, size: fontSize, cjkFamily: theme.cjkFontFamily),
+            options: options)
         super.init()
         terminalView.processDelegate = self   // weak on SwiftTerm's side
-        applyTheme()
+        applyTheme(theme, fontSize: fontSize)
     }
 
-    /// Bundled JetBrains Mono, falling back to the system monospaced face.
-    static func monoFont(_ size: CGFloat) -> NSFont {
-        NSFont(name: "JetBrains Mono", size: size)
-            ?? NSFont(name: "JetBrainsMono-Regular", size: size)
-            ?? NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
+    static func monoFont(_ size: CGFloat) -> NSFont { FontResolver.fallbackMono(size) }
+
+    /// Terminal behaviour prefs that can change while a session is live.
+    func applyTerminalPrefs(optionAsMeta: Bool, mouseReporting: Bool,
+                            scrollSensitivity: CGFloat, scrollbar: ScrollbarStyle) {
+        terminalView.optionAsMetaKey = optionAsMeta
+        terminalView.allowMouseReporting = mouseReporting
+        terminalView.scrollSensitivity = scrollSensitivity
+        terminalView.scrollerStyle = (scrollbar == .legacy) ? .legacy : .overlay
     }
 
     func startIfNeeded(invocation: ShellInvocation, environment: [String], workingDirectory: String?) {
@@ -46,7 +56,9 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
     }
 
     func setFontSize(_ size: CGFloat) {
-        terminalView.font = TerminalController.monoFont(size)
+        fontSize = size
+        terminalView.font = FontResolver.terminalFont(
+            family: theme.fontFamily, size: size, cjkFamily: theme.cjkFontFamily)
     }
 
     /// ⌘K — drop the scrollback history, then send Ctrl-L so the shell (readline/zsh
@@ -112,13 +124,24 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
         }
     }
 
-    // MARK: Theme — cream paper, ink text. Default ANSI palette reads fine on cream.
+    // MARK: Theme
 
-    private func applyTheme() {
-        terminalView.nativeBackgroundColor = NSColor(hex: 0xF7F4EC)
-        terminalView.nativeForegroundColor = NSColor(hex: 0x1B1D22)
-        terminalView.caretColor = NSColor(hex: 0xCBAE2E)
-        terminalView.selectedTextBackgroundColor = NSColor(hex: 0x4FB7E8).withAlphaComponent(0.35)
+    func applyTheme(_ theme: Theme, fontSize: CGFloat) {
+        self.theme = theme
+        self.fontSize = fontSize
+        terminalView.nativeBackgroundColor = theme.background.nsColor
+        terminalView.nativeForegroundColor = theme.foreground.nsColor
+        terminalView.caretColor = theme.cursor.nsColor
+        terminalView.caretTextColor = theme.cursorText?.nsColor
+        terminalView.selectedTextBackgroundColor = theme.selectionBackground.nsColor.withAlphaComponent(0.35)
+        if let sf = theme.selectionForeground?.nsColor { terminalView.selectedTextForegroundColor = sf }
+        terminalView.useBrightColors = theme.useBrightBold
+        if theme.ansi.count == 16 {
+            terminalView.installColors(theme.ansi.map(\.swiftTerm))
+        }
+        terminalView.getTerminal().setCursorStyle(theme.cursorSpec.swiftTerm)
+        terminalView.font = FontResolver.terminalFont(
+            family: theme.fontFamily, size: fontSize, cjkFamily: theme.cjkFontFamily)
     }
 
     // MARK: LocalProcessTerminalViewDelegate

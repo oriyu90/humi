@@ -66,3 +66,62 @@
 "settings.appearance.hint" = "立即应用到已打开的会话。Humi 使用浅色（Hum）主题。";
 
 "session.home" = "主目录";
+
+/* v1.1 — settings panes */
+"settings.tab.terminal" = "终端";
+"settings.tab.profiles" = "配置文件";
+"settings.tab.snippets" = "代码片段";
+"settings.tab.shortcuts" = "快捷键";
+"settings.tab.statusbar" = "状态栏";
+"settings.tab.advanced" = "高级";
+
+"appearance.mode" = "模式";
+"appearance.mode.light" = "浅色";
+"appearance.mode.dark" = "深色";
+"appearance.mode.system" = "跟随系统";
+"appearance.theme" = "主题";
+"appearance.font_family" = "字体";
+"appearance.font_family.system" = "系统等宽";
+"appearance.cjk_font" = "中日韩字体";
+"appearance.cjk_font.none" = "无";
+"appearance.cursor_shape" = "光标形状";
+"appearance.cursor.block" = "方块";
+"appearance.cursor.underline" = "下划线";
+"appearance.cursor.bar" = "竖线";
+"appearance.cursor_blink" = "光标闪烁";
+"appearance.bright_bold" = "粗体使用亮色";
+"appearance.colors" = "配色";
+"appearance.color.background" = "背景";
+"appearance.color.foreground" = "文字";
+"appearance.color.cursor" = "光标";
+"appearance.color.selection" = "选中区域";
+"appearance.ansi" = "ANSI 16 色";
+"appearance.ansi.normal" = "普通";
+"appearance.ansi.bright" = "明亮";
+"appearance.duplicate" = "复制以编辑";
+"appearance.delete" = "删除";
+"appearance.import" = "导入…";
+"appearance.export" = "导出…";
+"appearance.builtin_note" = "内置主题不可编辑。请用“复制以编辑”创建自定义主题。";
+
+"terminal.option_as_meta" = "将 Option 键作为 Meta/Alt 发送";
+"terminal.mouse_reporting" = "向应用发送鼠标事件（vim 等）";
+"terminal.scroll_sensitivity" = "滚动灵敏度";
+"terminal.scrollbar" = "滚动条";
+"terminal.scrollbar.overlay" = "浮层";
+"terminal.scrollbar.legacy" = "始终显示";
+"terminal.copy_on_select" = "选择即复制";
+"terminal.confirm_paste" = "粘贴多行前确认";
+"terminal.bell" = "响铃";
+"terminal.bell.off" = "关闭";
+"terminal.bell.sound" = "声音";
+"terminal.bell.visual" = "视觉";
+"terminal.bell.notify" = "通知";
+"terminal.margin" = "内边距";
+"terminal.unlimited_scrollback" = "无限回滚缓冲";
+"terminal.editor_command" = "编辑器命令";
+"terminal.editor_command.hint" = "用于打开终端输出中的“路径:行号”。会替换 {file} 和 {line}。未设置或未安装时回退到 Finder。";
+"terminal.confirm_close" = "关闭会话前确认";
+"terminal.confirm_close.never" = "从不";
+"terminal.confirm_close.busy" = "仅在忙碌时";
+"terminal.confirm_close.always" = "总是";

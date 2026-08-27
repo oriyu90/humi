@@ -29,9 +29,15 @@ public final class TerminalRegistry {
         if let existing = controllers[session.id] { return existing }
 
         let controller = TerminalController(sessionID: session.id,
+                                            theme: ThemeStore.shared.resolvedTheme,
                                             fontSize: CGFloat(settings.fontSize),
-                                            scrollback: settings.scrollbackLines)
+                                            scrollback: settings.effectiveScrollback)
         controllers[session.id] = controller
+
+        controller.applyTerminalPrefs(optionAsMeta: settings.optionAsMeta,
+                                      mouseReporting: settings.mouseReporting,
+                                      scrollSensitivity: CGFloat(settings.scrollSensitivity),
+                                      scrollbar: settings.scrollbarStyle)
 
         if makeStart {
             let invocation = ShellResolver.resolve(config: settings.shellConfig)
@@ -80,6 +86,24 @@ public final class TerminalRegistry {
 
     public func setFontSize(_ size: CGFloat) {
         for (_, c) in controllers { c.setFontSize(size) }
+    }
+
+    /// Re-apply the currently resolved theme (+ font size) to every live terminal.
+    public func applyTheme() {
+        let theme = ThemeStore.shared.resolvedTheme
+        let size = CGFloat(AppSettings.shared.fontSize)
+        for (_, c) in controllers { c.applyTheme(theme, fontSize: size) }
+    }
+
+    /// Re-apply terminal-behaviour prefs to every live terminal.
+    public func applyTerminalPrefs() {
+        let s = AppSettings.shared
+        for (_, c) in controllers {
+            c.applyTerminalPrefs(optionAsMeta: s.optionAsMeta,
+                                 mouseReporting: s.mouseReporting,
+                                 scrollSensitivity: CGFloat(s.scrollSensitivity),
+                                 scrollbar: s.scrollbarStyle)
+        }
     }
 
     /// ⌘K — clear the scrollback of whichever session's terminal currently has focus

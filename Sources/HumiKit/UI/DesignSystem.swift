@@ -7,13 +7,28 @@ import AppKit
 public enum Hum {
 
     // MARK: Palette (oklch values from hallmark, converted to sRGB)
+    //
+    // Chrome tokens are dynamic `NSColor`s: they resolve light/dark against the
+    // hosting view's appearance, which the windows set from
+    // `ThemeStore.resolvedTheme.appAppearance`. No `@MainActor` needed on the tokens.
 
-    static let paper       = Color(hex: 0xF7F4EC)   // oklch(97% .012 95) — cream, slight pear pull
-    static let paper2      = Color(hex: 0xEFEBDC)   // tinted band
-    static let paper3      = Color(hex: 0xE6E0CC)   // deeper hover
-    static let ink         = Color(hex: 0x1B1D22)   // oklch(20% .012 250) — never pure black
-    static let ink2        = Color(hex: 0x5B5E66)   // secondary ink
-    static let hairline    = Color(hex: 0x1B1D22).opacity(0.10)
+    /// A colour that resolves to `light` in aqua and `dark` in dark-aqua.
+    static func dyn(light: UInt32, dark: UInt32) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+            return NSColor(hex: isDark ? dark : light)
+        })
+    }
+
+    static let paper       = dyn(light: 0xF7F4EC, dark: 0x191B20)   // cream / near-black
+    static let paper2      = dyn(light: 0xEFEBDC, dark: 0x212329)   // tinted band
+    static let paper3      = dyn(light: 0xE6E0CC, dark: 0x2C2F37)   // deeper hover
+    static let ink         = dyn(light: 0x1B1D22, dark: 0xE9E6DC)   // never pure black / white
+    static let ink2        = dyn(light: 0x5B5E66, dark: 0x9A9C9F)   // secondary ink
+    static let hairline    = Color(nsColor: NSColor(name: nil) { appearance in
+        let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        return NSColor(hex: isDark ? 0xFFFFFF : 0x1B1D22).withAlphaComponent(isDark ? 0.12 : 0.10)
+    })
 
     static let pear        = Color(hex: 0xF1D64A)   // primary — CTA, character mark
     static let pearDeep    = Color(hex: 0xCBAE2E)   // button edge / pressed line
