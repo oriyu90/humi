@@ -259,19 +259,20 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
     }
 
     /// The leaf a directional focus move from `id` should land on, decided purely by the
-    /// laid-out rectangles. Picks the candidate on the requested side with the greatest
-    /// overlap along the perpendicular axis, breaking ties by nearest edge. Origin is
-    /// top-left, so `.up` means smaller `y`.
+    /// laid-out rectangles. Considers only candidates on the requested side that overlap
+    /// `id` along the perpendicular axis, then picks the nearest one, breaking ties by the
+    /// greater overlap. Origin is top-left, so `.up` means smaller `y`.
     func focusNeighbor(of id: UUID,
                        direction: Direction,
                        in rect: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1),
                        gap: CGFloat = 0) -> UUID? {
         let boxes = frames(in: rect, gap: gap)
         guard let origin = boxes[id] else { return nil }
+        let slack: CGFloat = 0.5
 
         var best: UUID?
-        var bestOverlap: CGFloat = -1
         var bestDistance = CGFloat.greatestFiniteMagnitude
+        var bestOverlap: CGFloat = -1
 
         for (candidate, box) in boxes where candidate != id {
             let onSide: Bool
@@ -279,27 +280,29 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
             let overlap: CGFloat
             switch direction {
             case .left:
-                onSide = box.midX < origin.midX && box.maxX <= origin.minX + 0.5
+                onSide = box.midX < origin.midX && box.maxX <= origin.minX + slack
                 distance = origin.minX - box.maxX
                 overlap = overlapLength(origin.minY, origin.maxY, box.minY, box.maxY)
             case .right:
-                onSide = box.midX > origin.midX && box.minX >= origin.maxX - 0.5
+                onSide = box.midX > origin.midX && box.minX >= origin.maxX - slack
                 distance = box.minX - origin.maxX
                 overlap = overlapLength(origin.minY, origin.maxY, box.minY, box.maxY)
             case .up:
-                onSide = box.midY < origin.midY && box.maxY <= origin.minY + 0.5
+                onSide = box.midY < origin.midY && box.maxY <= origin.minY + slack
                 distance = origin.minY - box.maxY
                 overlap = overlapLength(origin.minX, origin.maxX, box.minX, box.maxX)
             case .down:
-                onSide = box.midY > origin.midY && box.minY >= origin.maxY - 0.5
+                onSide = box.midY > origin.midY && box.minY >= origin.maxY - slack
                 distance = box.minY - origin.maxY
                 overlap = overlapLength(origin.minX, origin.maxX, box.minX, box.maxX)
             }
             guard onSide, overlap > 0 else { continue }
-            if overlap > bestOverlap + 0.001 || (abs(overlap - bestOverlap) <= 0.001 && distance < bestDistance) {
+            let closer = distance < bestDistance - 0.001
+            let tied = abs(distance - bestDistance) <= 0.001
+            if closer || (tied && overlap > bestOverlap) {
                 best = candidate
-                bestOverlap = overlap
                 bestDistance = distance
+                bestOverlap = overlap
             }
         }
         return best

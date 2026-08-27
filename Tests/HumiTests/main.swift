@@ -508,6 +508,93 @@ MainActor.assumeIsolated {
         check(store.sessions.map(\.id) == [b.id], "close: removes only target")
         check(store.exitCodes[a.id] == nil, "close: clears exit code")
     }
+
+    suite("SessionStore.layout") {
+        try? FileManager.default.removeItem(at: Persistence.url(SessionStore.fileName))
+        let store = SessionStore()
+        check(store.layout == nil, "layout: nil with no sessions")
+
+        let a = store.add(workingDirectory: "/a")
+        check(store.layout == .leaf(a.id), "layout: first add is a bare leaf")
+        let b = store.add(workingDirectory: "/b")
+        let c = store.add(workingDirectory: "/c")
+        check(store.layout?.leaves() == [a.id, b.id, c.id], "layout: adds append in order")
+        check(store.layout?.depth == 1, "layout: plain adds stay a single flat row")
+
+        // ⌘D-style split: new pane nests beside the target on the requested axis
+        let d = store.split(besideLeaf: b.id, axis: .vertical, workingDirectory: "/d")
+        check(store.sessions.count == 4, "split: registers the new session")
+        check(store.layout?.leaves() == [a.id, b.id, d.id, c.id], "split: new pane sits next to its target")
+        check(store.layout?.depth == 2, "split: a cross-axis split adds nesting")
+
+        store.swapPanes(a.id, c.id)
+        check(store.layout?.leaves() == [c.id, b.id, d.id, a.id], "swapPanes: exchanges two panes")
+        store.swapPanes(a.id, c.id) // put them back
+
+        check(store.paneNeighbor(of: a.id, .left) == nil, "paneNeighbor: nothing left of the first column")
+        check(store.paneNeighbor(of: a.id, .right) == b.id || store.paneNeighbor(of: a.id, .right) == d.id,
+              "paneNeighbor: a's right neighbour is the split column")
+
+        store.setPaneRatio(besideLeaf: b.id, dividerIndex: 0, to: 0.8)
+        check(store.layout != nil, "setPaneRatio: layout survives a divider drag")
+
+        store.equalizeSplits()
+        if case .split(_, _, let r)? = store.layout {
+            check(r.allSatisfy { abs($0 - r[0]) < 0.001 }, "equalizeSplits: top-level ratios evened out")
+        } else { check(false, "equalizeSplits: still a split") }
+
+        store.close(d.id)
+        check(store.layout?.leaves() == [a.id, b.id, c.id], "close: leaf leaves the tree")
+        check(store.layout?.depth == 1, "close: emptied nested split folds away")
+        store.close(a.id); store.close(b.id); store.close(c.id)
+        check(store.layout == nil, "close: last pane clears the layout")
+
+        _ = store.add(workingDirectory: "/x")
+        store.closeAll()
+        check(store.layout == nil && store.sessions.isEmpty, "closeAll: wipes layout and registry")
+    }
+
+    suite("SessionStore migration") {
+        let url = Persistence.url(SessionStore.fileName)
+
+        // Pre-1.2 file: a bare top-level [Session] array, no layout key.
+        try? FileManager.default.removeItem(at: url)
+        let id1 = UUID(), id2 = UUID()
+        let legacy = """
+        [{"id":"\(id1.uuidString)","title":"one","accentIndex":0,"createdAt":0},
+         {"id":"\(id2.uuidString)","title":"two","accentIndex":1,"createdAt":0}]
+        """
+        try! Data(legacy.utf8).write(to: url)
+        let migrated = SessionStore()
+        check(migrated.sessions.map(\.id) == [id1, id2], "migration: legacy array still loads")
+        check(migrated.layout?.leaves() == [id1, id2], "migration: synthesizes a linear layout")
+        check(migrated.layout?.depth == 1, "migration: synthesized layout is one flat row")
+
+        // v1.2 file: {sessions, layout} round-trips exactly.
+        try? FileManager.default.removeItem(at: url)
+        let src = SessionStore()
+        let a = src.add(workingDirectory: "/a")
+        let b = src.add(workingDirectory: "/b")
+        src.split(besideLeaf: a.id, axis: .vertical, workingDirectory: "/c")
+        let savedLayout = src.layout
+        src.persistNow()
+        let reloaded = SessionStore()
+        check(reloaded.layout == savedLayout, "migration: {sessions,layout} round-trips")
+        check(reloaded.sessions.count == 3, "migration: leaf registry round-trips")
+        _ = b
+
+        // Reconcile: a layout that references a vanished leaf, and a session with no leaf.
+        try? FileManager.default.removeItem(at: url)
+        let ghost = UUID(), orphan = UUID()
+        let skewed = """
+        {"sessions":[{"id":"\(orphan.uuidString)","title":"orphan","accentIndex":0,"createdAt":0}],
+         "layout":{"type":"split","axis":"horizontal","ratios":[0.5,0.5],
+           "children":[{"type":"leaf","id":"\(orphan.uuidString)"},{"type":"leaf","id":"\(ghost.uuidString)"}]}}
+        """
+        try! Data(skewed.utf8).write(to: url)
+        let fixed = SessionStore()
+        check(fixed.layout?.leaves() == [orphan], "reconcile: unknown leaf pruned, orphan session kept")
+    }
 }
 
 print("\n\(count - failures)/\(count) checks passed")
