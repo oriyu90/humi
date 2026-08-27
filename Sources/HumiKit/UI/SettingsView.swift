@@ -11,9 +11,10 @@ public struct SettingsView: View {
             GeneralPane().tabItem { Label(L("settings.tab.general"), systemImage: "gearshape") }
             AppearancePane().tabItem { Label(L("settings.tab.appearance"), systemImage: "paintpalette") }
             TerminalPane().tabItem { Label(L("settings.tab.terminal"), systemImage: "terminal") }
+            ProfilesPane().tabItem { Label(L("settings.tab.profiles"), systemImage: "person.crop.rectangle.stack") }
             ShellPane().tabItem { Label(L("settings.tab.shell"), systemImage: "chevron.left.forwardslash.chevron.right") }
         }
-        .frame(width: 560, height: 460)
+        .frame(width: 620, height: 480)
         .background(Hum.paper)
         .environment(\.locale, loc.locale)
         .preferredColorScheme(themes.resolvedTheme.appAppearance == .dark ? .dark : .light)

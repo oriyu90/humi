@@ -152,3 +152,28 @@
 "paste.confirm.title" = "粘贴多行？";
 "paste.confirm.message" = "你将要粘贴 %d 行。";
 "paste.confirm.paste" = "粘贴";
+
+/* v1.1 — Phase 5: profiles */
+"sheet.new.profile" = "配置文件";
+"sheet.new.profile.none" = "无（全局设置）";
+"launcher.title" = "按配置文件打开";
+"profiles.add" = "添加";
+"profiles.duplicate" = "复制";
+"profiles.delete" = "删除";
+"profiles.default" = "新会话默认";
+"profiles.name" = "名称";
+"profiles.icon" = "图标（SF Symbol）";
+"profiles.color" = "颜色";
+"profiles.startup" = "启动命令";
+"profiles.cwd" = "初始文件夹";
+"profiles.cwd.choose" = "选择…";
+"profiles.cwd.clear" = "清除";
+"profiles.theme" = "主题";
+"profiles.theme.global" = "跟随全局";
+"profiles.env" = "环境变量（KEY=VALUE，每行一个）";
+"profiles.scrollback" = "回滚行数（留空则用全局）";
+"profiles.logging" = "默认记录此会话";
+"profiles.import" = "导入…";
+"profiles.export" = "导出…";
+"profiles.empty" = "没有配置文件。点“添加”创建一个。";
+"profiles.none_selected" = "从左侧列表选择一个配置文件。";

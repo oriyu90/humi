@@ -22,6 +22,7 @@ public struct RootView: View {
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var loc = Localization.shared
     @ObservedObject private var themes = ThemeStore.shared
+    @ObservedObject private var profiles = ProfileStore.shared
 
     @State private var showingNewSheet = false
     @State private var pendingFolder: String?
@@ -66,6 +67,21 @@ public struct RootView: View {
                 .help(L("toolbar.toggle_notes"))
                 .accessibilityLabel(L("toolbar.toggle_notes"))
 
+                if !profiles.profiles.isEmpty {
+                    Menu {
+                        ForEach(profiles.profiles) { p in
+                            Button {
+                                withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
+                                    _ = store.add(workingDirectory: p.cwd, profileID: p.id)
+                                }
+                            } label: { Label(p.name, systemImage: p.icon) }
+                        }
+                    } label: {
+                        Image(systemName: "square.grid.2x2")
+                    }
+                    .help(L("launcher.title"))
+                }
+
                 Button(action: beginNewSession) {
                     Label(L("toolbar.new_session"), systemImage: "plus")
                 }
@@ -85,10 +101,10 @@ public struct RootView: View {
                         showingNewSheet = true
                     }
                 },
-                onCreate: { dir in
+                onCreate: { dir, pid in
                     showingNewSheet = false
                     withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
-                        _ = store.add(workingDirectory: dir)
+                        _ = store.add(workingDirectory: dir, profileID: pid)
                     }
                 },
                 onCancel: { showingNewSheet = false }

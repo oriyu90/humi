@@ -152,3 +152,28 @@
 "paste.confirm.title" = "Paste multiple lines?";
 "paste.confirm.message" = "You're about to paste %d lines.";
 "paste.confirm.paste" = "Paste";
+
+/* v1.1 — Phase 5: profiles */
+"sheet.new.profile" = "Profile";
+"sheet.new.profile.none" = "None (global settings)";
+"launcher.title" = "Open from profile";
+"profiles.add" = "Add";
+"profiles.duplicate" = "Duplicate";
+"profiles.delete" = "Delete";
+"profiles.default" = "Default for new sessions";
+"profiles.name" = "Name";
+"profiles.icon" = "Icon (SF Symbol)";
+"profiles.color" = "Color";
+"profiles.startup" = "Startup command";
+"profiles.cwd" = "Initial folder";
+"profiles.cwd.choose" = "Choose…";
+"profiles.cwd.clear" = "Clear";
+"profiles.theme" = "Theme";
+"profiles.theme.global" = "Follow global";
+"profiles.env" = "Environment (KEY=VALUE, one per line)";
+"profiles.scrollback" = "Scrollback lines (blank = global)";
+"profiles.logging" = "Log this session by default";
+"profiles.import" = "Import…";
+"profiles.export" = "Export…";
+"profiles.empty" = "No profiles. Use “Add” to create one.";
+"profiles.none_selected" = "Select a profile from the list.";

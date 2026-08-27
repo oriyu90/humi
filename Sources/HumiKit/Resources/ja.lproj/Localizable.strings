@@ -152,3 +152,28 @@
 "paste.confirm.title" = "複数行を貼り付けますか？";
 "paste.confirm.message" = "%d 行を貼り付けようとしています。";
 "paste.confirm.paste" = "貼り付け";
+
+/* v1.1 — Phase 5: profiles */
+"sheet.new.profile" = "プロファイル";
+"sheet.new.profile.none" = "なし（グローバル設定）";
+"launcher.title" = "プロファイルから開く";
+"profiles.add" = "追加";
+"profiles.duplicate" = "複製";
+"profiles.delete" = "削除";
+"profiles.default" = "新規セッションの既定";
+"profiles.name" = "名前";
+"profiles.icon" = "アイコン（SF Symbol）";
+"profiles.color" = "色";
+"profiles.startup" = "開始時コマンド";
+"profiles.cwd" = "初期フォルダ";
+"profiles.cwd.choose" = "選択…";
+"profiles.cwd.clear" = "クリア";
+"profiles.theme" = "テーマ";
+"profiles.theme.global" = "グローバルに従う";
+"profiles.env" = "環境変数（KEY=VALUE、1行に1つ）";
+"profiles.scrollback" = "スクロールバック行数（空欄でグローバル）";
+"profiles.logging" = "既定でこのセッションを記録";
+"profiles.import" = "読み込み…";
+"profiles.export" = "書き出し…";
+"profiles.empty" = "プロファイルがありません。「追加」で作成します。";
+"profiles.none_selected" = "左の一覧からプロファイルを選択します。";

@@ -152,3 +152,28 @@
 "paste.confirm.title" = "Colar várias linhas?";
 "paste.confirm.message" = "Você vai colar %d linhas.";
 "paste.confirm.paste" = "Colar";
+
+/* v1.1 — Phase 5: profiles */
+"sheet.new.profile" = "Perfil";
+"sheet.new.profile.none" = "Nenhum (configurações globais)";
+"launcher.title" = "Abrir a partir de um perfil";
+"profiles.add" = "Adicionar";
+"profiles.duplicate" = "Duplicar";
+"profiles.delete" = "Excluir";
+"profiles.default" = "Padrão para novas sessões";
+"profiles.name" = "Nome";
+"profiles.icon" = "Ícone (SF Symbol)";
+"profiles.color" = "Cor";
+"profiles.startup" = "Comando de inicialização";
+"profiles.cwd" = "Pasta inicial";
+"profiles.cwd.choose" = "Escolher…";
+"profiles.cwd.clear" = "Limpar";
+"profiles.theme" = "Tema";
+"profiles.theme.global" = "Seguir o global";
+"profiles.env" = "Ambiente (KEY=VALUE, um por linha)";
+"profiles.scrollback" = "Linhas de histórico (vazio = global)";
+"profiles.logging" = "Registrar esta sessão por padrão";
+"profiles.import" = "Importar…";
+"profiles.export" = "Exportar…";
+"profiles.empty" = "Nenhum perfil. Use “Adicionar” para criar um.";
+"profiles.none_selected" = "Selecione um perfil na lista.";

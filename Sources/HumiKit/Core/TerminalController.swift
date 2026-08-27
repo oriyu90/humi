@@ -68,7 +68,8 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
         }
     }
 
-    func startIfNeeded(invocation: ShellInvocation, environment: [String], workingDirectory: String?) {
+    func startIfNeeded(invocation: ShellInvocation, environment: [String],
+                       workingDirectory: String?, startupCommand: String = "") {
         guard !started else { return }
         started = true
         currentDirectory = workingDirectory
@@ -77,6 +78,14 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
                                   environment: environment,
                                   execName: invocation.execName,
                                   currentDirectory: workingDirectory)
+        let cmd = startupCommand.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !cmd.isEmpty {
+            // The shell needs a beat to reach its first prompt.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                guard let self, !self.exited else { return }
+                self.terminalView.send(txt: cmd + "\n")
+            }
+        }
     }
 
     // MARK: Search (⌘F)

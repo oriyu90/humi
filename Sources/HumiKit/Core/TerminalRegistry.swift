@@ -28,10 +28,15 @@ public final class TerminalRegistry {
         if reaped[session.id] != nil { return nil }
         if let existing = controllers[session.id] { return existing }
 
+        let profile = ProfileStore.shared.profile(session.profileID)
+        let theme = profile?.themeName.flatMap { ThemeStore.shared.theme(named: $0) }
+            ?? ThemeStore.shared.resolvedTheme
+        let scrollback = profile?.scrollback ?? settings.effectiveScrollback
+
         let controller = TerminalController(sessionID: session.id,
-                                            theme: ThemeStore.shared.resolvedTheme,
+                                            theme: theme,
                                             fontSize: CGFloat(settings.fontSize),
-                                            scrollback: settings.effectiveScrollback)
+                                            scrollback: scrollback)
         controllers[session.id] = controller
 
         controller.applyTerminalPrefs(optionAsMeta: settings.optionAsMeta,
@@ -41,12 +46,12 @@ public final class TerminalRegistry {
                                       bell: settings.bellStyle)
 
         if makeStart {
-            var invocation = ShellResolver.resolve(config: settings.shellConfig)
-            let env = ShellResolver.childEnvironment()
+            var invocation = ShellResolver.resolve(config: profile?.shellConfig ?? settings.shellConfig)
+            let env = ShellResolver.childEnvironment(extra: profile?.env ?? [:])
             // nil workingDirectory == "open as-is" → start in the user's home, not
             // Humi's launch cwd ("/" when opened from Finder). A folder that has since
             // been deleted also falls back to home.
-            let cwd = ShellResolver.startDirectory(requested: session.workingDirectory)
+            let cwd = ShellResolver.startDirectory(requested: session.workingDirectory ?? profile?.cwd)
 
             if session.logging,
                let path = SessionLogger.logPath(sessionTitle: session.title,
@@ -56,7 +61,8 @@ public final class TerminalRegistry {
             }
             controller.startIfNeeded(invocation: invocation,
                                      environment: env,
-                                     workingDirectory: cwd)
+                                     workingDirectory: cwd,
+                                     startupCommand: profile?.startupCommand ?? "")
         }
         return controller
     }

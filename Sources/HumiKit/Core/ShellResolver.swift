@@ -77,14 +77,17 @@ enum ShellResolver {
         return home
     }
 
-    /// Environment for the child: inherit, then make sure a sane TERM / LANG / COLORTERM are present.
-    static func childEnvironment(base: [String: String] = ProcessInfo.processInfo.environment) -> [String] {
+    /// Environment for the child: inherit, then make sure a sane TERM / LANG / COLORTERM
+    /// are present, then apply any profile overrides (`extra`).
+    static func childEnvironment(base: [String: String] = ProcessInfo.processInfo.environment,
+                                 extra: [String: String] = [:]) -> [String] {
         var env = base
         env["TERM"] = "xterm-256color"
         env["COLORTERM"] = "truecolor"
         if env["LANG"] == nil { env["LANG"] = "en_US.UTF-8" }
         env["TERM_PROGRAM"] = "Humi"
         env.removeValue(forKey: "TERM_PROGRAM_VERSION")
+        for (k, v) in extra where !k.isEmpty { env[k] = v }
         return env.map { "\($0.key)=\($0.value)" }
     }
 }

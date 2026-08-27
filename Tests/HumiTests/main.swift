@@ -271,6 +271,32 @@ MainActor.assumeIsolated {
     }
 }
 
+// MARK: Profile
+
+suite("Profile codec") {
+    var p = Profile(name: "Dev", icon: "hammer", colorIndex: 2, env: ["FOO": "bar"],
+                    startupCommand: "npm run dev", cwd: "/tmp", themeName: "Nord",
+                    scrollback: 5000, loggingDefault: true)
+    p.shellKind = ShellKind.bash.rawValue
+    let data = try! JSONEncoder().encode(p)
+    let back = try? JSONDecoder().decode(Profile.self, from: data)
+    check(back?.name == "Dev", "profile round-trips name")
+    check(back?.env["FOO"] == "bar", "profile round-trips env")
+    check(back?.startupCommand == "npm run dev", "profile round-trips startup")
+    check(back?.themeName == "Nord", "profile round-trips theme")
+    check(back?.shellConfig.kind == .bash, "profile shellConfig maps kind")
+    // Partial JSON still decodes.
+    let partial = "{\"name\":\"Min\"}".data(using: .utf8)!
+    let m = try? JSONDecoder().decode(Profile.self, from: partial)
+    check(m?.name == "Min" && m?.shellConfig.kind == .login, "partial profile → login default")
+
+    // childEnvironment merges profile env over the base.
+    let env = ShellResolver.childEnvironment(base: ["PATH": "/bin"], extra: ["FOO": "bar", "PATH": "/x"])
+    check(env.contains("FOO=bar"), "childEnvironment adds profile var")
+    check(env.contains("PATH=/x"), "childEnvironment: profile overrides base")
+    check(env.contains { $0.hasPrefix("TERM=") }, "childEnvironment still sets TERM")
+}
+
 // MARK: GridLayout
 
 suite("GridLayout") {

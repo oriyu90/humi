@@ -24,8 +24,13 @@ final class SessionStore: ObservableObject {
     // MARK: Mutations
 
     @discardableResult
-    func add(workingDirectory: String?) -> Session {
-        let session = Session(workingDirectory: workingDirectory, accentIndex: nextAccent)
+    func add(workingDirectory: String?, profileID: UUID? = nil) -> Session {
+        let profile = ProfileStore.shared.profile(profileID)
+        var session = Session(workingDirectory: workingDirectory,
+                              accentIndex: profile?.colorIndex ?? nextAccent,
+                              profileID: profileID,
+                              logging: profile?.loggingDefault ?? false)
+        if let profile { session.customTitle = profile.name }
         nextAccent += 1
         sessions.append(session)
         lastAddedID = session.id
