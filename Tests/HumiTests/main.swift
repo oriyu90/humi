@@ -339,6 +339,152 @@ suite("GridLayout") {
     check(GridLayout.chunk([1, 2], into: 0) == [[1, 2]], "chunk: size 0 → single row")
 }
 
+// MARK: PaneTree — pure recursive layout model (v1.2 phase A-1)
+
+suite("PaneTree") {
+    let a = UUID(), b = UUID(), c = UUID(), d = UUID(), e = UUID()
+
+    func approx(_ x: CGFloat, _ y: CGFloat, _ eps: CGFloat = 0.001) -> Bool { abs(x - y) <= eps }
+
+    // Queries
+    let flat = PaneNode.split(axis: .horizontal, children: [.leaf(a), .leaf(b), .leaf(c)],
+                              ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3])
+    check(PaneNode.leaf(a).leaves() == [a], "leaves: bare leaf")
+    check(flat.leaves() == [a, b, c], "leaves: split order preserved")
+    check(flat.contains(b) && !flat.contains(d), "contains: hit and miss")
+    check(PaneNode.leaf(a).depth == 0, "depth: leaf is 0")
+    check(flat.depth == 1, "depth: one split is 1")
+
+    // insert beside a bare leaf → two-child split, order follows `after`
+    let iAfter = PaneNode.leaf(a).insert(besideLeaf: a, axis: .horizontal, newLeaf: b, after: true)
+    check(iAfter.leaves() == [a, b], "insert: after puts new leaf second")
+    let iBefore = PaneNode.leaf(a).insert(besideLeaf: a, axis: .vertical, newLeaf: b, after: false)
+    check(iBefore.leaves() == [b, a], "insert: before puts new leaf first")
+    if case .split(let ax, _, let r) = iBefore {
+        check(ax == .vertical, "insert: axis honoured")
+        check(approx(r.reduce(0, +), 1), "insert: fresh split ratios sum to 1")
+    } else { check(false, "insert: bare leaf becomes a split") }
+
+    // insert into a split that already runs along the same axis → joins it, siblings stay put
+    let joined = flat.insert(besideLeaf: b, axis: .horizontal, newLeaf: d, after: true)
+    check(joined.leaves() == [a, d, b, c] || joined.leaves() == [a, b, d, c], "insert: joins same-axis split")
+    check(joined.leaves() == [a, b, d, c], "insert: new leaf lands right after target")
+    if case .split(_, let ch, let r) = joined {
+        check(ch.count == 4 && r.count == 4, "insert: no extra nesting for same axis")
+        check(approx(r[0], 1.0 / 3), "insert: untouched sibling keeps its ratio")
+        check(approx(r[1] + r[2], 1.0 / 3), "insert: target's slot is halved in place")
+    } else { check(false, "insert: still a split") }
+
+    // insert with a different axis → nested split replaces the target leaf
+    let nested = flat.insert(besideLeaf: b, axis: .vertical, newLeaf: d, after: true)
+    check(nested.leaves() == [a, b, d, c], "insert: cross-axis keeps visual order")
+    check(nested.depth == 2, "insert: cross-axis adds a nesting level")
+
+    // insert guards
+    check(flat.insert(besideLeaf: e, axis: .horizontal, newLeaf: d, after: true) == flat,
+          "insert: unknown target is a no-op")
+    check(flat.insert(besideLeaf: a, axis: .horizontal, newLeaf: b, after: true) == flat,
+          "insert: duplicate new leaf is a no-op")
+
+    // remove
+    let removed = flat.remove(leaf: b)
+    check(removed?.leaves() == [a, c], "remove: drops the target leaf")
+    let downToOne = PaneNode.split(axis: .horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5])
+        .remove(leaf: b)
+    check(downToOne == .leaf(a), "remove: single-child split collapses to the leaf")
+    check(PaneNode.leaf(a).remove(leaf: a) == nil, "remove: last leaf yields nil")
+    check(flat.remove(leaf: e) == flat, "remove: unknown leaf is a no-op")
+    let deepRemoved = nested.remove(leaf: d)
+    check(deepRemoved?.leaves() == [a, b, c], "remove: collapses nested split when it empties out")
+    check(deepRemoved?.depth == 1, "remove: nesting level folds away")
+
+    // swap
+    let swapped = flat.swap(a, c)
+    check(swapped.leaves() == [c, b, a], "swap: exchanges two leaves")
+    check(flat.swap(a, e) == flat, "swap: unknown id is a no-op")
+    check(flat.swap(a, a) == flat, "swap: same id is a no-op")
+
+    // setRatio — clamps and preserves the divider pair's combined share
+    let tuned = flat.setRatio(atSplitContaining: a, dividerIndex: 0, to: 0.7)
+    if case .split(_, _, let r) = tuned {
+        check(approx(r[0] + r[1], 2.0 / 3), "setRatio: pair sum preserved")
+        check(approx(r[0] / (r[0] + r[1]), 0.7), "setRatio: earlier child gets the fraction")
+        check(approx(r[2], 1.0 / 3), "setRatio: other siblings untouched")
+    } else { check(false, "setRatio: still a split") }
+    let clamped = flat.setRatio(atSplitContaining: a, dividerIndex: 0, to: 5)
+    if case .split(_, _, let r) = clamped {
+        check(r[0] / (r[0] + r[1]) <= 0.95 + 0.001, "setRatio: over-large fraction clamps to 0.95")
+    } else { check(false, "setRatio: clamp still a split") }
+
+    // equalized
+    let uneven = PaneNode.split(axis: .horizontal, children: [.leaf(a), .leaf(b), .leaf(c)],
+                                ratios: [0.7, 0.2, 0.1])
+    if case .split(_, _, let r) = uneven.equalized() {
+        check(r.allSatisfy { approx($0, 1.0 / 3) }, "equalized: every child gets an equal share")
+    } else { check(false, "equalized: still a split") }
+
+    // normalized — repairs drifted ratios and arity
+    if case .split(_, _, let r) = (PaneNode.split(axis: .horizontal,
+        children: [.leaf(a), .leaf(b)], ratios: [4, 4]).normalized()) {
+        check(approx(r[0], 0.5) && approx(r[1], 0.5), "normalized: ratios rescaled to sum 1")
+    } else { check(false, "normalized: still a split") }
+    if case .split(_, _, let r) = (PaneNode.split(axis: .horizontal,
+        children: [.leaf(a), .leaf(b), .leaf(c)], ratios: [0.5, 0.5]).normalized()) {
+        check(r.count == 3, "normalized: ratio count repaired to match children")
+    } else { check(false, "normalized: count repair still a split") }
+    check(PaneNode.split(axis: .horizontal, children: [.leaf(a)], ratios: [1]).normalized() == .leaf(a),
+          "normalized: single-child split collapses")
+
+    // frames — partition geometry
+    let rect = CGRect(x: 0, y: 0, width: 300, height: 200)
+    check(PaneNode.leaf(a).frames(in: rect)[a] == rect, "frames: leaf fills the rect")
+    let hFrames = flat.frames(in: rect)
+    check(approx(hFrames[a]!.width, 100) && approx(hFrames[b]!.width, 100), "frames: even horizontal thirds")
+    check(approx(hFrames[a]!.minX, 0) && approx(hFrames[b]!.minX, 100) && approx(hFrames[c]!.minX, 200),
+          "frames: children tile left to right")
+    check(hFrames.values.allSatisfy { approx($0.height, 200) }, "frames: cross axis spans full height")
+    let widthsSum = [a, b, c].compactMap { hFrames[$0]?.width }.reduce(0, +)
+    check(approx(widthsSum, 300), "frames: widths sum to the container")
+
+    // frames — gap + min-length floor
+    let gapped = flat.frames(in: rect, gap: 6)
+    check(approx([a, b, c].compactMap { gapped[$0]?.width }.reduce(0, +), 300 - 12), "frames: gap removed from total")
+    let squeeze = PaneNode.split(axis: .horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.98, 0.02])
+        .frames(in: CGRect(x: 0, y: 0, width: 300, height: 100))
+    check(squeeze[b]!.width >= PaneNode.minLeafLength - 0.5 || approx(squeeze[b]!.width, 150),
+          "frames: tiny slice floored at minLeafLength")
+
+    // focusNeighbor — 2×2 grid: outer H [ left=V[a,c] , right=V[b,d] ]
+    let grid = PaneNode.split(axis: .horizontal, children: [
+        .split(axis: .vertical, children: [.leaf(a), .leaf(c)], ratios: [0.5, 0.5]),
+        .split(axis: .vertical, children: [.leaf(b), .leaf(d)], ratios: [0.5, 0.5]),
+    ], ratios: [0.5, 0.5])
+    let box = CGRect(x: 0, y: 0, width: 100, height: 100)
+    check(grid.focusNeighbor(of: a, direction: .right, in: box) == b, "focusNeighbor: right across the column")
+    check(grid.focusNeighbor(of: a, direction: .down, in: box) == c, "focusNeighbor: down within the column")
+    check(grid.focusNeighbor(of: d, direction: .left, in: box) == c, "focusNeighbor: left across the column")
+    check(grid.focusNeighbor(of: d, direction: .up, in: box) == b, "focusNeighbor: up within the column")
+    check(grid.focusNeighbor(of: a, direction: .left, in: box) == nil, "focusNeighbor: nothing to the left of an edge")
+    check(grid.focusNeighbor(of: a, direction: .up, in: box) == nil, "focusNeighbor: nothing above an edge")
+    check(grid.focusNeighbor(of: e, direction: .right, in: box) == nil, "focusNeighbor: unknown id → nil")
+
+    // Codable — discriminated round trips + forgiving decode
+    let enc = JSONEncoder()
+    let dec = JSONDecoder()
+    func roundTrip(_ node: PaneNode) -> PaneNode? { try? dec.decode(PaneNode.self, from: try! enc.encode(node)) }
+    check(roundTrip(.leaf(a)) == .leaf(a), "codec: leaf round-trips")
+    check(roundTrip(grid) == grid, "codec: nested tree round-trips exactly")
+    let looseJSON = Data(#"{"type":"split","axis":"vertical","children":[{"type":"leaf","id":"\#(a.uuidString)"},{"type":"leaf","id":"\#(b.uuidString)"}]}"#.utf8)
+    if let loose = try? dec.decode(PaneNode.self, from: looseJSON), case .split(_, _, let r) = loose {
+        check(loose.leaves() == [a, b], "codec: split without ratios still decodes")
+        check(approx(r[0], 0.5) && approx(r[1], 0.5), "codec: missing ratios default to equal shares")
+    } else { check(false, "codec: ratio-less split decodes to a split") }
+    let mismatchJSON = Data(#"{"type":"split","axis":"horizontal","ratios":[0.9],"children":[{"type":"leaf","id":"\#(a.uuidString)"},{"type":"leaf","id":"\#(b.uuidString)"}]}"#.utf8)
+    if let fixed = try? dec.decode(PaneNode.self, from: mismatchJSON), case .split(_, _, let r) = fixed {
+        check(r.count == 2 && approx(r.reduce(0, +), 1), "codec: mismatched ratio count normalized on decode")
+    } else { check(false, "codec: mismatched ratios decode to a split") }
+}
+
 // MARK: SessionStore (main actor — top-level main.swift already runs on it)
 
 MainActor.assumeIsolated {
