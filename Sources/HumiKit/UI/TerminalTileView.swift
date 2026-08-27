@@ -7,6 +7,8 @@ import AppKit
 struct TerminalTileView: View {
     let session: Session
     let isMaximized: Bool
+    /// Draw the accent focus ring — this is the pane the keyboard is in.
+    var isFocused: Bool = false
     @ObservedObject var store: SessionStore
     @ObservedObject var settings: AppSettings
 
@@ -31,8 +33,8 @@ struct TerminalTileView: View {
         .background(Hum.paper)
         .overlay(
             RoundedRectangle(cornerRadius: Hum.Radius.tile, style: .continuous)
-                .strokeBorder(isMaximized ? accent.edge.opacity(0.9) : Hum.hairline,
-                              lineWidth: isMaximized ? 2 : 1)
+                .strokeBorder((isMaximized || isFocused) ? accent.edge.opacity(0.9) : Hum.hairline,
+                              lineWidth: (isMaximized || isFocused) ? 2 : 1)
         )
         .background(
             RoundedRectangle(cornerRadius: Hum.Radius.tile, style: .continuous)

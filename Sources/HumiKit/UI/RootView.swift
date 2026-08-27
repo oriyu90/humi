@@ -18,6 +18,9 @@ public extension Notification.Name {
     static let humiMaximizeTile = Notification.Name("humi.maximizeTile")
     static let humiToggleNotes = Notification.Name("humi.toggleNotes")
     static let humiProfileLauncher = Notification.Name("humi.profileLauncher")
+    /// Posted (object: session UUID) when a terminal becomes the working terminal.
+    /// Not a user action — drives the pane focus ring, so it's kept out of `humiAllActions`.
+    static let humiFocusChanged = Notification.Name("humi.focusChanged")
 
     static let humiAllActions: [Notification.Name] = [
         .humiNewSession, .humiClearBuffer, .humiFind, .humiFontIn, .humiFontOut, .humiFontReset,
@@ -43,7 +46,7 @@ public struct RootView: View {
 
     public var body: some View {
         HSplitView {
-            SessionGridView(store: store, settings: settings, onNew: beginNewSession)
+            PaneTreeView(store: store, settings: settings, onNew: beginNewSession)
                 .frame(minWidth: 420)
                 .overlay(alignment: .top) {
                     if searchVisible {
@@ -170,9 +173,10 @@ public struct RootView: View {
         }
     }
 
-    /// Move keyboard focus to the tile `offset` positions from the focused one.
+    /// Move keyboard focus to the tile `offset` positions from the focused one,
+    /// walking panes in visual (layout) order.
     private func focusTile(offset: Int) {
-        let ids = store.sessions.map(\.id)
+        let ids = store.layout?.leaves() ?? store.sessions.map(\.id)
         guard !ids.isEmpty else { return }
         let currentID = TerminalRegistry.shared.focusedController()?.sessionID
         let currentIndex = currentID.flatMap { ids.firstIndex(of: $0) } ?? 0

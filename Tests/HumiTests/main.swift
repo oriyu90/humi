@@ -328,17 +328,6 @@ MainActor.assumeIsolated {
     }
 }
 
-// MARK: GridLayout
-
-suite("GridLayout") {
-    check(GridLayout.columnCount(width: 400, minTileWidth: 380, spacing: 16) == 1, "narrow → 1 column")
-    check(GridLayout.columnCount(width: 820, minTileWidth: 380, spacing: 16) == 2, "wide → 2 columns")
-    check(GridLayout.columnCount(width: 0, minTileWidth: 380, spacing: 16) == 1, "zero width → 1 column")
-    check(GridLayout.chunk([1, 2, 3, 4, 5], into: 2) == [[1, 2], [3, 4], [5]], "chunk: uneven split")
-    check(GridLayout.chunk([Int](), into: 3) == [], "chunk: empty → empty")
-    check(GridLayout.chunk([1, 2], into: 0) == [[1, 2]], "chunk: size 0 → single row")
-}
-
 // MARK: PaneTree — pure recursive layout model (v1.2 phase A-1)
 
 suite("PaneTree") {
@@ -483,6 +472,27 @@ suite("PaneTree") {
     if let fixed = try? dec.decode(PaneNode.self, from: mismatchJSON), case .split(_, _, let r) = fixed {
         check(r.count == 2 && approx(r.reduce(0, +), 1), "codec: mismatched ratio count normalized on decode")
     } else { check(false, "codec: mismatched ratios decode to a split") }
+
+    // dividers — renderer drag-handle specs (v1.2 phase A-3)
+    let box2 = CGRect(x: 0, y: 0, width: 200, height: 100)
+    check(PaneNode.leaf(a).dividers(in: box2).isEmpty, "dividers: a bare leaf has none")
+    let flatDivs = flat.dividers(in: box2)
+    check(flatDivs.count == 2, "dividers: an n-child split has n-1 handles")
+    check(flatDivs.allSatisfy { $0.axis == .horizontal && $0.path == [] }, "dividers: rooted at the top split")
+    check(flatDivs.map(\.index) == [0, 1], "dividers: indexed by the earlier child")
+    check(flatDivs[0].rect.midX > 0 && flatDivs[0].rect.midX < flatDivs[1].rect.midX,
+          "dividers: handles ordered left to right")
+    check(flatDivs.map(\.id).count == Set(flatDivs.map(\.id)).count, "dividers: ids are unique")
+    let nestedDivs = grid.dividers(in: box2)
+    check(nestedDivs.contains { $0.path == [0] } && nestedDivs.contains { $0.path == [1] },
+          "dividers: nested splits contribute their own handles with a path")
+
+    // settingRatio(at:) — path-addressed divider drag
+    let deepTuned = grid.settingRatio(at: [0], dividerIndex: 0, to: 0.75)
+    let deepFrames = deepTuned.frames(in: CGRect(x: 0, y: 0, width: 400, height: 400))
+    check(deepFrames[a]!.height > deepFrames[c]!.height, "settingRatio(at:): drag inside a nested split resizes it")
+    check(approx(deepFrames[a]!.height + deepFrames[c]!.height, 400), "settingRatio(at:): the pair still fills the column")
+    check(grid.settingRatio(at: [9], dividerIndex: 0, to: 0.5) == grid, "settingRatio(at:): bad path is a no-op")
 }
 
 // MARK: SessionStore (main actor — top-level main.swift already runs on it)

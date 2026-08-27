@@ -46,6 +46,7 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
         terminalView.onInteracted = { [weak self] in
             guard let self else { return }
             TerminalRegistry.shared.noteFocused(self.sessionID)
+            NotificationCenter.default.post(name: .humiFocusChanged, object: self.sessionID)
         }
         applyTheme(theme, fontSize: fontSize)
     }

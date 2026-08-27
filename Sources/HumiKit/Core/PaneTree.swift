@@ -258,6 +258,77 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
         return lengths
     }
 
+    // MARK: Dividers (renderer drag handles)
+
+    /// One draggable split boundary: the `path` of child indices from the root to the split
+    /// that owns it, the `index` of the child immediately before the boundary, the split's
+    /// `axis`, the handle's hit `rect`, and `pairRect` — the combined span of the two panes
+    /// the handle resizes. All rects share the coordinate space of `frames(in:gap:)`.
+    struct DividerSpec: Equatable {
+        let path: [Int]
+        let index: Int
+        let axis: Axis
+        let rect: CGRect
+        let pairRect: CGRect
+        /// Stable identity for `ForEach` — a split's position plus which boundary it is.
+        var id: String { path.map(String.init).joined(separator: ".") + "#\(index)" }
+    }
+
+    func dividers(in rect: CGRect, gap: CGFloat = 0, thickness: CGFloat = 10) -> [DividerSpec] {
+        _dividers(in: rect, gap: gap, thickness: thickness, path: [])
+    }
+
+    private func _dividers(in rect: CGRect, gap: CGFloat, thickness: CGFloat, path: [Int]) -> [DividerSpec] {
+        guard case .split(let axis, let children, let ratios) = self else { return [] }
+        let horizontal = axis == .horizontal
+        let available = max(0, (horizontal ? rect.width : rect.height) - gap * CGFloat(children.count - 1))
+        let lengths = PaneNode.partition(available, ratios: ratios)
+
+        var childRects: [CGRect] = []
+        var offset = horizontal ? rect.minX : rect.minY
+        for length in lengths {
+            childRects.append(horizontal
+                ? CGRect(x: offset, y: rect.minY, width: length, height: rect.height)
+                : CGRect(x: rect.minX, y: offset, width: rect.width, height: length))
+            offset += length + gap
+        }
+
+        var specs: [DividerSpec] = []
+        for i in children.indices {
+            specs += children[i]._dividers(in: childRects[i], gap: gap, thickness: thickness, path: path + [i])
+            guard i < children.count - 1 else { continue }
+            let a = childRects[i], b = childRects[i + 1]
+            let center = horizontal ? (a.maxX + b.minX) / 2 : (a.maxY + b.minY) / 2
+            let handle = horizontal
+                ? CGRect(x: center - thickness / 2, y: rect.minY, width: thickness, height: rect.height)
+                : CGRect(x: rect.minX, y: center - thickness / 2, width: rect.width, height: thickness)
+            specs.append(DividerSpec(path: path, index: i, axis: axis, rect: handle, pairRect: a.union(b)))
+        }
+        return specs
+    }
+
+    /// Set the ratio of the divider `dividerIndex` inside the split reached by following
+    /// `path` (child indices) from the root. `r` is the earlier pane's fraction of that
+    /// divider's pair, clamped to `0.05...0.95`; the pair's combined share is preserved.
+    func settingRatio(at path: [Int], dividerIndex: Int, to r: CGFloat) -> PaneNode {
+        _settingRatio(at: path[...], dividerIndex: dividerIndex, to: r).normalized()
+    }
+
+    private func _settingRatio(at path: ArraySlice<Int>, dividerIndex: Int, to r: CGFloat) -> PaneNode {
+        guard case .split(let axis, var children, var ratios) = self else { return self }
+        if let head = path.first {
+            guard children.indices.contains(head) else { return self }
+            children[head] = children[head]._settingRatio(at: path.dropFirst(), dividerIndex: dividerIndex, to: r)
+            return .split(axis: axis, children: children, ratios: ratios)
+        }
+        guard dividerIndex >= 0, dividerIndex + 1 < ratios.count else { return self }
+        let pairSum = ratios[dividerIndex] + ratios[dividerIndex + 1]
+        let frac = min(max(r, 0.05), 0.95)
+        ratios[dividerIndex] = pairSum * frac
+        ratios[dividerIndex + 1] = pairSum - ratios[dividerIndex]
+        return .split(axis: axis, children: children, ratios: ratios)
+    }
+
     /// The leaf a directional focus move from `id` should land on, decided purely by the
     /// laid-out rectangles. Considers only candidates on the requested side that overlap
     /// `id` along the perpendicular axis, then picks the nearest one, breaking ties by the

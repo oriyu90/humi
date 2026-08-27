@@ -144,6 +144,13 @@ final class SessionStore: ObservableObject {
         persist()
     }
 
+    /// Drag a split divider addressed by its position in the tree (`PaneNode.DividerSpec`).
+    func setPaneRatio(atPath path: [Int], dividerIndex: Int, to r: CGFloat) {
+        guard let layout else { return }
+        self.layout = layout.settingRatio(at: path, dividerIndex: dividerIndex, to: r)
+        persist()
+    }
+
     /// Reset every split so its children share the space equally (⌘⌥=).
     func equalizeSplits() {
         guard let layout else { return }
