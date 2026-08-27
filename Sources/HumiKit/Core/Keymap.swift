@@ -5,6 +5,10 @@ import AppKit
 public enum HumiAction: String, CaseIterable, Codable, Identifiable, Sendable {
     case newSession, closeTile, restartTile, maximizeTile, clearBuffer
     case find, fontIn, fontOut, fontReset, nextTile, prevTile, toggleNotes, profileLauncher
+    // v1.2 — pane tree
+    case splitH, splitV
+    case focusPaneLeft, focusPaneRight, focusPaneUp, focusPaneDown
+    case equalizeSplits
 
     public var id: String { rawValue }
 
@@ -23,6 +27,13 @@ public enum HumiAction: String, CaseIterable, Codable, Identifiable, Sendable {
         case .prevTile:        return .humiPrevTile
         case .toggleNotes:     return .humiToggleNotes
         case .profileLauncher: return .humiProfileLauncher
+        case .splitH:          return .humiSplitH
+        case .splitV:          return .humiSplitV
+        case .focusPaneLeft:   return .humiFocusPaneLeft
+        case .focusPaneRight:  return .humiFocusPaneRight
+        case .focusPaneUp:     return .humiFocusPaneUp
+        case .focusPaneDown:   return .humiFocusPaneDown
+        case .equalizeSplits:  return .humiEqualizeSplits
         }
     }
 
@@ -104,6 +115,8 @@ public final class KeymapStore: ObservableObject {
 
     static let cmd = NSEvent.ModifierFlags.command.rawValue
     static let cmdOpt = (NSEvent.ModifierFlags.command.union(.option)).rawValue
+    static let cmdShift = (NSEvent.ModifierFlags.command.union(.shift)).rawValue
+    static let cmdCtrl = (NSEvent.ModifierFlags.command.union(.control)).rawValue
 
     static let defaults: [HumiAction: KeyChord] = [
         .newSession:   KeyChord(key: "n", modifiers: cmd),
@@ -119,6 +132,13 @@ public final class KeymapStore: ObservableObject {
         .prevTile:     KeyChord(key: "left", modifiers: cmdOpt),
         .toggleNotes:  KeyChord(key: "s", modifiers: cmdOpt),
         .profileLauncher: KeyChord(key: "p", modifiers: cmdOpt),
+        .splitH:       KeyChord(key: "d", modifiers: cmd),
+        .splitV:       KeyChord(key: "d", modifiers: cmdShift),
+        .focusPaneLeft:  KeyChord(key: "left", modifiers: cmdCtrl),
+        .focusPaneRight: KeyChord(key: "right", modifiers: cmdCtrl),
+        .focusPaneUp:    KeyChord(key: "up", modifiers: cmdCtrl),
+        .focusPaneDown:  KeyChord(key: "down", modifiers: cmdCtrl),
+        .equalizeSplits: KeyChord(key: "=", modifiers: cmdOpt),
     ]
 
     private init() {

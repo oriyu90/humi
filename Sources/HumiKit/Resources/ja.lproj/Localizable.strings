@@ -192,6 +192,13 @@
 "key.action.prevTile" = "前のタイル";
 "key.action.toggleNotes" = "メモの表示切替";
 "key.action.profileLauncher" = "既定プロファイルで開く";
+"key.action.splitH" = "左右に分割";
+"key.action.splitV" = "上下に分割";
+"key.action.focusPaneLeft" = "左のペインへ";
+"key.action.focusPaneRight" = "右のペインへ";
+"key.action.focusPaneUp" = "上のペインへ";
+"key.action.focusPaneDown" = "下のペインへ";
+"key.action.equalizeSplits" = "分割を均等化";
 "shortcuts.reset" = "既定に戻す";
 "shortcuts.import" = "読み込み…";
 "shortcuts.export" = "書き出し…";

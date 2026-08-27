@@ -192,6 +192,13 @@
 "key.action.prevTile" = "Bloque anterior";
 "key.action.toggleNotes" = "Mostrar/ocultar notas";
 "key.action.profileLauncher" = "Abrir con el perfil predeterminado";
+"key.action.splitH" = "Dividir izquierda / derecha";
+"key.action.splitV" = "Dividir arriba / abajo";
+"key.action.focusPaneLeft" = "Enfocar panel izquierdo";
+"key.action.focusPaneRight" = "Enfocar panel derecho";
+"key.action.focusPaneUp" = "Enfocar panel superior";
+"key.action.focusPaneDown" = "Enfocar panel inferior";
+"key.action.equalizeSplits" = "Igualar divisiones";
 "shortcuts.reset" = "Restablecer valores predeterminados";
 "shortcuts.import" = "Importar…";
 "shortcuts.export" = "Exportar…";

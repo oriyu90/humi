@@ -192,6 +192,13 @@
 "key.action.prevTile" = "上一个图块";
 "key.action.toggleNotes" = "显示/隐藏备忘";
 "key.action.profileLauncher" = "用默认配置文件打开";
+"key.action.splitH" = "左右分割";
+"key.action.splitV" = "上下分割";
+"key.action.focusPaneLeft" = "聚焦左侧窗格";
+"key.action.focusPaneRight" = "聚焦右侧窗格";
+"key.action.focusPaneUp" = "聚焦上方窗格";
+"key.action.focusPaneDown" = "聚焦下方窗格";
+"key.action.equalizeSplits" = "平均分配窗格";
 "shortcuts.reset" = "恢复默认";
 "shortcuts.import" = "导入…";
 "shortcuts.export" = "导出…";

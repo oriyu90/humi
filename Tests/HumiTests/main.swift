@@ -325,6 +325,18 @@ MainActor.assumeIsolated {
         store.set(.find, n)   // collide with newSession
         check(store.conflicts(n, excluding: .find).contains(.newSession), "conflict detected")
         store.resetAll()
+
+        // v1.2 pane actions — default chords + no collision with the v1.1 set
+        check(store.chord(for: .splitH) == KeyChord(key: "d", modifiers: KeymapStore.cmd), "splitH defaults to ⌘D")
+        check(store.chord(for: .splitV) == KeyChord(key: "d", modifiers: KeymapStore.cmdShift), "splitV defaults to ⌘⇧D")
+        check(store.chord(for: .splitV).display == "⇧⌘D", "splitV chord display")
+        check(store.chord(for: .focusPaneDown).display == "⌃⌘↓", "focusPaneDown chord display")
+        let paneActions: [HumiAction] = [.splitH, .splitV, .focusPaneLeft, .focusPaneRight,
+                                         .focusPaneUp, .focusPaneDown, .equalizeSplits]
+        for a in paneActions {
+            check(store.conflicts(store.chord(for: a), excluding: a).isEmpty,
+                  "\(a.rawValue) default chord doesn't collide")
+        }
     }
 }
 

@@ -18,6 +18,14 @@ public extension Notification.Name {
     static let humiMaximizeTile = Notification.Name("humi.maximizeTile")
     static let humiToggleNotes = Notification.Name("humi.toggleNotes")
     static let humiProfileLauncher = Notification.Name("humi.profileLauncher")
+    // v1.2 — pane tree
+    static let humiSplitH = Notification.Name("humi.splitH")
+    static let humiSplitV = Notification.Name("humi.splitV")
+    static let humiFocusPaneLeft = Notification.Name("humi.focusPaneLeft")
+    static let humiFocusPaneRight = Notification.Name("humi.focusPaneRight")
+    static let humiFocusPaneUp = Notification.Name("humi.focusPaneUp")
+    static let humiFocusPaneDown = Notification.Name("humi.focusPaneDown")
+    static let humiEqualizeSplits = Notification.Name("humi.equalizeSplits")
     /// Posted (object: session UUID) when a terminal becomes the working terminal.
     /// Not a user action — drives the pane focus ring, so it's kept out of `humiAllActions`.
     static let humiFocusChanged = Notification.Name("humi.focusChanged")
@@ -26,6 +34,8 @@ public extension Notification.Name {
         .humiNewSession, .humiClearBuffer, .humiFind, .humiFontIn, .humiFontOut, .humiFontReset,
         .humiNextTile, .humiPrevTile, .humiCloseTile, .humiRestartTile, .humiMaximizeTile,
         .humiToggleNotes, .humiProfileLauncher,
+        .humiSplitH, .humiSplitV, .humiFocusPaneLeft, .humiFocusPaneRight,
+        .humiFocusPaneUp, .humiFocusPaneDown, .humiEqualizeSplits,
     ]
 }
 
@@ -169,8 +179,40 @@ public struct RootView: View {
                     _ = store.add(workingDirectory: p.cwd, profileID: p.id)
                 }
             } else { beginNewSession() }
+        case .humiSplitH: splitFocused(.horizontal, focusedID: focusedID)
+        case .humiSplitV: splitFocused(.vertical, focusedID: focusedID)
+        case .humiFocusPaneLeft:  focusPane(.left)
+        case .humiFocusPaneRight: focusPane(.right)
+        case .humiFocusPaneUp:    focusPane(.up)
+        case .humiFocusPaneDown:  focusPane(.down)
+        case .humiEqualizeSplits:
+            withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) { store.equalizeSplits() }
         default: break
         }
+    }
+
+    /// ⌘D / ⌘⇧D — split the focused pane, opening the new shell in the same directory.
+    private func splitFocused(_ axis: Axis, focusedID: UUID?) {
+        guard let id = focusedID ?? store.layout?.leaves().last,
+              let source = store.sessions.first(where: { $0.id == id }) else {
+            beginNewSession()
+            return
+        }
+        withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
+            _ = store.split(besideLeaf: id, axis: axis,
+                            workingDirectory: source.workingDirectory, profileID: source.profileID)
+        }
+    }
+
+    /// ⌘⌃arrow — move keyboard focus to the neighbouring pane in that direction.
+    private func focusPane(_ direction: Direction) {
+        guard let current = TerminalRegistry.shared.focusedController()?.sessionID,
+              let target = store.paneNeighbor(of: current, direction),
+              let view = TerminalRegistry.shared.existing(target)?.terminalView,
+              let window = view.window else { return }
+        window.makeFirstResponder(view)
+        TerminalRegistry.shared.noteFocused(target)
+        NotificationCenter.default.post(name: .humiFocusChanged, object: target)
     }
 
     /// Move keyboard focus to the tile `offset` positions from the focused one,

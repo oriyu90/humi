@@ -59,10 +59,18 @@ struct HumiApp: App {
                 actionButton(.fontOut, "app.menu.font_out")
                 actionButton(.fontReset, "app.menu.font_reset")
                 Divider()
+                actionButton(.splitH, "key.action.splitH")
+                actionButton(.splitV, "key.action.splitV")
+                actionButton(.equalizeSplits, "key.action.equalizeSplits")
+                Divider()
                 actionButton(.maximizeTile, "tile.maximize")
                 actionButton(.toggleNotes, "toolbar.toggle_notes")
                 actionButton(.nextTile, "app.menu.next_tile")
                 actionButton(.prevTile, "app.menu.prev_tile")
+                actionButton(.focusPaneLeft, "key.action.focusPaneLeft")
+                actionButton(.focusPaneRight, "key.action.focusPaneRight")
+                actionButton(.focusPaneUp, "key.action.focusPaneUp")
+                actionButton(.focusPaneDown, "key.action.focusPaneDown")
             }
         }
 

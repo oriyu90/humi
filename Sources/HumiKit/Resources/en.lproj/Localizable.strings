@@ -192,6 +192,13 @@
 "key.action.prevTile" = "Previous tile";
 "key.action.toggleNotes" = "Toggle notes";
 "key.action.profileLauncher" = "Open with default profile";
+"key.action.splitH" = "Split left / right";
+"key.action.splitV" = "Split top / bottom";
+"key.action.focusPaneLeft" = "Focus pane left";
+"key.action.focusPaneRight" = "Focus pane right";
+"key.action.focusPaneUp" = "Focus pane up";
+"key.action.focusPaneDown" = "Focus pane down";
+"key.action.equalizeSplits" = "Equalize splits";
 "shortcuts.reset" = "Reset to defaults";
 "shortcuts.import" = "Import…";
 "shortcuts.export" = "Export…";
