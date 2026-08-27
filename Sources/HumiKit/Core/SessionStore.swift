@@ -129,9 +129,11 @@ final class SessionStore: ObservableObject {
         let wasAutoTitle = sessions[idx].hasAutoTitle
         sessions[idx].workingDirectory = dir
         // Follow the cwd in the tile title, unless the shell (OSC 0/2) or the user
-        // gave it a real title — then leave that alone.
+        // gave it a real title — then leave that alone. Home stays the localized default
+        // (not the username) so an OSC-7 report of $HOME doesn't rename the tile.
         if wasAutoTitle {
-            sessions[idx].title = Session.defaultTitle(for: dir)
+            let atHome = dir.map { $0 == NSHomeDirectory() } ?? true
+            sessions[idx].title = atHome ? "" : Session.defaultTitle(for: dir)
         }
         persist()
     }
