@@ -1,0 +1,68 @@
+/* Humi — English */
+
+"lang.system" = "System";
+
+"app.menu.new_session" = "New Session";
+"app.menu.clear_buffer" = "Clear Buffer";
+
+"shell.login" = "Login shell";
+"shell.custom" = "Custom";
+"ext.terminal" = "Terminal.app";
+"ext.iterm" = "iTerm2";
+
+"session.default_title" = "Session";
+
+"panel.choose" = "Choose";
+"panel.message" = "Folder to open the session in (Cancel for home)";
+
+"toolbar.toggle_notes" = "Toggle notes";
+"toolbar.new_session" = "New Session";
+"toolbar.new_session.help" = "New Session (⌘N)";
+
+"sheet.new.title" = "New Session";
+"sheet.new.subtitle" = "Choose how to open it.";
+"sheet.new.no_folder" = "No folder chosen (opens in home)";
+"sheet.new.choose_folder" = "Choose Folder…";
+"sheet.new.change_folder" = "Change…";
+"sheet.new.open_home" = "Open as-is (home)";
+"sheet.new.open_here" = "Open in this folder";
+"sheet.new.open_caption" = "Opens a terminal in a tile inside Humi";
+"sheet.new.cancel" = "Cancel";
+
+"empty.title" = "No sessions";
+"empty.body" = "Press “+” to pick a folder and open a terminal session as a tile.\nAdd as many sessions as you want.";
+"empty.button" = "Open your first session";
+
+"tile.exited" = "Exited";
+"tile.exited_code" = "Exited (%d)";
+"tile.exited.a11y" = "Process exited";
+"tile.exited_code.a11y" = "Process exited, code %d";
+"tile.restart" = "Restart session";
+"tile.restore" = "Back to tiled view";
+"tile.maximize" = "Maximize";
+"tile.close" = "Close session";
+"tile.a11y" = "Session: %@";
+
+"notes.title" = "Notes";
+"notes.edit" = "Edit";
+"notes.preview" = "Preview";
+"notes.placeholder" = "# Notes\n\nWrite notes here. They persist across app restarts.\nMarkdown is supported.";
+
+"settings.tab.general" = "General";
+"settings.tab.shell" = "Shell";
+"settings.tab.appearance" = "Appearance";
+"settings.general.notes_on_launch" = "Show notes on launch";
+"settings.general.scrollback" = "Scrollback";
+"settings.general.lines" = "%d lines";
+"settings.general.scrollback_hint" = "Scrollback changes take effect for sessions opened next.";
+"settings.general.language" = "Display language";
+"settings.shell.shell" = "Shell";
+"settings.shell.custom_path" = "Executable path";
+"settings.shell.custom_args" = "Arguments (space-separated)";
+"settings.shell.login_toggle" = "Start as a login shell (-l / leading - in argv0)";
+"settings.shell.hint" = "Changes take effect for sessions opened next.";
+"settings.appearance.font_size" = "Font size";
+"settings.appearance.pt" = "%d pt";
+"settings.appearance.hint" = "Applied to open sessions immediately. Humi uses the light (Hum) theme.";
+
+"session.home" = "Home";

@@ -2,17 +2,19 @@ import SwiftUI
 
 public struct SettingsView: View {
     @ObservedObject private var settings = AppSettings.shared
+    @ObservedObject private var loc = Localization.shared
 
     public init() {}
 
     public var body: some View {
         TabView {
-            general.tabItem { Label("一般", systemImage: "gearshape") }
-            shell.tabItem { Label("シェル", systemImage: "terminal") }
-            appearance.tabItem { Label("外観", systemImage: "paintpalette") }
+            general.tabItem { Label(L("settings.tab.general"), systemImage: "gearshape") }
+            shell.tabItem { Label(L("settings.tab.shell"), systemImage: "terminal") }
+            appearance.tabItem { Label(L("settings.tab.appearance"), systemImage: "paintpalette") }
         }
         .frame(width: 500, height: 360)
         .background(Hum.paper)
+        .environment(\.locale, loc.locale)
     }
 
     /// Each tab's rows, top-aligned and left-aligned with room for labels.
@@ -35,42 +37,53 @@ public struct SettingsView: View {
 
     private var general: some View {
         tab {
-            Toggle("起動時にメモを表示", isOn: settings.bind(\.notesVisible))
             HStack {
-                Text("スクロールバック")
+                Text(L("settings.general.language"))
                 Spacer()
-                Text("\(settings.scrollbackLines) 行").foregroundStyle(Hum.ink2).monospacedDigit()
+                Picker("", selection: settings.bind(\.appLanguage)) {
+                    ForEach(Localization.supported, id: \.self) { code in
+                        Text(Localization.label(for: code)).tag(code)
+                    }
+                }
+                .labelsHidden()
+                .frame(width: 200)
+            }
+            Toggle(L("settings.general.notes_on_launch"), isOn: settings.bind(\.notesVisible))
+            HStack {
+                Text(L("settings.general.scrollback"))
+                Spacer()
+                Text(L("settings.general.lines", settings.scrollbackLines)).foregroundStyle(Hum.ink2).monospacedDigit()
                 Stepper("", value: settings.bind(\.scrollbackLines), in: 1000...200_000, step: 1000)
                     .labelsHidden()
             }
-            hint("スクロールバックの変更は次に開くセッションから反映されます。")
+            hint(L("settings.general.scrollback_hint"))
         }
     }
 
     private var shell: some View {
         tab {
-            Picker("シェル", selection: settings.bind(\.shellKind)) {
+            Picker(L("settings.shell.shell"), selection: settings.bind(\.shellKind)) {
                 ForEach(ShellKind.allCases) { Text($0.label).tag($0) }
             }
             if settings.shellKind == .custom {
-                TextField("実行パス", text: settings.bind(\.customShellPath))
-                TextField("引数（スペース区切り）", text: settings.bind(\.customShellArgs))
+                TextField(L("settings.shell.custom_path"), text: settings.bind(\.customShellPath))
+                TextField(L("settings.shell.custom_args"), text: settings.bind(\.customShellArgs))
             } else {
-                Toggle("ログインシェルとして起動（-l / argv0 に -）", isOn: settings.bind(\.useLoginShellArgs))
+                Toggle(L("settings.shell.login_toggle"), isOn: settings.bind(\.useLoginShellArgs))
             }
-            hint("変更は次に開くセッションから反映されます。")
+            hint(L("settings.shell.hint"))
         }
     }
 
     private var appearance: some View {
         tab {
             HStack {
-                Text("フォントサイズ")
+                Text(L("settings.appearance.font_size"))
                 Spacer()
-                Text("\(Int(settings.fontSize)) pt").foregroundStyle(Hum.ink2).monospacedDigit()
+                Text(L("settings.appearance.pt", Int(settings.fontSize))).foregroundStyle(Hum.ink2).monospacedDigit()
             }
             Slider(value: settings.bind(\.fontSize), in: 9...22, step: 1).labelsHidden()
-            hint("開いているセッションへ即座に反映されます。Humi はライトテーマ（Hum）です。")
+            hint(L("settings.appearance.hint"))
         }
     }
 }

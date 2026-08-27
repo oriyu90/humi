@@ -78,10 +78,10 @@ struct SessionGridView: View {
                 .scaleEffect(2.2)
                 .padding(.bottom, Hum.Space.sm)
 
-            Text("セッションがありません")
+            Text(L("empty.title"))
                 .font(Hum.Font.display(22, weight: .bold))
                 .foregroundStyle(Hum.ink)
-            Text("『+』でフォルダを選び、ターミナルセッションをタイルで開きます。\nセッションはいくつでも追加できます。")
+            Text(L("empty.body"))
                 .font(Hum.Font.body(13))
                 .foregroundStyle(Hum.ink2)
                 .multilineTextAlignment(.center)
@@ -90,7 +90,7 @@ struct SessionGridView: View {
             Button {
                 onNew()
             } label: {
-                Label("最初のセッションを開く", systemImage: "plus")
+                Label(L("empty.button"), systemImage: "plus")
             }
             .buttonStyle(.hum(.push, accent: Hum.accent(0), size: 15))
         }

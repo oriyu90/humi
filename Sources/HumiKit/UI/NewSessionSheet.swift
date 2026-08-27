@@ -14,10 +14,10 @@ struct NewSessionSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Hum.Space.lg) {
             VStack(alignment: .leading, spacing: Hum.Space.xs) {
-                Text("新しいセッション")
+                Text(L("sheet.new.title"))
                     .font(Hum.Font.display(20, weight: .bold))
                     .foregroundStyle(Hum.ink)
-                Text("開き方を選びます。")
+                Text(L("sheet.new.subtitle"))
                     .font(Hum.Font.body(13))
                     .foregroundStyle(Hum.ink2)
             }
@@ -25,13 +25,13 @@ struct NewSessionSheet: View {
             HStack(spacing: Hum.Space.sm) {
                 Image(systemName: folder == nil ? "house" : "folder")
                     .foregroundStyle(Hum.ink2)
-                Text(folder.map { ($0 as NSString).abbreviatingWithTildeInPath } ?? "フォルダ未選択（ホームで開く）")
+                Text(folder.map { ($0 as NSString).abbreviatingWithTildeInPath } ?? L("sheet.new.no_folder"))
                     .font(Hum.Font.mono(12))
                     .foregroundStyle(folder == nil ? Hum.ink2 : Hum.ink)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer(minLength: Hum.Space.sm)
-                Button(folder == nil ? "フォルダを選択…" : "変更…") { onPickFolder() }
+                Button(folder == nil ? L("sheet.new.choose_folder") : L("sheet.new.change_folder")) { onPickFolder() }
                     .buttonStyle(.hum(.outline, accent: Hum.accent(1)))
             }
             .padding(Hum.Space.md)
@@ -42,15 +42,15 @@ struct NewSessionSheet: View {
             Button {
                 onCreate(folder)
             } label: {
-                actionLabel(title: folder == nil ? "そのまま開く（ホーム）" : "このフォルダで開く",
-                            subtitle: "Humi 内のタイルでターミナルを開く",
+                actionLabel(title: folder == nil ? L("sheet.new.open_home") : L("sheet.new.open_here"),
+                            subtitle: L("sheet.new.open_caption"),
                             systemImage: "square.split.2x2")
             }
             .buttonStyle(.hum(.push, accent: Hum.accent(0)))
 
             HStack {
                 Spacer()
-                Button("キャンセル") { onCancel() }
+                Button(L("sheet.new.cancel")) { onCancel() }
                     .buttonStyle(.plain)
                     .foregroundStyle(Hum.ink2)
                     .keyboardShortcut(.cancelAction)

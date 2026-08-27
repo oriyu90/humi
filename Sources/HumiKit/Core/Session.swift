@@ -6,7 +6,8 @@ struct Session: Identifiable, Codable, Equatable {
     let id: UUID
     /// Directory the shell was started in. `nil` == "open as-is" (home / login default).
     var workingDirectory: String?
-    /// Live title: OSC title from the shell, else the directory basename, else "セッション".
+    /// Live title: OSC title from the shell, else the directory basename. Empty string
+    /// means "no explicit title" — `displayTitle` substitutes the localized default.
     var title: String
     /// Index into `Hum.accents` — fixed at creation so a tile keeps its colour.
     var accentIndex: Int
@@ -20,14 +21,23 @@ struct Session: Identifiable, Codable, Equatable {
         self.title = Session.defaultTitle(for: workingDirectory)
     }
 
+    /// Basename for a directory; empty string for "no directory" (see `title`).
+    /// Pure and non-isolated — localization happens in `displayTitle`.
     static func defaultTitle(for dir: String?) -> String {
-        guard let dir, !dir.isEmpty else { return "セッション" }
+        guard let dir, !dir.isEmpty else { return "" }
         let name = (dir as NSString).lastPathComponent
         return name.isEmpty ? dir : name
     }
 
+    /// True when `title` has never been set to anything explicit.
+    var hasAutoTitle: Bool { title.isEmpty || title == Session.defaultTitle(for: workingDirectory) }
+
+    @MainActor
+    var displayTitle: String { title.isEmpty ? L("session.default_title") : title }
+
+    @MainActor
     var displayDirectory: String {
-        guard let workingDirectory else { return "ホーム" }
+        guard let workingDirectory else { return L("session.home") }
         return (workingDirectory as NSString).abbreviatingWithTildeInPath
     }
 }

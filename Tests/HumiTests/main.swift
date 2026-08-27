@@ -34,6 +34,39 @@ suite("Persistence isolation") {
           "not writing to the real app-support dir")
 }
 
+// MARK: Localization — every language file must carry the same keys
+
+MainActor.assumeIsolated {
+    suite("L10n") {
+        let langs = ["ja", "en", "zh-Hans", "pt-BR", "es"]
+        var tables: [String: [String: String]] = [:]
+        for lang in langs {
+            if let t = Localization.loadStrings(lang) { tables[lang] = t }
+            else { check(false, "\(lang): Localizable.strings loads") }
+        }
+        check(tables.count == langs.count, "all 5 language files present")
+
+        if let base = tables["ja"] {
+            let baseKeys = Set(base.keys)
+            check(baseKeys.count > 30, "ja has a non-trivial key set (\(baseKeys.count))")
+            for (lang, table) in tables {
+                let keys = Set(table.keys)
+                let missing = baseKeys.subtracting(keys)
+                let extra = keys.subtracting(baseKeys)
+                check(missing.isEmpty, "\(lang): no missing keys" + (missing.isEmpty ? "" : " — \(missing.sorted())"))
+                check(extra.isEmpty, "\(lang): no orphan keys" + (extra.isEmpty ? "" : " — \(extra.sorted())"))
+                check(table.values.allSatisfy { !$0.isEmpty }, "\(lang): no empty values")
+                // %d / %@ placeholder counts must match the base so String(format:) is safe.
+                for key in baseKeys.intersection(keys) {
+                    let bc = base[key]!.components(separatedBy: "%").count
+                    let tc = table[key]!.components(separatedBy: "%").count
+                    check(bc == tc, "\(lang): \(key) placeholder count matches base")
+                }
+            }
+        }
+    }
+}
+
 // MARK: ShellResolver
 
 suite("ShellResolver") {

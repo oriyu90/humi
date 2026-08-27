@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Humi",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v14)
     ],

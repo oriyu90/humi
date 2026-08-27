@@ -14,6 +14,7 @@ public struct RootView: View {
     @StateObject private var store = SessionStore()
     @ObservedObject private var notes = NotesStore.shared
     @ObservedObject private var settings = AppSettings.shared
+    @ObservedObject private var loc = Localization.shared
 
     @State private var showingNewSheet = false
     @State private var pendingFolder: String?
@@ -30,6 +31,7 @@ public struct RootView: View {
             }
         }
         .background(Hum.paper2)
+        .environment(\.locale, loc.locale)
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 HStack(spacing: Hum.Space.sm) {
@@ -45,14 +47,14 @@ public struct RootView: View {
                 } label: {
                     Image(systemName: settings.notesVisible ? "sidebar.right" : "sidebar.trailing")
                 }
-                .help("メモの表示切替")
-                .accessibilityLabel("メモの表示切替")
+                .help(L("toolbar.toggle_notes"))
+                .accessibilityLabel(L("toolbar.toggle_notes"))
 
                 Button(action: beginNewSession) {
-                    Label("新しいセッション", systemImage: "plus")
+                    Label(L("toolbar.new_session"), systemImage: "plus")
                 }
-                .help("新しいセッション (⌘N)")
-                .accessibilityLabel("新しいセッション")
+                .help(L("toolbar.new_session.help"))
+                .accessibilityLabel(L("toolbar.new_session"))
             }
         }
         .sheet(isPresented: $showingNewSheet) {
@@ -97,13 +99,14 @@ public struct RootView: View {
     }
 
     /// App-modal folder picker. Safe here because no SwiftUI sheet is presented yet.
+    @MainActor
     private static func runFolderPanel() -> String? {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.prompt = "選択"
-        panel.message = "セッションを開くフォルダ（キャンセルでホーム）"
+        panel.prompt = L("panel.choose")
+        panel.message = L("panel.message")
         return panel.runModal() == .OK ? panel.url?.path : nil
     }
 }

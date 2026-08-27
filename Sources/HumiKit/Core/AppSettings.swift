@@ -9,13 +9,13 @@ enum ShellKind: String, CaseIterable, Identifiable {
     case custom
 
     var id: String { rawValue }
-    var label: String {
+    @MainActor var label: String {
         switch self {
-        case .login:  return "ログインシェル"
+        case .login:  return L("shell.login")
         case .zsh:    return "zsh"
         case .bash:   return "bash"
         case .fish:   return "fish"
-        case .custom: return "カスタム"
+        case .custom: return L("shell.custom")
         }
     }
 }
@@ -25,10 +25,10 @@ enum ExternalTerminalApp: String, CaseIterable, Identifiable {
     case iterm
 
     var id: String { rawValue }
-    var label: String {
+    @MainActor var label: String {
         switch self {
-        case .terminal: return "ターミナル.app"
-        case .iterm:    return "iTerm2"
+        case .terminal: return L("ext.terminal")
+        case .iterm:    return L("ext.iterm")
         }
     }
     var bundleID: String {
@@ -62,7 +62,9 @@ public final class AppSettings: ObservableObject {
             Keys.externalTerminal: ExternalTerminalApp.terminal.rawValue,
             Keys.notesVisible: true,
             Keys.notesPreview: false,
+            Keys.appLanguage: "system",
         ])
+        Localization.shared.apply(appLanguage)
     }
 
     private enum Keys {
@@ -75,6 +77,7 @@ public final class AppSettings: ObservableObject {
         static let externalTerminal = "externalTerminal"
         static let notesVisible = "notesVisible"
         static let notesPreview = "notesPreview"
+        static let appLanguage = "humiAppLanguage"
     }
 
     private func set<T>(_ value: T, _ key: String) {
@@ -123,6 +126,14 @@ public final class AppSettings: ObservableObject {
     var notesPreview: Bool {
         get { defaults.bool(forKey: Keys.notesPreview) }
         set { set(newValue, Keys.notesPreview) }
+    }
+    /// `"system"` or a code with an `.lproj` (`ja`, `en`, `zh-Hans`, `pt-BR`, `es`).
+    var appLanguage: String {
+        get { defaults.string(forKey: Keys.appLanguage) ?? "system" }
+        set {
+            set(newValue, Keys.appLanguage)
+            Localization.shared.apply(newValue)
+        }
     }
     var externalTerminal: ExternalTerminalApp {
         get { ExternalTerminalApp(rawValue: defaults.string(forKey: Keys.externalTerminal) ?? "") ?? .terminal }

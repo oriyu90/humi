@@ -15,15 +15,10 @@ public final class NotesStore: ObservableObject {
     private var saveWorkItem: DispatchWorkItem?
 
     private init() {
-        self.text = Persistence.readString(NotesStore.fileName) ?? NotesStore.placeholder
+        self.text = Persistence.readString(NotesStore.fileName) ?? L("notes.placeholder")
     }
 
-    static let placeholder = """
-    # メモ
-
-    ここにメモが書けます。アプリを再起動しても内容は残ります。
-    Markdown 形式に対応。
-    """
+    @MainActor static var placeholder: String { L("notes.placeholder") }
 
     private func scheduleSave() {
         saveWorkItem?.cancel()

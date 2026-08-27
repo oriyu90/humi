@@ -1,0 +1,68 @@
+/* Humi — Português */
+
+"lang.system" = "Sistema";
+
+"app.menu.new_session" = "Nova sessão";
+"app.menu.clear_buffer" = "Limpar buffer";
+
+"shell.login" = "Shell de login";
+"shell.custom" = "Personalizado";
+"ext.terminal" = "Terminal.app";
+"ext.iterm" = "iTerm2";
+
+"session.default_title" = "Sessão";
+
+"panel.choose" = "Escolher";
+"panel.message" = "Pasta para abrir a sessão (Cancelar usa a pasta pessoal)";
+
+"toolbar.toggle_notes" = "Mostrar/ocultar notas";
+"toolbar.new_session" = "Nova sessão";
+"toolbar.new_session.help" = "Nova sessão (⌘N)";
+
+"sheet.new.title" = "Nova sessão";
+"sheet.new.subtitle" = "Escolha como abrir.";
+"sheet.new.no_folder" = "Nenhuma pasta escolhida (abre na pasta pessoal)";
+"sheet.new.choose_folder" = "Escolher pasta…";
+"sheet.new.change_folder" = "Alterar…";
+"sheet.new.open_home" = "Abrir como está (pasta pessoal)";
+"sheet.new.open_here" = "Abrir nesta pasta";
+"sheet.new.open_caption" = "Abre um terminal em um bloco dentro do Humi";
+"sheet.new.cancel" = "Cancelar";
+
+"empty.title" = "Sem sessões";
+"empty.body" = "Pressione “+” para escolher uma pasta e abrir uma sessão de terminal como bloco.\nAdicione quantas sessões quiser.";
+"empty.button" = "Abrir sua primeira sessão";
+
+"tile.exited" = "Encerrada";
+"tile.exited_code" = "Encerrada (%d)";
+"tile.exited.a11y" = "Processo encerrado";
+"tile.exited_code.a11y" = "Processo encerrado, código %d";
+"tile.restart" = "Reiniciar sessão";
+"tile.restore" = "Voltar à visão em blocos";
+"tile.maximize" = "Maximizar";
+"tile.close" = "Fechar sessão";
+"tile.a11y" = "Sessão: %@";
+
+"notes.title" = "Notas";
+"notes.edit" = "Editar";
+"notes.preview" = "Pré-visualizar";
+"notes.placeholder" = "# Notas\n\nEscreva notas aqui. Elas persistem entre reinícios do app.\nMarkdown é suportado.";
+
+"settings.tab.general" = "Geral";
+"settings.tab.shell" = "Shell";
+"settings.tab.appearance" = "Aparência";
+"settings.general.notes_on_launch" = "Mostrar notas ao iniciar";
+"settings.general.scrollback" = "Histórico de rolagem";
+"settings.general.lines" = "%d linhas";
+"settings.general.scrollback_hint" = "Mudanças no histórico valem para as próximas sessões abertas.";
+"settings.general.language" = "Idioma de exibição";
+"settings.shell.shell" = "Shell";
+"settings.shell.custom_path" = "Caminho do executável";
+"settings.shell.custom_args" = "Argumentos (separados por espaço)";
+"settings.shell.login_toggle" = "Iniciar como shell de login (-l / - no início do argv0)";
+"settings.shell.hint" = "As mudanças valem para as próximas sessões abertas.";
+"settings.appearance.font_size" = "Tamanho da fonte";
+"settings.appearance.pt" = "%d pt";
+"settings.appearance.hint" = "Aplicado às sessões abertas imediatamente. O Humi usa o tema claro (Hum).";
+
+"session.home" = "Pasta pessoal";

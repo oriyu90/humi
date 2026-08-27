@@ -75,7 +75,7 @@ final class SessionStore: ObservableObject {
     func updateWorkingDirectory(_ id: UUID, _ dir: String?) {
         guard let idx = sessions.firstIndex(where: { $0.id == id }) else { return }
         guard sessions[idx].workingDirectory != dir else { return }
-        let wasAutoTitle = sessions[idx].title == Session.defaultTitle(for: sessions[idx].workingDirectory)
+        let wasAutoTitle = sessions[idx].hasAutoTitle
         sessions[idx].workingDirectory = dir
         // Follow the cwd in the tile title, unless the shell (OSC 0/2) or the user
         // gave it a real title — then leave that alone.
@@ -105,7 +105,10 @@ final class SessionStore: ObservableObject {
     }
 
     private func restore() {
-        let saved = Persistence.decode([Session].self, from: SessionStore.fileName) ?? []
+        var saved = Persistence.decode([Session].self, from: SessionStore.fileName) ?? []
+        // Pre-1.1 sessions stored the literal "セッション" as the auto-title; normalize to
+        // the empty sentinel so `displayTitle` localizes it.
+        for i in saved.indices where saved[i].title == "セッション" { saved[i].title = "" }
         sessions = saved
         nextAccent = (saved.map(\.accentIndex).max() ?? -1) + 1
         maximizedID = nil

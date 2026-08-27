@@ -24,11 +24,11 @@ struct HumiApp: App {
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button("新しいセッション") { NotificationCenter.default.post(name: .humiNewSession, object: nil) }
+                Button(L("app.menu.new_session")) { NotificationCenter.default.post(name: .humiNewSession, object: nil) }
                     .keyboardShortcut("n", modifiers: [.command])
             }
             CommandGroup(after: .pasteboard) {
-                Button("バッファをクリア") { NotificationCenter.default.post(name: .humiClearBuffer, object: nil) }
+                Button(L("app.menu.clear_buffer")) { NotificationCenter.default.post(name: .humiClearBuffer, object: nil) }
                     .keyboardShortcut("k", modifiers: [.command])
             }
         }

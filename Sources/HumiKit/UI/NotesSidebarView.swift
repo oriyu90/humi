@@ -22,13 +22,13 @@ struct NotesSidebarView: View {
 
     private var header: some View {
         HStack(spacing: Hum.Space.sm) {
-            Text("メモ")
+            Text(L("notes.title"))
                 .font(Hum.Font.display(13, weight: .bold))
                 .foregroundStyle(Hum.ink)
             Spacer()
             Picker("", selection: settings.bind(\.notesPreview)) {
-                Text("編集").tag(false)
-                Text("プレビュー").tag(true)
+                Text(L("notes.edit")).tag(false)
+                Text(L("notes.preview")).tag(true)
             }
             .pickerStyle(.segmented)
             .labelsHidden()

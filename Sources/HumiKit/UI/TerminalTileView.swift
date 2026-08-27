@@ -36,7 +36,7 @@ struct TerminalTileView: View {
             withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) { hovering = h }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("セッション: \(session.title)")
+        .accessibilityLabel(L("tile.a11y", session.displayTitle))
     }
 
     private var titleBar: some View {
@@ -45,33 +45,33 @@ struct TerminalTileView: View {
                 .overlay(Circle().stroke(accent.edge.opacity(0.6), lineWidth: 1))
                 .accessibilityHidden(true)
 
-            Text(session.title)
+            Text(session.displayTitle)
                 .font(Hum.Font.display(12.5, weight: .semibold))
                 .foregroundStyle(Hum.ink)
                 .lineLimit(1)
                 .truncationMode(.middle)
 
             if let code = exitCode {
-                Text(code == 0 ? "終了" : "終了 (\(code))")
+                Text(code == 0 ? L("tile.exited") : L("tile.exited_code", Int(code)))
                     .font(Hum.Font.mono(10))
                     .foregroundStyle(Hum.ink2)
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(Capsule().fill(Hum.paper3))
-                    .accessibilityLabel(code == 0 ? "プロセス終了" : "プロセス終了、コード \(code)")
+                    .accessibilityLabel(code == 0 ? L("tile.exited.a11y") : L("tile.exited_code.a11y", Int(code)))
             }
 
             Spacer(minLength: Hum.Space.sm)
 
             if exitCode != nil {
-                tileButton("arrow.clockwise", label: "セッションを再起動") {
+                tileButton("arrow.clockwise", label: L("tile.restart")) {
                     store.restart(session.id, settings: settings)
                 }
             }
             tileButton(isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
-                       label: isMaximized ? "タイル表示に戻す" : "最大化") {
+                       label: isMaximized ? L("tile.restore") : L("tile.maximize")) {
                 withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) { store.toggleMaximize(session.id) }
             }
-            tileButton("xmark", label: "セッションを閉じる") {
+            tileButton("xmark", label: L("tile.close")) {
                 store.close(session.id)
             }
         }

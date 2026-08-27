@@ -1,0 +1,68 @@
+/* Humi — 日本語 */
+
+"lang.system" = "システム";
+
+"app.menu.new_session" = "新しいセッション";
+"app.menu.clear_buffer" = "バッファをクリア";
+
+"shell.login" = "ログインシェル";
+"shell.custom" = "カスタム";
+"ext.terminal" = "ターミナル.app";
+"ext.iterm" = "iTerm2";
+
+"session.default_title" = "セッション";
+
+"panel.choose" = "選択";
+"panel.message" = "セッションを開くフォルダ（キャンセルでホーム）";
+
+"toolbar.toggle_notes" = "メモの表示切替";
+"toolbar.new_session" = "新しいセッション";
+"toolbar.new_session.help" = "新しいセッション (⌘N)";
+
+"sheet.new.title" = "新しいセッション";
+"sheet.new.subtitle" = "開き方を選びます。";
+"sheet.new.no_folder" = "フォルダ未選択（ホームで開く）";
+"sheet.new.choose_folder" = "フォルダを選択…";
+"sheet.new.change_folder" = "変更…";
+"sheet.new.open_home" = "そのまま開く（ホーム）";
+"sheet.new.open_here" = "このフォルダで開く";
+"sheet.new.open_caption" = "Humi 内のタイルでターミナルを開く";
+"sheet.new.cancel" = "キャンセル";
+
+"empty.title" = "セッションがありません";
+"empty.body" = "『+』でフォルダを選び、ターミナルセッションをタイルで開きます。\nセッションはいくつでも追加できます。";
+"empty.button" = "最初のセッションを開く";
+
+"tile.exited" = "終了";
+"tile.exited_code" = "終了 (%d)";
+"tile.exited.a11y" = "プロセス終了";
+"tile.exited_code.a11y" = "プロセス終了、コード %d";
+"tile.restart" = "セッションを再起動";
+"tile.restore" = "タイル表示に戻す";
+"tile.maximize" = "最大化";
+"tile.close" = "セッションを閉じる";
+"tile.a11y" = "セッション: %@";
+
+"notes.title" = "メモ";
+"notes.edit" = "編集";
+"notes.preview" = "プレビュー";
+"notes.placeholder" = "# メモ\n\nここにメモが書けます。アプリを再起動しても内容は残ります。\nMarkdown 形式に対応。";
+
+"settings.tab.general" = "一般";
+"settings.tab.shell" = "シェル";
+"settings.tab.appearance" = "外観";
+"settings.general.notes_on_launch" = "起動時にメモを表示";
+"settings.general.scrollback" = "スクロールバック";
+"settings.general.lines" = "%d 行";
+"settings.general.scrollback_hint" = "スクロールバックの変更は次に開くセッションから反映されます。";
+"settings.general.language" = "表示言語";
+"settings.shell.shell" = "シェル";
+"settings.shell.custom_path" = "実行パス";
+"settings.shell.custom_args" = "引数（スペース区切り）";
+"settings.shell.login_toggle" = "ログインシェルとして起動（-l / argv0 に -）";
+"settings.shell.hint" = "変更は次に開くセッションから反映されます。";
+"settings.appearance.font_size" = "フォントサイズ";
+"settings.appearance.pt" = "%d pt";
+"settings.appearance.hint" = "開いているセッションへ即座に反映されます。Humi はライトテーマ（Hum）です。";
+
+"session.home" = "ホーム";

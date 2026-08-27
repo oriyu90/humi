@@ -1,0 +1,68 @@
+/* Humi — 简体中文 */
+
+"lang.system" = "跟随系统";
+
+"app.menu.new_session" = "新建会话";
+"app.menu.clear_buffer" = "清空缓冲";
+
+"shell.login" = "登录 shell";
+"shell.custom" = "自定义";
+"ext.terminal" = "终端.app";
+"ext.iterm" = "iTerm2";
+
+"session.default_title" = "会话";
+
+"panel.choose" = "选择";
+"panel.message" = "在此文件夹中打开会话（取消则用主目录）";
+
+"toolbar.toggle_notes" = "显示/隐藏备忘";
+"toolbar.new_session" = "新建会话";
+"toolbar.new_session.help" = "新建会话 (⌘N)";
+
+"sheet.new.title" = "新建会话";
+"sheet.new.subtitle" = "选择打开方式。";
+"sheet.new.no_folder" = "未选择文件夹（在主目录打开）";
+"sheet.new.choose_folder" = "选择文件夹…";
+"sheet.new.change_folder" = "更改…";
+"sheet.new.open_home" = "按原样打开（主目录）";
+"sheet.new.open_here" = "在此文件夹中打开";
+"sheet.new.open_caption" = "在 Humi 的图块中打开终端";
+"sheet.new.cancel" = "取消";
+
+"empty.title" = "没有会话";
+"empty.body" = "按“+”选择文件夹，将终端会话作为图块打开。\n会话数量不限。";
+"empty.button" = "打开第一个会话";
+
+"tile.exited" = "已退出";
+"tile.exited_code" = "已退出 (%d)";
+"tile.exited.a11y" = "进程已退出";
+"tile.exited_code.a11y" = "进程已退出，代码 %d";
+"tile.restart" = "重启会话";
+"tile.restore" = "返回图块视图";
+"tile.maximize" = "最大化";
+"tile.close" = "关闭会话";
+"tile.a11y" = "会话：%@";
+
+"notes.title" = "备忘";
+"notes.edit" = "编辑";
+"notes.preview" = "预览";
+"notes.placeholder" = "# 备忘\n\n在此记录备忘。重启应用后内容仍会保留。\n支持 Markdown。";
+
+"settings.tab.general" = "通用";
+"settings.tab.shell" = "Shell";
+"settings.tab.appearance" = "外观";
+"settings.general.notes_on_launch" = "启动时显示备忘";
+"settings.general.scrollback" = "回滚缓冲";
+"settings.general.lines" = "%d 行";
+"settings.general.scrollback_hint" = "回滚缓冲的更改将在下次打开的会话中生效。";
+"settings.general.language" = "显示语言";
+"settings.shell.shell" = "Shell";
+"settings.shell.custom_path" = "可执行文件路径";
+"settings.shell.custom_args" = "参数（以空格分隔）";
+"settings.shell.login_toggle" = "作为登录 shell 启动（-l / argv0 前加 -）";
+"settings.shell.hint" = "更改将在下次打开的会话中生效。";
+"settings.appearance.font_size" = "字体大小";
+"settings.appearance.pt" = "%d pt";
+"settings.appearance.hint" = "立即应用到已打开的会话。Humi 使用浅色（Hum）主题。";
+
+"session.home" = "主目录";
