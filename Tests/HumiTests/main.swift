@@ -26,11 +26,19 @@ func suite(_ name: String, _ body: () -> Void) {
 // MARK: ShellResolver
 
 suite("ShellResolver") {
+    // `.login` order is getpwuid → $SHELL → /bin/zsh. The passwd entry wins when it
+    // points at a real shell (that's the machine's actual login shell), so this only
+    // asserts the invariant: an executable shell path, login-style argv0, no extra args.
     let login = ShellResolver.resolve(config: .init(kind: .login, customPath: "", customArgs: "", useLoginArgs: true),
                                       environment: ["SHELL": "/bin/zsh"])
-    check(login.executable == "/bin/zsh", "login: resolves $SHELL")
+    check(FileManager.default.isExecutableFile(atPath: login.executable), "login: resolves an executable shell")
     check(login.execName.hasPrefix("-"), "login: argv0 has leading dash")
+    check(login.execName.hasSuffix((login.executable as NSString).lastPathComponent), "login: argv0 is -<shell basename>")
     check(login.args.isEmpty, "login: no extra args")
+
+    // With no passwd shell and no $SHELL, it must fall back to /bin/zsh.
+    let loginFallback = ShellResolver.loginShellPath(environment: [:])
+    check(FileManager.default.isExecutableFile(atPath: loginFallback), "login: fallback path is executable")
 
     let bash = ShellResolver.resolve(config: .init(kind: .bash, customPath: "", customArgs: "", useLoginArgs: true),
                                      environment: [:])

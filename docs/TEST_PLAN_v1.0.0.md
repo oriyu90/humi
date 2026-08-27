@@ -18,7 +18,7 @@
 | Persistence | Session 配列の JSON ラウンドトリップ、欠損ファイル → nil | ✅ 5 |
 | GridLayout | 列数計算、行チャンク分割の境界 | ✅ 6 |
 | SessionStore | 追加・アクセント回転・最大化トグル・終了コード・クローズ | ✅ 7 |
-| **合計** | | **✅ 35 / 35** |
+| **合計** | | **✅ 37 / 37** |
 
 ## 2. ビルド
 
@@ -52,7 +52,7 @@
 | 2 | スコープ | 「v1.0 内蔵のみ」方針に反し外部ターミナル UI が 3 箇所生きていた | NewSessionSheet 副ボタン / タイルボタン / 設定ピッカーを撤去。`ExternalTerminal.swift` はコード保持（v1.1） | 3-2〜3-3 のスクショで外部導線無し |
 | 3 | 安定性 | `applicationWillTerminate` の子プロセス回収が非同期 `asyncAfter` 依存で、終了時に実行されず孤児化しうる | `terminateAllSync()`（SIGTERM→ポーリング→SIGKILL→`waitpid`）を同期実行 | 3-9 |
 | 4 | メモリ | `TerminalRegistry.reaped` が閉じたセッション id を無制限保持 | `[UUID: Date]` + 120 秒 TTL prune、`terminateAllSync` でクリア | コードレビュー |
-| 5 | 堅牢性 | 復元セッションの作業フォルダが消えていてもそのまま `startProcess` に渡していた | `ShellResolver.startDirectory` で存在確認 → home フォールバック | 3-7 + 自動テスト 5 件 |
+| 5 | 堅牢性 | 復元セッションの作業フォルダが消えていてもそのまま `startProcess` に渡していた | `ShellResolver.startDirectory` で存在確認 → home フォールバック | 3-7 + 自動テスト 7 件 |
 
 ### 併せて対応
 - `⌘K`（バッファクリア）を追加（従来なし）。
@@ -69,5 +69,5 @@
 
 ## 6. 判定
 
-**release 可。** must-fix 5 件はすべて修正・再検証済み。自動 35/35、手動 3-1〜3-10 全項目 pass、
+**release 可。** must-fix 5 件はすべて修正・再検証済み。自動 37/37、手動 3-1〜3-10 全項目 pass、
 `⌘Q` 後の孤児プロセス無しを確認。

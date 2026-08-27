@@ -26,7 +26,7 @@ Initial release.
   (SIGTERM → poll → SIGKILL → reap) so nothing is left orphaned.
 - Hum visual theme (cream paper, rounded surfaces, multi-accent tiles, push buttons),
   bundled Plus Jakarta Sans + JetBrains Mono.
-- Dependency-free self-test suite (`Scripts/test.sh`, 35 checks) and a no-Xcode app
+- Dependency-free self-test suite (`Scripts/test.sh`, 37 checks) and a no-Xcode app
   bundler (`Scripts/build-app.sh`).
 
 ### Notes

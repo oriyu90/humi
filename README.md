@@ -55,7 +55,7 @@ Xcode は不要です（Command Line Tools + Swift 6.2 で動作）。
 
 ```bash
 swift build -c release --product Humi   # ビルドのみ
-bash Scripts/test.sh                    # 依存なしのセルフテスト（35 チェック）
+bash Scripts/test.sh                    # 依存なしのセルフテスト（37 チェック）
 bash Scripts/build-app.sh release       # dist/Humi.app を生成（ad-hoc 署名）
 open dist/Humi.app
 ```
