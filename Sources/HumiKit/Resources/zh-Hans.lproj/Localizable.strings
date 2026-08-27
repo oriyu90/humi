@@ -198,3 +198,12 @@
 "shortcuts.record" = "录制";
 "shortcuts.conflict" = "冲突";
 "shortcuts.hint" = "快捷键更改将在重启应用后生效。";
+
+/* v1.1 — Phase 7: status bar */
+"statusbar.enabled" = "显示状态栏";
+"statusbar.cwd" = "工作文件夹";
+"statusbar.shell" = "Shell 名称";
+"statusbar.git" = "Git 分支／改动";
+"statusbar.process" = "运行中的进程";
+"statusbar.clock" = "时间";
+"statusbar.hint" = "显示在每个图块底部。Git 信息在文件夹变化时以及约每 12 秒刷新一次。";

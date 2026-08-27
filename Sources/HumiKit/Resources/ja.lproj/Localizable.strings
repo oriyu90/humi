@@ -198,3 +198,12 @@
 "shortcuts.record" = "記録";
 "shortcuts.conflict" = "重複";
 "shortcuts.hint" = "ショートカットの変更はアプリの再起動後に反映されます。";
+
+/* v1.1 — Phase 7: status bar */
+"statusbar.enabled" = "ステータスバーを表示";
+"statusbar.cwd" = "作業フォルダ";
+"statusbar.shell" = "シェル名";
+"statusbar.git" = "Git ブランチ／変更";
+"statusbar.process" = "実行中プロセス";
+"statusbar.clock" = "時刻";
+"statusbar.hint" = "各タイル下部に表示します。Git 情報は作業フォルダの変更時と約12秒ごとに更新します。";

@@ -198,3 +198,12 @@
 "shortcuts.record" = "Gravar";
 "shortcuts.conflict" = "conflito";
 "shortcuts.hint" = "As mudanças de atalho valem após reiniciar o app.";
+
+/* v1.1 — Phase 7: status bar */
+"statusbar.enabled" = "Mostrar barra de status";
+"statusbar.cwd" = "Pasta de trabalho";
+"statusbar.shell" = "Nome do shell";
+"statusbar.git" = "Branch / alterações do Git";
+"statusbar.process" = "Processo em execução";
+"statusbar.clock" = "Relógio";
+"statusbar.hint" = "Exibida na parte inferior de cada bloco. O Git atualiza ao mudar de pasta e a cada ~12s.";

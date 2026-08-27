@@ -13,6 +13,7 @@ public struct SettingsView: View {
             TerminalPane().tabItem { Label(L("settings.tab.terminal"), systemImage: "terminal") }
             ProfilesPane().tabItem { Label(L("settings.tab.profiles"), systemImage: "person.crop.rectangle.stack") }
             ShortcutsPane().tabItem { Label(L("settings.tab.shortcuts"), systemImage: "keyboard") }
+            StatusBarPane().tabItem { Label(L("settings.tab.statusbar"), systemImage: "menubar.rectangle") }
             ShellPane().tabItem { Label(L("settings.tab.shell"), systemImage: "chevron.left.forwardslash.chevron.right") }
         }
         .frame(width: 620, height: 480)

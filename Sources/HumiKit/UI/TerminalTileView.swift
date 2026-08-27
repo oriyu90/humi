@@ -23,6 +23,10 @@ struct TerminalTileView: View {
             titleBar
             Divider().overlay(Hum.hairline)
             terminalBody
+            if settings.statusBarEnabled {
+                Divider().overlay(Hum.hairline)
+                StatusBarView(session: session, settings: settings)
+            }
         }
         .background(Hum.paper)
         .overlay(

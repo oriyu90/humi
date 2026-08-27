@@ -198,3 +198,12 @@
 "shortcuts.record" = "Record";
 "shortcuts.conflict" = "conflict";
 "shortcuts.hint" = "Shortcut changes take effect after restarting the app.";
+
+/* v1.1 — Phase 7: status bar */
+"statusbar.enabled" = "Show status bar";
+"statusbar.cwd" = "Working folder";
+"statusbar.shell" = "Shell name";
+"statusbar.git" = "Git branch / dirty";
+"statusbar.process" = "Running process";
+"statusbar.clock" = "Clock";
+"statusbar.hint" = "Shown at the bottom of each tile. Git info refreshes on folder change and about every 12s.";

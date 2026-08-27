@@ -94,6 +94,12 @@ public final class AppSettings: ObservableObject {
             Keys.confirmClose: ConfirmClose.busy.rawValue,
             Keys.logDirectory: (NSHomeDirectory() as NSString).appendingPathComponent("Documents/Humi Logs"),
             Keys.logFilenamePattern: "{name}-{date}.log",
+            Keys.statusBarEnabled: false,
+            Keys.statusCwd: true,
+            Keys.statusShell: true,
+            Keys.statusGit: true,
+            Keys.statusClock: true,
+            Keys.statusProcess: false,
         ])
         Localization.shared.apply(appLanguage)
     }
@@ -122,6 +128,12 @@ public final class AppSettings: ObservableObject {
         static let confirmClose = "confirmClose"
         static let logDirectory = "logDirectory"
         static let logFilenamePattern = "logFilenamePattern"
+        static let statusBarEnabled = "statusBarEnabled"
+        static let statusCwd = "statusCwd"
+        static let statusShell = "statusShell"
+        static let statusGit = "statusGit"
+        static let statusClock = "statusClock"
+        static let statusProcess = "statusProcess"
     }
 
     private func set<T>(_ value: T, _ key: String) {
@@ -242,6 +254,12 @@ public final class AppSettings: ObservableObject {
         get { defaults.string(forKey: Keys.logFilenamePattern) ?? "{name}-{date}.log" }
         set { set(newValue, Keys.logFilenamePattern) }
     }
+    var statusBarEnabled: Bool { get { defaults.bool(forKey: Keys.statusBarEnabled) } set { set(newValue, Keys.statusBarEnabled) } }
+    var statusCwd: Bool     { get { defaults.bool(forKey: Keys.statusCwd) }     set { set(newValue, Keys.statusCwd) } }
+    var statusShell: Bool   { get { defaults.bool(forKey: Keys.statusShell) }   set { set(newValue, Keys.statusShell) } }
+    var statusGit: Bool     { get { defaults.bool(forKey: Keys.statusGit) }     set { set(newValue, Keys.statusGit) } }
+    var statusClock: Bool   { get { defaults.bool(forKey: Keys.statusClock) }   set { set(newValue, Keys.statusClock) } }
+    var statusProcess: Bool { get { defaults.bool(forKey: Keys.statusProcess) } set { set(newValue, Keys.statusProcess) } }
 
     var shellConfig: ShellConfig {
         ShellConfig(kind: shellKind,

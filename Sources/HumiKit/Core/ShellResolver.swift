@@ -63,6 +63,20 @@ enum ShellResolver {
         }
     }
 
+    /// A one-liner that makes the shell report its working directory (OSC 7) on every
+    /// prompt, so Humi's title / status bar / git panel follow `cd`. Stock macOS zsh
+    /// only emits OSC 7 for Terminal.app, so Humi injects this itself.
+    static func osc7Snippet(for kind: ShellKind) -> String? {
+        switch kind {
+        case .zsh, .login:
+            return #"autoload -Uz add-zsh-hook 2>/dev/null; __humi_osc7(){ printf '\033]7;file://%s%s\033\\' "${HOST:-localhost}" "$PWD" }; add-zsh-hook precmd __humi_osc7 2>/dev/null || precmd_functions+=(__humi_osc7)"#
+        case .bash:
+            return #"__humi_osc7(){ printf '\033]7;file://%s%s\033\\' "${HOSTNAME:-localhost}" "$PWD"; }; case "$PROMPT_COMMAND" in *__humi_osc7*) ;; *) PROMPT_COMMAND="__humi_osc7${PROMPT_COMMAND:+; $PROMPT_COMMAND}";; esac"#
+        case .fish, .custom:
+            return nil
+        }
+    }
+
     /// The directory a new shell should start in. Returns `requested` only if it still
     /// exists and is a directory; otherwise the user's home. A restored session whose
     /// folder was deleted must not fail to launch or land in "/".

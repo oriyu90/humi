@@ -198,3 +198,12 @@
 "shortcuts.record" = "Grabar";
 "shortcuts.conflict" = "conflicto";
 "shortcuts.hint" = "Los cambios de atajo se aplican tras reiniciar la app.";
+
+/* v1.1 — Phase 7: status bar */
+"statusbar.enabled" = "Mostrar barra de estado";
+"statusbar.cwd" = "Carpeta de trabajo";
+"statusbar.shell" = "Nombre del shell";
+"statusbar.git" = "Rama / cambios de Git";
+"statusbar.process" = "Proceso en ejecución";
+"statusbar.clock" = "Reloj";
+"statusbar.hint" = "Se muestra en la parte inferior de cada bloque. Git se actualiza al cambiar de carpeta y cada ~12s.";

@@ -59,10 +59,12 @@ public final class TerminalRegistry {
                                                 pattern: settings.logFilenamePattern) {
                 invocation = SessionLogger.wrap(invocation, logPath: path)
             }
+            let shellKind = profile?.shellConfig.kind ?? settings.shellConfig.kind
             controller.startIfNeeded(invocation: invocation,
                                      environment: env,
                                      workingDirectory: cwd,
-                                     startupCommand: profile?.startupCommand ?? "")
+                                     startupCommand: profile?.startupCommand ?? "",
+                                     osc7Snippet: session.logging ? nil : ShellResolver.osc7Snippet(for: shellKind))
         }
         return controller
     }

@@ -69,7 +69,8 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
     }
 
     func startIfNeeded(invocation: ShellInvocation, environment: [String],
-                       workingDirectory: String?, startupCommand: String = "") {
+                       workingDirectory: String?, startupCommand: String = "",
+                       osc7Snippet: String? = nil) {
         guard !started else { return }
         started = true
         currentDirectory = workingDirectory
@@ -78,9 +79,22 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
                                   environment: environment,
                                   execName: invocation.execName,
                                   currentDirectory: workingDirectory)
+
+        // Sequence after the shell reaches its first prompt: install the OSC 7 hook,
+        // wipe the setup noise, then run the profile's startup command.
         let cmd = startupCommand.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !cmd.isEmpty {
-            // The shell needs a beat to reach its first prompt.
+        if let snippet = osc7Snippet, !snippet.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                guard let self, !self.exited else { return }
+                self.terminalView.send(txt: snippet + "\n")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                    guard let self, !self.exited else { return }
+                    self.terminalView.clearScrollback()
+                    self.terminalView.send(txt: "\u{0C}")
+                    if !cmd.isEmpty { self.terminalView.send(txt: cmd + "\n") }
+                }
+            }
+        } else if !cmd.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
                 guard let self, !self.exited else { return }
                 self.terminalView.send(txt: cmd + "\n")
@@ -228,11 +242,24 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
     }
 
     nonisolated func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
-        let value = directory
+        let value = TerminalController.normalizeDirectory(directory)
         Task { @MainActor in
             if let value { self.currentDirectory = value }
             self.onDirectory?(value)
         }
+    }
+
+    /// OSC 7 payloads arrive as `file://host/path` (percent-encoded). Reduce to a plain path.
+    nonisolated static func normalizeDirectory(_ raw: String?) -> String? {
+        guard let raw else { return nil }
+        if raw.hasPrefix("file://") {
+            if let url = URL(string: raw), !url.path.isEmpty { return url.path }
+            // Fallback: strip scheme + host manually.
+            if let slash = raw.dropFirst("file://".count).firstIndex(of: "/") {
+                return String(raw[slash...]).removingPercentEncoding
+            }
+        }
+        return raw
     }
 
     nonisolated func processTerminated(source: TerminalView, exitCode: Int32?) {
