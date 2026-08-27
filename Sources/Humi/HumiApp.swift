@@ -38,6 +38,21 @@ struct HumiApp: App {
             CommandGroup(after: .pasteboard) {
                 Button(L("app.menu.clear_buffer")) { NotificationCenter.default.post(name: .humiClearBuffer, object: nil) }
                     .keyboardShortcut("k", modifiers: [.command])
+                Button(L("app.menu.find")) { NotificationCenter.default.post(name: .humiFind, object: nil) }
+                    .keyboardShortcut("f", modifiers: [.command])
+            }
+            CommandGroup(after: .toolbar) {
+                Button(L("app.menu.font_in")) { NotificationCenter.default.post(name: .humiFontIn, object: nil) }
+                    .keyboardShortcut("+", modifiers: [.command])
+                Button(L("app.menu.font_out")) { NotificationCenter.default.post(name: .humiFontOut, object: nil) }
+                    .keyboardShortcut("-", modifiers: [.command])
+                Button(L("app.menu.font_reset")) { NotificationCenter.default.post(name: .humiFontReset, object: nil) }
+                    .keyboardShortcut("0", modifiers: [.command])
+                Divider()
+                Button(L("app.menu.next_tile")) { NotificationCenter.default.post(name: .humiNextTile, object: nil) }
+                    .keyboardShortcut(.rightArrow, modifiers: [.command, .option])
+                Button(L("app.menu.prev_tile")) { NotificationCenter.default.post(name: .humiPrevTile, object: nil) }
+                    .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
             }
         }
 

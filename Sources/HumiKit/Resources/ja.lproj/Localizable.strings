@@ -125,3 +125,30 @@
 "terminal.confirm_close.never" = "しない";
 "terminal.confirm_close.busy" = "実行中のときだけ";
 "terminal.confirm_close.always" = "常に";
+
+/* v1.1 — Phase 3/4: search, font zoom, tile menu */
+"search.placeholder" = "検索";
+"search.none" = "一致なし";
+"app.menu.find" = "検索…";
+"app.menu.font_in" = "文字を大きく";
+"app.menu.font_out" = "文字を小さく";
+"app.menu.font_reset" = "文字サイズをリセット";
+"app.menu.next_tile" = "次のタイル";
+"app.menu.prev_tile" = "前のタイル";
+"tile.rename" = "名前を変更…";
+"tile.rename.prompt" = "セッション名";
+"tile.color" = "色";
+"tile.on_exit" = "終了時の動作";
+"tile.on_exit.keep" = "そのまま残す";
+"tile.on_exit.restart" = "自動で再起動";
+"tile.on_exit.close" = "自動で閉じる";
+"tile.open_selection" = "選択部分を開く（URL / パス）";
+"tile.reveal" = "作業フォルダを Finder で開く";
+"tile.logging" = "このセッションを記録";
+"tile.close_confirm.title" = "セッションを閉じますか？";
+"tile.close_confirm.message" = "このセッションではまだプロセスが実行中です。";
+"tile.close_confirm.close" = "閉じる";
+"common.cancel" = "キャンセル";
+"paste.confirm.title" = "複数行を貼り付けますか？";
+"paste.confirm.message" = "%d 行を貼り付けようとしています。";
+"paste.confirm.paste" = "貼り付け";

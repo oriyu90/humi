@@ -92,6 +92,8 @@ public final class AppSettings: ObservableObject {
             Keys.unlimitedScrollback: false,
             Keys.editorCommand: "code -g {file}:{line}",
             Keys.confirmClose: ConfirmClose.busy.rawValue,
+            Keys.logDirectory: (NSHomeDirectory() as NSString).appendingPathComponent("Documents/Humi Logs"),
+            Keys.logFilenamePattern: "{name}-{date}.log",
         ])
         Localization.shared.apply(appLanguage)
     }
@@ -118,6 +120,8 @@ public final class AppSettings: ObservableObject {
         static let unlimitedScrollback = "unlimitedScrollback"
         static let editorCommand = "editorCommand"
         static let confirmClose = "confirmClose"
+        static let logDirectory = "logDirectory"
+        static let logFilenamePattern = "logFilenamePattern"
     }
 
     private func set<T>(_ value: T, _ key: String) {
@@ -210,7 +214,7 @@ public final class AppSettings: ObservableObject {
     }
     var bellStyle: BellStyle {
         get { BellStyle(rawValue: defaults.string(forKey: Keys.bellStyle) ?? "") ?? .sound }
-        set { set(newValue.rawValue, Keys.bellStyle) }
+        set { setTerminalPref(newValue.rawValue, Keys.bellStyle) }
     }
     var terminalMargin: Double {
         get { max(0, defaults.double(forKey: Keys.terminalMargin)) }
@@ -229,6 +233,14 @@ public final class AppSettings: ObservableObject {
     var confirmClose: ConfirmClose {
         get { ConfirmClose(rawValue: defaults.string(forKey: Keys.confirmClose) ?? "") ?? .busy }
         set { set(newValue.rawValue, Keys.confirmClose) }
+    }
+    var logDirectory: String {
+        get { defaults.string(forKey: Keys.logDirectory) ?? (NSHomeDirectory() as NSString).appendingPathComponent("Documents/Humi Logs") }
+        set { set(newValue, Keys.logDirectory) }
+    }
+    var logFilenamePattern: String {
+        get { defaults.string(forKey: Keys.logFilenamePattern) ?? "{name}-{date}.log" }
+        set { set(newValue, Keys.logFilenamePattern) }
     }
 
     var shellConfig: ShellConfig {

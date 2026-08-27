@@ -125,3 +125,30 @@
 "terminal.confirm_close.never" = "Never";
 "terminal.confirm_close.busy" = "Only when busy";
 "terminal.confirm_close.always" = "Always";
+
+/* v1.1 — Phase 3/4: search, font zoom, tile menu */
+"search.placeholder" = "Find";
+"search.none" = "No matches";
+"app.menu.find" = "Find…";
+"app.menu.font_in" = "Increase Font Size";
+"app.menu.font_out" = "Decrease Font Size";
+"app.menu.font_reset" = "Reset Font Size";
+"app.menu.next_tile" = "Next Tile";
+"app.menu.prev_tile" = "Previous Tile";
+"tile.rename" = "Rename…";
+"tile.rename.prompt" = "Session name";
+"tile.color" = "Color";
+"tile.on_exit" = "On exit";
+"tile.on_exit.keep" = "Keep the tile";
+"tile.on_exit.restart" = "Restart automatically";
+"tile.on_exit.close" = "Close automatically";
+"tile.open_selection" = "Open selection (URL / path)";
+"tile.reveal" = "Reveal working folder in Finder";
+"tile.logging" = "Log this session";
+"tile.close_confirm.title" = "Close this session?";
+"tile.close_confirm.message" = "A process is still running in this session.";
+"tile.close_confirm.close" = "Close";
+"common.cancel" = "Cancel";
+"paste.confirm.title" = "Paste multiple lines?";
+"paste.confirm.message" = "You're about to paste %d lines.";
+"paste.confirm.paste" = "Paste";

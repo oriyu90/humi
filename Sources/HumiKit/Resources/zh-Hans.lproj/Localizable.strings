@@ -125,3 +125,30 @@
 "terminal.confirm_close.never" = "从不";
 "terminal.confirm_close.busy" = "仅在忙碌时";
 "terminal.confirm_close.always" = "总是";
+
+/* v1.1 — Phase 3/4: search, font zoom, tile menu */
+"search.placeholder" = "查找";
+"search.none" = "无匹配";
+"app.menu.find" = "查找…";
+"app.menu.font_in" = "增大字号";
+"app.menu.font_out" = "减小字号";
+"app.menu.font_reset" = "重置字号";
+"app.menu.next_tile" = "下一个图块";
+"app.menu.prev_tile" = "上一个图块";
+"tile.rename" = "重命名…";
+"tile.rename.prompt" = "会话名称";
+"tile.color" = "颜色";
+"tile.on_exit" = "退出时";
+"tile.on_exit.keep" = "保留图块";
+"tile.on_exit.restart" = "自动重启";
+"tile.on_exit.close" = "自动关闭";
+"tile.open_selection" = "打开所选内容（URL / 路径）";
+"tile.reveal" = "在 Finder 中打开工作文件夹";
+"tile.logging" = "记录此会话";
+"tile.close_confirm.title" = "关闭此会话？";
+"tile.close_confirm.message" = "此会话中仍有进程在运行。";
+"tile.close_confirm.close" = "关闭";
+"common.cancel" = "取消";
+"paste.confirm.title" = "粘贴多行？";
+"paste.confirm.message" = "你将要粘贴 %d 行。";
+"paste.confirm.paste" = "粘贴";

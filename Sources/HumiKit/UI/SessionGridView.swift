@@ -46,6 +46,10 @@ struct SessionGridView: View {
                                             .frame(maxWidth: .infinity)
                                             .frame(height: tileHeight(for: rows.count, in: geo.size.height))
                                             .id(session.id)
+                                            .onDrag { NSItemProvider(object: session.id.uuidString as NSString) }
+                                            .onDrop(of: [.text], isTargeted: nil) { providers in
+                                                handleDrop(providers, before: session.id)
+                                            }
                                     } else {
                                         Color.clear.frame(maxWidth: .infinity)
                                     }
@@ -63,6 +67,19 @@ struct SessionGridView: View {
                 }
             }
         }
+    }
+
+    private func handleDrop(_ providers: [NSItemProvider], before targetID: UUID) -> Bool {
+        guard let provider = providers.first else { return false }
+        _ = provider.loadObject(ofClass: NSString.self) { obj, _ in
+            guard let s = obj as? String, let dragged = UUID(uuidString: s), dragged != targetID else { return }
+            Task { @MainActor in
+                withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
+                    store.move(id: dragged, before: targetID)
+                }
+            }
+        }
+        return true
     }
 
     private func tileHeight(for rowCount: Int, in available: CGFloat) -> CGFloat {

@@ -1,7 +1,9 @@
 import SwiftUI
+import AppKit
 
 /// One session, framed as a Hum card: rounded, hairline, an accent tint that deepens
-/// on hover, a title bar with restart / open-externally / maximise / close.
+/// on hover, a title bar with restart / maximise / close, and a context menu for
+/// rename / colour / on-exit / logging / open-selection.
 struct TerminalTileView: View {
     let session: Session
     let isMaximized: Bool
@@ -9,8 +11,11 @@ struct TerminalTileView: View {
     @ObservedObject var settings: AppSettings
 
     @State private var hovering = false
+    @State private var renaming = false
+    @State private var draftName = ""
+    @State private var confirmingClose = false
 
-    private var accent: Hum.Accent { Hum.accent(session.accentIndex) }
+    private var accent: Hum.Accent { Hum.accent(session.effectiveAccent) }
     private var exitCode: Int32? { store.exitCodes[session.id] }
 
     var body: some View {
@@ -35,9 +40,23 @@ struct TerminalTileView: View {
         .onHover { h in
             withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) { hovering = h }
         }
+        .contextMenu { menu }
+        .alert(L("tile.rename"), isPresented: $renaming) {
+            TextField(L("tile.rename.prompt"), text: $draftName)
+            Button(L("common.cancel"), role: .cancel) {}
+            Button(L("tile.rename")) { store.setCustomTitle(session.id, draftName) }
+        }
+        .confirmationDialog(L("tile.close_confirm.title"), isPresented: $confirmingClose, titleVisibility: .visible) {
+            Button(L("tile.close_confirm.close"), role: .destructive) { store.close(session.id) }
+            Button(L("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(L("tile.close_confirm.message"))
+        }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(L("tile.a11y", session.displayTitle))
     }
+
+    // MARK: title bar
 
     private var titleBar: some View {
         HStack(spacing: Hum.Space.sm) {
@@ -50,6 +69,12 @@ struct TerminalTileView: View {
                 .foregroundStyle(Hum.ink)
                 .lineLimit(1)
                 .truncationMode(.middle)
+                .onTapGesture(count: 2) { beginRename() }
+
+            if session.logging {
+                Image(systemName: "record.circle").font(.system(size: 10)).foregroundStyle(Hum.coral)
+                    .accessibilityLabel(L("tile.logging"))
+            }
 
             if let code = exitCode {
                 Text(code == 0 ? L("tile.exited") : L("tile.exited_code", Int(code)))
@@ -71,9 +96,7 @@ struct TerminalTileView: View {
                        label: isMaximized ? L("tile.restore") : L("tile.maximize")) {
                 withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) { store.toggleMaximize(session.id) }
             }
-            tileButton("xmark", label: L("tile.close")) {
-                store.close(session.id)
-            }
+            tileButton("xmark", label: L("tile.close")) { requestClose() }
         }
         .padding(.horizontal, Hum.Space.md)
         .padding(.vertical, Hum.Space.sm)
@@ -90,9 +113,76 @@ struct TerminalTileView: View {
             },
             onExit: { code in store.markExited(session.id, code: code) }
         )
-        .padding(.horizontal, 6)
-        .padding(.vertical, 4)
+        .padding(.horizontal, max(6, CGFloat(settings.terminalMargin)))
+        .padding(.vertical, max(4, CGFloat(settings.terminalMargin) * 0.66))
         .opacity(exitCode == nil ? 1 : 0.55)
+    }
+
+    // MARK: context menu
+
+    @ViewBuilder private var menu: some View {
+        Button(L("tile.rename")) { beginRename() }
+
+        Menu(L("tile.color")) {
+            ForEach(0..<Hum.accents.count, id: \.self) { i in
+                Button {
+                    store.setAccentOverride(session.id, i == session.accentIndex ? nil : i)
+                } label: {
+                    Label {
+                        Text(colorName(i))
+                    } icon: {
+                        Image(systemName: session.effectiveAccent == i ? "checkmark.circle.fill" : "circle.fill")
+                            .foregroundStyle(Hum.accent(i).tint)
+                    }
+                }
+            }
+        }
+
+        Picker(L("tile.on_exit"), selection: Binding(
+            get: { session.onExit },
+            set: { store.setOnExit(session.id, $0) }
+        )) {
+            Text(L("tile.on_exit.keep")).tag(OnExit.keep)
+            Text(L("tile.on_exit.restart")).tag(OnExit.restart)
+            Text(L("tile.on_exit.close")).tag(OnExit.close)
+        }
+
+        Toggle(L("tile.logging"), isOn: Binding(
+            get: { session.logging },
+            set: { store.setLogging(session.id, $0) }
+        ))
+
+        Divider()
+
+        Button(L("tile.open_selection")) {
+            _ = TerminalRegistry.shared.existing(session.id)?.openSelection()
+        }
+        if session.workingDirectory != nil {
+            Button(L("tile.reveal")) {
+                if let dir = session.workingDirectory {
+                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: dir)])
+                }
+            }
+        }
+
+        Divider()
+        Button(L("tile.close"), role: .destructive) { requestClose() }
+    }
+
+    // MARK: helpers
+
+    private func beginRename() {
+        draftName = session.customTitle ?? session.displayTitle
+        renaming = true
+    }
+
+    private func requestClose() {
+        if store.closeNeedsConfirmation(session.id) { confirmingClose = true }
+        else { store.close(session.id) }
+    }
+
+    private func colorName(_ i: Int) -> String {
+        ["Pear", "Cyan", "Coral", "Mint", "Lavender"][i % 5]
     }
 
     private func tileButton(_ systemName: String, label: String, action: @escaping () -> Void) -> some View {

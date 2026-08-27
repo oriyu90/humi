@@ -37,15 +37,23 @@ public final class TerminalRegistry {
         controller.applyTerminalPrefs(optionAsMeta: settings.optionAsMeta,
                                       mouseReporting: settings.mouseReporting,
                                       scrollSensitivity: CGFloat(settings.scrollSensitivity),
-                                      scrollbar: settings.scrollbarStyle)
+                                      scrollbar: settings.scrollbarStyle,
+                                      bell: settings.bellStyle)
 
         if makeStart {
-            let invocation = ShellResolver.resolve(config: settings.shellConfig)
+            var invocation = ShellResolver.resolve(config: settings.shellConfig)
             let env = ShellResolver.childEnvironment()
             // nil workingDirectory == "open as-is" → start in the user's home, not
             // Humi's launch cwd ("/" when opened from Finder). A folder that has since
             // been deleted also falls back to home.
             let cwd = ShellResolver.startDirectory(requested: session.workingDirectory)
+
+            if session.logging,
+               let path = SessionLogger.logPath(sessionTitle: session.title,
+                                                dir: settings.logDirectory,
+                                                pattern: settings.logFilenamePattern) {
+                invocation = SessionLogger.wrap(invocation, logPath: path)
+            }
             controller.startIfNeeded(invocation: invocation,
                                      environment: env,
                                      workingDirectory: cwd)
@@ -102,21 +110,32 @@ public final class TerminalRegistry {
             c.applyTerminalPrefs(optionAsMeta: s.optionAsMeta,
                                  mouseReporting: s.mouseReporting,
                                  scrollSensitivity: CGFloat(s.scrollSensitivity),
-                                 scrollbar: s.scrollbarStyle)
+                                 scrollbar: s.scrollbarStyle,
+                                 bell: s.bellStyle)
         }
     }
 
-    /// ⌘K — clear the scrollback of whichever session's terminal currently has focus
-    /// in the key window. No-op beep if focus isn't inside a terminal.
-    public func clearFocused() {
+    /// Last terminal that became first responder — so actions driven from the search
+    /// bar / a menu still target "the terminal you were just in".
+    private(set) var lastFocusedID: UUID?
+    func noteFocused(_ id: UUID) { lastFocusedID = id }
+
+    /// The controller the user is working in: the live first-responder terminal, else
+    /// the last one that had focus, else the only one, else nil.
+    func focusedController() -> TerminalController? {
         for c in controllers.values {
             guard let window = c.terminalView.window, window.isKeyWindow,
                   let responder = window.firstResponder as? NSView else { continue }
             if responder === c.terminalView || responder.isDescendant(of: c.terminalView) {
-                c.clearBuffer()
-                return
+                return c
             }
         }
-        NSSound.beep()
+        if let id = lastFocusedID, let c = controllers[id] { return c }
+        return controllers.count == 1 ? controllers.values.first : nil
+    }
+
+    /// ⌘K — clear the scrollback of the focused (or last-focused) session's terminal.
+    public func clearFocused() {
+        if let c = focusedController() { c.clearBuffer() } else { NSSound.beep() }
     }
 }

@@ -6,6 +6,12 @@ public extension Notification.Name {
     static let humiNewSession = Notification.Name("humi.newSession")
     /// Posted by the ⌘K command; clears the focused session's scrollback.
     static let humiClearBuffer = Notification.Name("humi.clearBuffer")
+    static let humiFind = Notification.Name("humi.find")
+    static let humiFontIn = Notification.Name("humi.fontIn")
+    static let humiFontOut = Notification.Name("humi.fontOut")
+    static let humiFontReset = Notification.Name("humi.fontReset")
+    static let humiNextTile = Notification.Name("humi.nextTile")
+    static let humiPrevTile = Notification.Name("humi.prevTile")
 }
 
 public struct RootView: View {
@@ -19,12 +25,20 @@ public struct RootView: View {
 
     @State private var showingNewSheet = false
     @State private var pendingFolder: String?
+    @State private var searchVisible = false
     @Environment(\.scenePhase) private var scenePhase
 
     public var body: some View {
         HSplitView {
             SessionGridView(store: store, settings: settings, onNew: beginNewSession)
                 .frame(minWidth: 420)
+                .overlay(alignment: .top) {
+                    if searchVisible {
+                        SearchBar(isPresented: $searchVisible)
+                            .padding(.top, Hum.Space.sm)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
 
             if settings.notesVisible {
                 NotesSidebarView(notes: notes, settings: settings)
@@ -86,12 +100,38 @@ public struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: .humiClearBuffer)) { _ in
             TerminalRegistry.shared.clearFocused()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .humiFind)) { _ in
+            withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) { searchVisible = true }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .humiFontIn)) { _ in
+            settings.fontSize = min(settings.fontSize + 1, 28)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .humiFontOut)) { _ in
+            settings.fontSize = max(settings.fontSize - 1, 9)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .humiFontReset)) { _ in
+            settings.fontSize = themes.resolvedTheme.fontSize
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .humiNextTile)) { _ in focusTile(offset: 1) }
+        .onReceive(NotificationCenter.default.publisher(for: .humiPrevTile)) { _ in focusTile(offset: -1) }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active {
                 notes.flush()
                 store.persistNow()
             }
         }
+    }
+
+    /// Move keyboard focus to the tile `offset` positions from the focused one.
+    private func focusTile(offset: Int) {
+        let ids = store.sessions.map(\.id)
+        guard !ids.isEmpty else { return }
+        let currentID = TerminalRegistry.shared.focusedController()?.sessionID
+        let currentIndex = currentID.flatMap { ids.firstIndex(of: $0) } ?? 0
+        let nextIndex = (currentIndex + offset + ids.count) % ids.count
+        guard let view = TerminalRegistry.shared.existing(ids[nextIndex])?.terminalView,
+              let window = view.window else { return }
+        window.makeFirstResponder(view)
     }
 
     /// `+` pressed → choose a folder (Cancel = "no folder"), then show the open-mode sheet.

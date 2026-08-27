@@ -125,3 +125,30 @@
 "terminal.confirm_close.never" = "Nunca";
 "terminal.confirm_close.busy" = "Só quando ocupada";
 "terminal.confirm_close.always" = "Sempre";
+
+/* v1.1 — Phase 3/4: search, font zoom, tile menu */
+"search.placeholder" = "Buscar";
+"search.none" = "Sem resultados";
+"app.menu.find" = "Buscar…";
+"app.menu.font_in" = "Aumentar fonte";
+"app.menu.font_out" = "Diminuir fonte";
+"app.menu.font_reset" = "Redefinir tamanho da fonte";
+"app.menu.next_tile" = "Próximo bloco";
+"app.menu.prev_tile" = "Bloco anterior";
+"tile.rename" = "Renomear…";
+"tile.rename.prompt" = "Nome da sessão";
+"tile.color" = "Cor";
+"tile.on_exit" = "Ao encerrar";
+"tile.on_exit.keep" = "Manter o bloco";
+"tile.on_exit.restart" = "Reiniciar automaticamente";
+"tile.on_exit.close" = "Fechar automaticamente";
+"tile.open_selection" = "Abrir seleção (URL / caminho)";
+"tile.reveal" = "Mostrar pasta de trabalho no Finder";
+"tile.logging" = "Registrar esta sessão";
+"tile.close_confirm.title" = "Fechar esta sessão?";
+"tile.close_confirm.message" = "Ainda há um processo em execução nesta sessão.";
+"tile.close_confirm.close" = "Fechar";
+"common.cancel" = "Cancelar";
+"paste.confirm.title" = "Colar várias linhas?";
+"paste.confirm.message" = "Você vai colar %d linhas.";
+"paste.confirm.paste" = "Colar";

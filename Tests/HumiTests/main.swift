@@ -201,6 +201,76 @@ MainActor.assumeIsolated {
     }
 }
 
+// MARK: PathActioner
+
+suite("PathActioner") {
+    check(PathActioner.classify("https://example.com", relativeTo: nil) == .url, "https → url")
+    check(PathActioner.classify("mailto:a@b.c", relativeTo: nil) == .url, "mailto → url")
+    check(PathActioner.classify("just some text", relativeTo: nil) == .unknown, "plain text → unknown")
+    // A real file for the path / path:line cases.
+    let tmp = NSTemporaryDirectory() + "humi-pa-\(UUID().uuidString).txt"
+    FileManager.default.createFile(atPath: tmp, contents: Data("x".utf8))
+    defer { try? FileManager.default.removeItem(atPath: tmp) }
+    if case .path = PathActioner.classify(tmp, relativeTo: nil) {} else { check(false, "existing file → .path") }
+    if case let .fileLine(_, line) = PathActioner.classify("\(tmp):42", relativeTo: nil) {
+        check(line == 42, "path:line → .fileLine(42)")
+    } else { check(false, "path:line → .fileLine") }
+    check(PathActioner.classify("/no/such/file/here", relativeTo: nil) == .unknown, "missing path → unknown")
+    // relative path resolved against cwd
+    let dir = (tmp as NSString).deletingLastPathComponent
+    let name = (tmp as NSString).lastPathComponent
+    if case .path = PathActioner.classify(name, relativeTo: dir) {} else { check(false, "relative path resolves via cwd") }
+}
+
+// MARK: SessionLogger
+
+suite("SessionLogger") {
+    let inv = ShellInvocation(executable: "/bin/zsh", args: ["-l"], execName: "-zsh")
+    let wrapped = SessionLogger.wrap(inv, logPath: "/tmp/x.log")
+    check(wrapped.executable == "/usr/bin/script", "wrap → script")
+    check(wrapped.args == ["-q", "-a", "/tmp/x.log", "/bin/zsh", "-l"], "wrap → script args")
+    let p = SessionLogger.logPath(sessionTitle: "my proj", dir: NSTemporaryDirectory() + "humilogs-\(UUID())",
+                                  pattern: "{name}-{date}.log")
+    check(p?.contains("my_proj-") == true, "log filename substitutes {name}")
+    check(p?.hasSuffix(".log") == true, "log filename ends .log")
+}
+
+// MARK: Session codec back-compat
+
+MainActor.assumeIsolated {
+    suite("Session codec") {
+        // A pre-1.1 record has no customTitle/onExit/logging keys.
+        let old = "{\"id\":\"\(UUID().uuidString)\",\"title\":\"t\",\"accentIndex\":0,\"createdAt\":0}"
+        let s = try? JSONDecoder().decode(Session.self, from: Data(old.utf8))
+        check(s != nil, "pre-1.1 session still decodes")
+        check(s?.onExit == .keep, "missing onExit → .keep")
+        check(s?.logging == false, "missing logging → false")
+        check(s?.customTitle == nil, "missing customTitle → nil")
+        // v1.1 round-trip
+        var full = Session(workingDirectory: "/tmp", accentIndex: 2, onExit: .restart, logging: true)
+        full.customTitle = "Build"
+        full.accentOverride = 3
+        let data = try! JSONEncoder().encode(full)
+        let back = try? JSONDecoder().decode(Session.self, from: data)
+        check(back?.customTitle == "Build", "customTitle round-trips")
+        check(back?.onExit == .restart, "onExit round-trips")
+        check(back?.effectiveAccent == 3, "accentOverride wins in effectiveAccent")
+    }
+
+    suite("SessionStore.move") {
+        try? FileManager.default.removeItem(at: Persistence.url(SessionStore.fileName))
+        let store = SessionStore()
+        let a = store.add(workingDirectory: "/a")
+        let b = store.add(workingDirectory: "/b")
+        let c = store.add(workingDirectory: "/c")
+        store.move(id: c.id, before: a.id)
+        check(store.sessions.map(\.workingDirectory) == ["/c", "/a", "/b"], "move c before a")
+        store.move(from: 0, to: 3)
+        check(store.sessions.map(\.workingDirectory) == ["/a", "/b", "/c"], "move first to end")
+        _ = b
+    }
+}
+
 // MARK: GridLayout
 
 suite("GridLayout") {

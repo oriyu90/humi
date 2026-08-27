@@ -42,6 +42,44 @@ final class SessionStore: ObservableObject {
         persist()
     }
 
+    /// Whether closing `id` should prompt first, given the confirm-close pref.
+    func closeNeedsConfirmation(_ id: UUID) -> Bool {
+        switch AppSettings.shared.confirmClose {
+        case .never:  return false
+        case .always: return sessions.contains { $0.id == id }
+        case .busy:   return TerminalRegistry.shared.existing(id)?.hasLiveForegroundChild ?? false
+        }
+    }
+
+    // MARK: v1.1 per-session mutations
+
+    private func mutate(_ id: UUID, _ body: (inout Session) -> Void) {
+        guard let i = sessions.firstIndex(where: { $0.id == id }) else { return }
+        body(&sessions[i])
+        persist()
+    }
+
+    func setCustomTitle(_ id: UUID, _ name: String?) {
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines)
+        mutate(id) { $0.customTitle = (trimmed?.isEmpty ?? true) ? nil : trimmed }
+    }
+    func setAccentOverride(_ id: UUID, _ index: Int?) { mutate(id) { $0.accentOverride = index } }
+    func setOnExit(_ id: UUID, _ v: OnExit) { mutate(id) { $0.onExit = v } }
+    func setLogging(_ id: UUID, _ v: Bool) { mutate(id) { $0.logging = v } }
+
+    /// Reorder the tile at `from` to `to` (drag-and-drop).
+    func move(from: Int, to: Int) {
+        guard sessions.indices.contains(from), to >= 0, to <= sessions.count, from != to else { return }
+        let item = sessions.remove(at: from)
+        sessions.insert(item, at: min(to, sessions.count))
+        persist()
+    }
+    func move(id: UUID, before targetID: UUID) {
+        guard let from = sessions.firstIndex(where: { $0.id == id }),
+              let target = sessions.firstIndex(where: { $0.id == targetID }) else { return }
+        move(from: from, to: from < target ? target - 1 : target)
+    }
+
     func closeAll() {
         for s in sessions { TerminalRegistry.shared.terminate(s.id) }
         sessions.removeAll()
@@ -52,8 +90,16 @@ final class SessionStore: ObservableObject {
     }
 
     func markExited(_ id: UUID, code: Int32?) {
-        guard sessions.contains(where: { $0.id == id }) else { return }
-        exitCodes[id] = code ?? -1
+        guard let session = sessions.first(where: { $0.id == id }) else { return }
+        switch session.onExit {
+        case .keep:
+            exitCodes[id] = code ?? -1
+        case .close:
+            close(id)
+        case .restart:
+            exitCodes.removeValue(forKey: id)
+            TerminalRegistry.shared.restart(session: session, settings: AppSettings.shared)
+        }
     }
 
     /// Re-spawn the shell for a session whose process ended, in its original directory.

@@ -8,7 +8,9 @@ import SwiftTerm
 final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
 
     let sessionID: UUID
-    let terminalView: LocalProcessTerminalView
+    let terminalView: HumiTerminalView
+    /// Directory the shell started in — used for classifying relative paths on ⌘-click.
+    var currentDirectory: String?
     private(set) var started = false
     private(set) var exited = false
 
@@ -25,12 +27,26 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
         self.theme = theme
         self.fontSize = fontSize
         let options = TerminalOptions(scrollback: max(0, scrollback))
-        self.terminalView = LocalProcessTerminalView(
+        self.terminalView = HumiTerminalView(
             frame: NSRect(x: 0, y: 0, width: 640, height: 400),
             font: FontResolver.terminalFont(family: theme.fontFamily, size: fontSize, cjkFamily: theme.cjkFontFamily),
             options: options)
         super.init()
         terminalView.processDelegate = self   // weak on SwiftTerm's side
+        terminalView.onOpenLink = { [weak self] link in
+            guard let self else { return }
+            PathActioner.open(link, cwd: self.currentDirectory,
+                              editorCommand: AppSettings.shared.editorCommand)
+        }
+        terminalView.onSelectionChanged = { text in
+            guard AppSettings.shared.copyOnSelect, let text, !text.isEmpty else { return }
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+        }
+        terminalView.onInteracted = { [weak self] in
+            guard let self else { return }
+            TerminalRegistry.shared.noteFocused(self.sessionID)
+        }
         applyTheme(theme, fontSize: fontSize)
     }
 
@@ -38,21 +54,70 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
 
     /// Terminal behaviour prefs that can change while a session is live.
     func applyTerminalPrefs(optionAsMeta: Bool, mouseReporting: Bool,
-                            scrollSensitivity: CGFloat, scrollbar: ScrollbarStyle) {
+                            scrollSensitivity: CGFloat, scrollbar: ScrollbarStyle,
+                            bell: BellStyle) {
         terminalView.optionAsMetaKey = optionAsMeta
         terminalView.allowMouseReporting = mouseReporting
         terminalView.scrollSensitivity = scrollSensitivity
         terminalView.scrollerStyle = (scrollbar == .legacy) ? .legacy : .overlay
+        switch bell {
+        case .off:    terminalView.bellStyle = .none
+        case .sound:  terminalView.bellStyle = .sound
+        case .visual: terminalView.bellStyle = .visual
+        case .notify: terminalView.bellStyle = .soundAndVisual   // notification handled in Phase 11
+        }
     }
 
     func startIfNeeded(invocation: ShellInvocation, environment: [String], workingDirectory: String?) {
         guard !started else { return }
         started = true
+        currentDirectory = workingDirectory
         terminalView.startProcess(executable: invocation.executable,
                                   args: invocation.args,
                                   environment: environment,
                                   execName: invocation.execName,
                                   currentDirectory: workingDirectory)
+    }
+
+    // MARK: Search (⌘F)
+
+    @discardableResult
+    func find(_ term: String, forward: Bool) -> Bool {
+        guard !term.isEmpty else { return false }
+        return forward ? terminalView.findNext(term) : terminalView.findPrevious(term)
+    }
+
+    /// `(matchIndex, total)` for the current term.
+    func matchSummary(_ term: String) -> (index: Int, total: Int) {
+        guard !term.isEmpty else { return (0, 0) }
+        return terminalView.searchMatchSummary(term)
+    }
+
+    // MARK: Selection actions (context menu)
+
+    var selectedText: String? { terminalView.selectionActive ? terminalView.getSelection() : nil }
+
+    @discardableResult
+    func openSelection() -> Bool {
+        guard let text = selectedText else { return false }
+        return PathActioner.open(text, cwd: currentDirectory, editorCommand: AppSettings.shared.editorCommand)
+    }
+
+    /// Heuristic "is something running in the foreground": the shell has a child process.
+    var hasLiveForegroundChild: Bool {
+        let pid = terminalView.process.shellPid
+        guard pid > 0 else { return false }
+        var name = [CTL_KERN, KERN_PROC, KERN_PROC_ALL]
+        var len = 0
+        guard sysctl(&name, 3, nil, &len, nil, 0) == 0, len > 0 else { return false }
+        let count = len / MemoryLayout<kinfo_proc>.stride
+        var procs = [kinfo_proc](repeating: kinfo_proc(), count: count)
+        guard sysctl(&name, 3, &procs, &len, nil, 0) == 0 else { return false }
+        let actual = len / MemoryLayout<kinfo_proc>.stride
+        for i in 0..<min(actual, procs.count) {
+            if procs[i].kp_eproc.e_ppid == pid { return true }
+        }
+        return false
     }
 
     func setFontSize(_ size: CGFloat) {
@@ -155,7 +220,10 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
 
     nonisolated func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
         let value = directory
-        Task { @MainActor in self.onDirectory?(value) }
+        Task { @MainActor in
+            if let value { self.currentDirectory = value }
+            self.onDirectory?(value)
+        }
     }
 
     nonisolated func processTerminated(source: TerminalView, exitCode: Int32?) {

@@ -125,3 +125,30 @@
 "terminal.confirm_close.never" = "Nunca";
 "terminal.confirm_close.busy" = "Solo cuando está ocupada";
 "terminal.confirm_close.always" = "Siempre";
+
+/* v1.1 — Phase 3/4: search, font zoom, tile menu */
+"search.placeholder" = "Buscar";
+"search.none" = "Sin coincidencias";
+"app.menu.find" = "Buscar…";
+"app.menu.font_in" = "Aumentar tamaño de fuente";
+"app.menu.font_out" = "Reducir tamaño de fuente";
+"app.menu.font_reset" = "Restablecer tamaño de fuente";
+"app.menu.next_tile" = "Bloque siguiente";
+"app.menu.prev_tile" = "Bloque anterior";
+"tile.rename" = "Renombrar…";
+"tile.rename.prompt" = "Nombre de la sesión";
+"tile.color" = "Color";
+"tile.on_exit" = "Al salir";
+"tile.on_exit.keep" = "Mantener el bloque";
+"tile.on_exit.restart" = "Reiniciar automáticamente";
+"tile.on_exit.close" = "Cerrar automáticamente";
+"tile.open_selection" = "Abrir selección (URL / ruta)";
+"tile.reveal" = "Mostrar la carpeta de trabajo en el Finder";
+"tile.logging" = "Registrar esta sesión";
+"tile.close_confirm.title" = "¿Cerrar esta sesión?";
+"tile.close_confirm.message" = "Todavía hay un proceso en ejecución en esta sesión.";
+"tile.close_confirm.close" = "Cerrar";
+"common.cancel" = "Cancelar";
+"paste.confirm.title" = "¿Pegar varias líneas?";
+"paste.confirm.message" = "Vas a pegar %d líneas.";
+"paste.confirm.paste" = "Pegar";
