@@ -75,7 +75,13 @@ final class SessionStore: ObservableObject {
     func updateWorkingDirectory(_ id: UUID, _ dir: String?) {
         guard let idx = sessions.firstIndex(where: { $0.id == id }) else { return }
         guard sessions[idx].workingDirectory != dir else { return }
+        let wasAutoTitle = sessions[idx].title == Session.defaultTitle(for: sessions[idx].workingDirectory)
         sessions[idx].workingDirectory = dir
+        // Follow the cwd in the tile title, unless the shell (OSC 0/2) or the user
+        // gave it a real title — then leave that alone.
+        if wasAutoTitle {
+            sessions[idx].title = Session.defaultTitle(for: dir)
+        }
         persist()
     }
 

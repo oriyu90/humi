@@ -9,6 +9,13 @@ enum Persistence {
     private static let ioQueue = DispatchQueue(label: "com.studiorizi.humi.io", qos: .utility)
 
     private static let _baseURL: URL = {
+        // Tests set HUMI_SUPPORT_DIR to a throwaway directory so the self-test suite
+        // never reads or clobbers the real ~/Library/Application Support/Humi.
+        if let override = ProcessInfo.processInfo.environment["HUMI_SUPPORT_DIR"], !override.isEmpty {
+            let dir = URL(fileURLWithPath: override, isDirectory: true)
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            return dir
+        }
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
         let dir = root.appendingPathComponent(directoryName, isDirectory: true)

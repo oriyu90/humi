@@ -3,7 +3,7 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.0.0（内蔵ターミナルエミュレータ / タイル型 / メモ欄）
+対象バージョン: v1.0.1（内蔵ターミナルエミュレータ / タイル型 / メモ欄）
 
 ---
 
@@ -24,7 +24,7 @@
 ## 2. リリース手順
 
 ```bash
-# 1. セルフテスト（37 チェック、全パス必須）
+# 1. セルフテスト（40 チェック、全パス必須）
 bash Scripts/test.sh
 
 # 2. 既定ビルドが通ること（--product なしでも通る = HumiTests を壊していない）
@@ -75,6 +75,19 @@ gh release create vX.Y.Z dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 
   `nonisolated` なデリゲートコールバックは `Task { @MainActor in }` で hop 済み。
   上げるなら `TerminalController` のデリゲート境界と `AppDelegate` の
   `MainActor.assumeIsolated` を先に見直すこと。
+- **テストは実 app-support dir を触らせない。** `Persistence.baseURL` は環境変数
+  `HUMI_SUPPORT_DIR` があればそちらを使う。`Scripts/test.sh` が `mktemp -d` を設定する。
+  これを外すと `bash Scripts/test.sh` が `~/Library/Application Support/Humi/sessions.json`
+  を消す（`HumiTests` が `removeItem` するため）。CI でも実行されるので絶対に戻さない。
+- **アイドル時に `repeatForever` アニメーションを置かない。** `CharacterMark` の breathing を
+  入れたら常時 8〜10% CPU になった（CA `collect_animations_` が毎フレーム回る）。
+  「生きてる感」は新規セッション時の burst だけで出す。
+- **`cd` でタイトルが変わらないのは仕様。** macOS の zshrc は `TERM_PROGRAM==Apple_Terminal`
+  のときだけ OSC 7 を出す。追従させたいなら `TERM_PROGRAM=Apple_Terminal` にするか
+  precmd hook を注入する（副作用注意。§4 参照）。
+- **設定タブは `VStack(alignment:.leading)+Spacer` で top-leading に固定。** `Form` に数行だけ
+  置くと下寄せになり、`Slider`/`Stepper` の長いラベルがコントロールを画面外へ押し出す。
+  値は `labelsHidden()` + 明示 `HStack` で右寄せする。
 
 ## 4. 既知の未対応事項・今後の予定
 
@@ -96,6 +109,10 @@ gh release create vX.Y.Z dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 
   リフローするだけ。
 - **`⌘K` はキーウィンドウ内でフォーカスが端末にある時のみ。** それ以外は `NSSound.beep()`。
   タイルのフォーカスリングが弱いので、フォーカス表示の改善余地あり。
+- **`cd` 追従（OSC 7）。** 現状は zshrc が OSC 7 を出す環境でしかタイトル/`workingDirectory` が
+  cwd を追わない。`ShellResolver.childEnvironment` で `TERM_PROGRAM=Apple_Terminal` にする、
+  または子シェル起動時に `precmd`/`PROMPT_COMMAND` で OSC 7 を出す rc スニペットを
+  `-c` 経由で流し込む案。前者は `TERM_PROGRAM` を見て挙動を変えるツールに影響が出うる。
 
 ### 優先度: 低
 - スクロールバック上限 200,000 行 × 多数セッションはメモリを食う。既定 10,000 は妥当。

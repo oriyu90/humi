@@ -1,12 +1,17 @@
 import SwiftUI
 
-/// Hum's one "character moment": a pear dot that breathes at rest and bursts a
-/// 4-point coral star when a new session is created. One per window, no more.
+/// Hum's one "character moment": a still pear dot that bursts a 4-point coral star
+/// when a new session is created. One per window, no more.
+///
+/// The dot used to "breathe" via a `repeatForever` scale animation. That kept Core
+/// Animation's `collect_animations_` + an AppKit layout pass running on the main
+/// thread every display frame *forever* — ~8–10 % idle CPU with the window open,
+/// regardless of session count. A decorative idle pulse isn't worth that; the burst
+/// on new-session is the character moment now.
 struct CharacterMark: View {
     /// Bump this to trigger a burst (e.g. session count).
     var burstTrigger: Int
 
-    @State private var breathing = false
     @State private var bursts: [BurstToken] = []
 
     var body: some View {
@@ -15,12 +20,6 @@ struct CharacterMark: View {
                 .fill(Hum.pear)
                 .frame(width: 14, height: 14)
                 .overlay(Circle().stroke(Hum.pearDeep.opacity(0.6), lineWidth: 1))
-                .scaleEffect(breathing && !Hum.Motion.reduceMotion ? 1.08 : 1.0)
-                .animation(
-                    Hum.Motion.reduceMotion ? nil :
-                        .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
-                    value: breathing
-                )
 
             ForEach(bursts) { token in
                 StarBurst()
@@ -28,7 +27,6 @@ struct CharacterMark: View {
             }
         }
         .frame(width: 22, height: 22)
-        .onAppear { breathing = true }
         .onChange(of: burstTrigger) { _, _ in
             guard !Hum.Motion.reduceMotion else { return }
             let token = BurstToken()

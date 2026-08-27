@@ -23,6 +23,17 @@ func suite(_ name: String, _ body: () -> Void) {
     body()
 }
 
+// MARK: Persistence isolation — the suite must never touch the real support dir
+
+suite("Persistence isolation") {
+    let override = ProcessInfo.processInfo.environment["HUMI_SUPPORT_DIR"] ?? ""
+    check(!override.isEmpty, "HUMI_SUPPORT_DIR is set (run via Scripts/test.sh)")
+    check(Persistence.baseURL.path == override,
+          "Persistence.baseURL follows HUMI_SUPPORT_DIR, not ~/Library/Application Support")
+    check(!Persistence.baseURL.path.contains("/Library/Application Support/Humi"),
+          "not writing to the real app-support dir")
+}
+
 // MARK: ShellResolver
 
 suite("ShellResolver") {
