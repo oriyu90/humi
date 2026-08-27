@@ -4,6 +4,19 @@ import HumiKit
 @main
 struct HumiApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @ObservedObject private var keymap = KeymapStore.shared
+
+    /// A menu button bound to an action's current key chord.
+    @ViewBuilder
+    private func actionButton(_ action: HumiAction, _ titleKey: String) -> some View {
+        let chord = keymap.chord(for: action)
+        let button = Button(L(titleKey)) { NotificationCenter.default.post(name: action.notification, object: nil) }
+        if let eq = chord.keyEquivalent {
+            button.keyboardShortcut(eq, modifiers: chord.swiftUIModifiers)
+        } else {
+            button
+        }
+    }
 
     init() {
         Hum.registerFonts()
@@ -32,27 +45,24 @@ struct HumiApp: App {
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button(L("app.menu.new_session")) { NotificationCenter.default.post(name: .humiNewSession, object: nil) }
-                    .keyboardShortcut("n", modifiers: [.command])
+                actionButton(.newSession, "app.menu.new_session")
+                actionButton(.profileLauncher, "launcher.title")
             }
             CommandGroup(after: .pasteboard) {
-                Button(L("app.menu.clear_buffer")) { NotificationCenter.default.post(name: .humiClearBuffer, object: nil) }
-                    .keyboardShortcut("k", modifiers: [.command])
-                Button(L("app.menu.find")) { NotificationCenter.default.post(name: .humiFind, object: nil) }
-                    .keyboardShortcut("f", modifiers: [.command])
+                actionButton(.clearBuffer, "app.menu.clear_buffer")
+                actionButton(.find, "app.menu.find")
+                actionButton(.closeTile, "tile.close")
+                actionButton(.restartTile, "tile.restart")
             }
             CommandGroup(after: .toolbar) {
-                Button(L("app.menu.font_in")) { NotificationCenter.default.post(name: .humiFontIn, object: nil) }
-                    .keyboardShortcut("+", modifiers: [.command])
-                Button(L("app.menu.font_out")) { NotificationCenter.default.post(name: .humiFontOut, object: nil) }
-                    .keyboardShortcut("-", modifiers: [.command])
-                Button(L("app.menu.font_reset")) { NotificationCenter.default.post(name: .humiFontReset, object: nil) }
-                    .keyboardShortcut("0", modifiers: [.command])
+                actionButton(.fontIn, "app.menu.font_in")
+                actionButton(.fontOut, "app.menu.font_out")
+                actionButton(.fontReset, "app.menu.font_reset")
                 Divider()
-                Button(L("app.menu.next_tile")) { NotificationCenter.default.post(name: .humiNextTile, object: nil) }
-                    .keyboardShortcut(.rightArrow, modifiers: [.command, .option])
-                Button(L("app.menu.prev_tile")) { NotificationCenter.default.post(name: .humiPrevTile, object: nil) }
-                    .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
+                actionButton(.maximizeTile, "tile.maximize")
+                actionButton(.toggleNotes, "toolbar.toggle_notes")
+                actionButton(.nextTile, "app.menu.next_tile")
+                actionButton(.prevTile, "app.menu.prev_tile")
             }
         }
 

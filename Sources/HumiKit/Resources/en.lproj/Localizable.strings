@@ -177,3 +177,24 @@
 "profiles.export" = "Export…";
 "profiles.empty" = "No profiles. Use “Add” to create one.";
 "profiles.none_selected" = "Select a profile from the list.";
+
+/* v1.1 — Phase 6: shortcuts */
+"key.action.newSession" = "New session";
+"key.action.closeTile" = "Close session";
+"key.action.restartTile" = "Restart session";
+"key.action.maximizeTile" = "Maximize tile";
+"key.action.clearBuffer" = "Clear buffer";
+"key.action.find" = "Find";
+"key.action.fontIn" = "Increase font size";
+"key.action.fontOut" = "Decrease font size";
+"key.action.fontReset" = "Reset font size";
+"key.action.nextTile" = "Next tile";
+"key.action.prevTile" = "Previous tile";
+"key.action.toggleNotes" = "Toggle notes";
+"key.action.profileLauncher" = "Open with default profile";
+"shortcuts.reset" = "Reset to defaults";
+"shortcuts.import" = "Import…";
+"shortcuts.export" = "Export…";
+"shortcuts.record" = "Record";
+"shortcuts.conflict" = "conflict";
+"shortcuts.hint" = "Shortcut changes take effect after restarting the app.";

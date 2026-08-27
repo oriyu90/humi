@@ -177,3 +177,24 @@
 "profiles.export" = "Exportar…";
 "profiles.empty" = "Nenhum perfil. Use “Adicionar” para criar um.";
 "profiles.none_selected" = "Selecione um perfil na lista.";
+
+/* v1.1 — Phase 6: shortcuts */
+"key.action.newSession" = "Nova sessão";
+"key.action.closeTile" = "Fechar sessão";
+"key.action.restartTile" = "Reiniciar sessão";
+"key.action.maximizeTile" = "Maximizar bloco";
+"key.action.clearBuffer" = "Limpar buffer";
+"key.action.find" = "Buscar";
+"key.action.fontIn" = "Aumentar fonte";
+"key.action.fontOut" = "Diminuir fonte";
+"key.action.fontReset" = "Redefinir tamanho da fonte";
+"key.action.nextTile" = "Próximo bloco";
+"key.action.prevTile" = "Bloco anterior";
+"key.action.toggleNotes" = "Mostrar/ocultar notas";
+"key.action.profileLauncher" = "Abrir com o perfil padrão";
+"shortcuts.reset" = "Restaurar padrões";
+"shortcuts.import" = "Importar…";
+"shortcuts.export" = "Exportar…";
+"shortcuts.record" = "Gravar";
+"shortcuts.conflict" = "conflito";
+"shortcuts.hint" = "As mudanças de atalho valem após reiniciar o app.";

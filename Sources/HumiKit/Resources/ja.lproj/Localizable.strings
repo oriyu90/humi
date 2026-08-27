@@ -177,3 +177,24 @@
 "profiles.export" = "書き出し…";
 "profiles.empty" = "プロファイルがありません。「追加」で作成します。";
 "profiles.none_selected" = "左の一覧からプロファイルを選択します。";
+
+/* v1.1 — Phase 6: shortcuts */
+"key.action.newSession" = "新しいセッション";
+"key.action.closeTile" = "セッションを閉じる";
+"key.action.restartTile" = "セッションを再起動";
+"key.action.maximizeTile" = "タイルを最大化";
+"key.action.clearBuffer" = "バッファをクリア";
+"key.action.find" = "検索";
+"key.action.fontIn" = "文字を大きく";
+"key.action.fontOut" = "文字を小さく";
+"key.action.fontReset" = "文字サイズをリセット";
+"key.action.nextTile" = "次のタイル";
+"key.action.prevTile" = "前のタイル";
+"key.action.toggleNotes" = "メモの表示切替";
+"key.action.profileLauncher" = "既定プロファイルで開く";
+"shortcuts.reset" = "既定に戻す";
+"shortcuts.import" = "読み込み…";
+"shortcuts.export" = "書き出し…";
+"shortcuts.record" = "記録";
+"shortcuts.conflict" = "重複";
+"shortcuts.hint" = "ショートカットの変更はアプリの再起動後に反映されます。";

@@ -297,6 +297,37 @@ suite("Profile codec") {
     check(env.contains { $0.hasPrefix("TERM=") }, "childEnvironment still sets TERM")
 }
 
+// MARK: Keymap
+
+MainActor.assumeIsolated {
+    suite("Keymap") {
+        let cmd = KeymapStore.cmd
+        let n = KeyChord(key: "n", modifiers: cmd)
+        // Codable round-trip
+        let data = try! JSONEncoder().encode(["newSession": n])
+        let back = try? JSONDecoder().decode([String: KeyChord].self, from: data)
+        check(back?["newSession"] == n, "KeyChord codec round-trip")
+        check(n.display == "⌘N", "KeyChord display")
+        check(KeyChord(key: "right", modifiers: KeymapStore.cmdOpt).display == "⌥⌘→", "arrow chord display")
+        check(n.keyEquivalent != nil, "letter chord → KeyEquivalent")
+        check(KeyChord(key: "left", modifiers: cmd).keyEquivalent != nil, "arrow chord → KeyEquivalent")
+
+        let store = KeymapStore.shared
+        store.resetAll()
+        check(store.chord(for: .newSession) == n, "default newSession = ⌘N")
+        check(store.map.isEmpty, "resetAll clears overrides")
+        // every action has a default
+        for a in HumiAction.allCases {
+            check(KeymapStore.defaults[a] != nil, "\(a.rawValue) has a default chord")
+            check(a.notification.rawValue.hasPrefix("humi."), "\(a.rawValue) maps to a humi.* notification")
+        }
+        // conflict detection
+        store.set(.find, n)   // collide with newSession
+        check(store.conflicts(n, excluding: .find).contains(.newSession), "conflict detected")
+        store.resetAll()
+    }
+}
+
 // MARK: GridLayout
 
 suite("GridLayout") {

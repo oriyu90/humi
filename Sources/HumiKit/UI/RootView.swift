@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Combine
 
 public extension Notification.Name {
     /// Posted by the ⌘N command; RootView opens the new-session flow.
@@ -12,6 +13,17 @@ public extension Notification.Name {
     static let humiFontReset = Notification.Name("humi.fontReset")
     static let humiNextTile = Notification.Name("humi.nextTile")
     static let humiPrevTile = Notification.Name("humi.prevTile")
+    static let humiCloseTile = Notification.Name("humi.closeTile")
+    static let humiRestartTile = Notification.Name("humi.restartTile")
+    static let humiMaximizeTile = Notification.Name("humi.maximizeTile")
+    static let humiToggleNotes = Notification.Name("humi.toggleNotes")
+    static let humiProfileLauncher = Notification.Name("humi.profileLauncher")
+
+    static let humiAllActions: [Notification.Name] = [
+        .humiNewSession, .humiClearBuffer, .humiFind, .humiFontIn, .humiFontOut, .humiFontReset,
+        .humiNextTile, .humiPrevTile, .humiCloseTile, .humiRestartTile, .humiMaximizeTile,
+        .humiToggleNotes, .humiProfileLauncher,
+    ]
 }
 
 public struct RootView: View {
@@ -110,31 +122,51 @@ public struct RootView: View {
                 onCancel: { showingNewSheet = false }
             )
         }
-        .onReceive(NotificationCenter.default.publisher(for: .humiNewSession)) { _ in
-            beginNewSession()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .humiClearBuffer)) { _ in
-            TerminalRegistry.shared.clearFocused()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .humiFind)) { _ in
-            withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) { searchVisible = true }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .humiFontIn)) { _ in
-            settings.fontSize = min(settings.fontSize + 1, 28)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .humiFontOut)) { _ in
-            settings.fontSize = max(settings.fontSize - 1, 9)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .humiFontReset)) { _ in
-            settings.fontSize = themes.resolvedTheme.fontSize
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .humiNextTile)) { _ in focusTile(offset: 1) }
-        .onReceive(NotificationCenter.default.publisher(for: .humiPrevTile)) { _ in focusTile(offset: -1) }
+        .onReceive(actionPublisher) { note in handle(note.name) }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active {
                 notes.flush()
                 store.persistNow()
             }
+        }
+    }
+
+    private var actionPublisher: AnyPublisher<Notification, Never> {
+        Publishers.MergeMany(
+            Notification.Name.humiAllActions.map { NotificationCenter.default.publisher(for: $0) }
+        ).eraseToAnyPublisher()
+    }
+
+    private func handle(_ name: Notification.Name) {
+        let focusedID = TerminalRegistry.shared.focusedController()?.sessionID
+        switch name {
+        case .humiNewSession:  beginNewSession()
+        case .humiClearBuffer: TerminalRegistry.shared.clearFocused()
+        case .humiFind:        withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) { searchVisible = true }
+        case .humiFontIn:      settings.fontSize = min(settings.fontSize + 1, 28)
+        case .humiFontOut:     settings.fontSize = max(settings.fontSize - 1, 9)
+        case .humiFontReset:   settings.fontSize = themes.resolvedTheme.fontSize
+        case .humiNextTile:    focusTile(offset: 1)
+        case .humiPrevTile:    focusTile(offset: -1)
+        case .humiToggleNotes:
+            withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) { settings.notesVisible.toggle() }
+        case .humiCloseTile:
+            if let id = focusedID {
+                if store.closeNeedsConfirmation(id) { NSSound.beep() } else { store.close(id) }
+            }
+        case .humiRestartTile:
+            if let id = focusedID { store.restart(id, settings: settings) }
+        case .humiMaximizeTile:
+            if let id = focusedID {
+                withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) { store.toggleMaximize(id) }
+            }
+        case .humiProfileLauncher:
+            if let p = profiles.defaultProfile ?? profiles.profiles.first {
+                withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
+                    _ = store.add(workingDirectory: p.cwd, profileID: p.id)
+                }
+            } else { beginNewSession() }
+        default: break
         }
     }
 
