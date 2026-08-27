@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build (default config — must not break on the test target)
+        run: swift build
+
+      - name: Release build
+        run: swift build -c release --product Humi
+
+      - name: Self-tests
+        run: bash Scripts/test.sh
+
+      - name: Assemble Humi.app
+        run: bash Scripts/build-app.sh release
+
+      - name: Verify bundle
+        run: |
+          test -x dist/Humi.app/Contents/MacOS/Humi
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' dist/Humi.app/Contents/Info.plist
+          codesign --verify --verbose dist/Humi.app
