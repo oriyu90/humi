@@ -3,6 +3,43 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.1.0] - 2026-08-28
+
+A large feature release: 5-language localization plus the "Priority A + B" items
+from the customization backlog. See `docs/TEST_PLAN_v1.1.0.md`.
+
+### Added
+- **Localization (5 languages).** Japanese, English, 中文 (简体), Português, Español.
+  Auto-selected from the OS language; a live in-app picker (Settings › General)
+  switches without relaunch.
+- **Full theming.** `Theme` model + 6 built-in presets (Hum Light/Dark, Solarized
+  Light/Dark, Nord, Terminal Basic), custom themes, `.humitheme` import/export,
+  ANSI-16 colour editor, cursor shape + blink, monospaced + CJK font pickers,
+  Light / Dark / **System** mode. The app chrome follows the theme's light/dark too.
+  Changes apply to every live terminal instantly.
+- **In-terminal search** (`⌘F`): match count, next/prev, highlight.
+- **URL / path actions.** ⌘-click or a right-click menu opens a URL in the browser,
+  a file/dir in Finder, or `path:line` in a configurable editor (`code -g` default).
+- **Profiles.** Named bundles of shell + environment + startup command + working
+  directory + theme + scrollback + logging. Picked in the new-session sheet, or
+  one-click from a toolbar launcher. `.humiprofile` import/export.
+- **Customizable keyboard shortcuts.** Every core action is rebindable in
+  Settings › Shortcuts, with conflict detection, reset, and `.humikeys` import/export.
+- **Session & tile.** Rename, per-tile colour, on-exit behaviour (keep / auto-restart
+  / auto-close), close confirmation when a process is running, drag-to-reorder,
+  per-session output logging (via `script`).
+- **Per-tile status bar** (opt-in): working folder, shell, git branch + dirty dot,
+  clock. Humi now injects an OSC 7 emitter for zsh/bash so the tile title, status-bar
+  cwd, and git panel follow `cd`.
+- Terminal behaviour prefs: option-as-Meta, mouse reporting, scroll sensitivity,
+  scrollbar style, copy-on-select, multi-line paste confirmation, unlimited
+  scrollback, inner margin, bell (off / sound / visual). Font zoom `⌘+` `⌘-` `⌘0`;
+  `⌥⌘←→` moves focus between tiles.
+
+### Not in this release (v1.2 roadmap, see `humi.md`)
+- Split panes / pane-tree layout, window arrangements, global hotkey / Quake window,
+  the full notification matrix, regex triggers.
+
 ## [1.0.1] - 2026-08-27
 
 Same-day follow-up from a hands-on debugging pass (settings persistence + terminal

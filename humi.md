@@ -3,7 +3,7 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.0.1（内蔵ターミナルエミュレータ / タイル型 / メモ欄）
+対象バージョン: v1.1.0（多言語化 + テーマ / プロファイル / キーバインド / 検索 / ステータスバー）
 
 ---
 
@@ -24,7 +24,7 @@
 ## 2. リリース手順
 
 ```bash
-# 1. セルフテスト（40 チェック、全パス必須）
+# 1. セルフテスト（1000+ チェック、全パス必須。HUMI_SUPPORT_DIR で分離される）
 bash Scripts/test.sh
 
 # 2. 既定ビルドが通ること（--product なしでも通る = HumiTests を壊していない）
@@ -89,6 +89,39 @@ gh release create vX.Y.Z dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 
   置くと下寄せになり、`Slider`/`Stepper` の長いラベルがコントロールを画面外へ押し出す。
   値は `labelsHidden()` + 明示 `HStack` で右寄せする。
 
+### v1.1 で増えた構造・注意
+
+- **永続ストア（すべて `Persistence` 経由 = `~/Library/Application Support/Humi/`）**
+  - `themes.json` … `ThemeStore`（active名 / mode / 自作テーマ）。組み込み 6 プリセットはコード。
+  - `profiles.json` … `ProfileStore`（プロファイル配列 + defaultProfileID）。
+  - `keymap.json` … `KeymapStore`（アクション rawValue → `KeyChord`。未登録は `defaults`）。
+  - スカラーは従来どおり `AppSettings`（`UserDefaults`）。
+  - モデルはすべて **カスタム `init(from:)`** を持ち、旧 JSON / 部分 JSON でも復号できる。壊さない。
+- **多言語化。** `Sources/HumiKit/Resources/{ja,en,zh-Hans,pt-BR,es}.lproj/Localizable.strings`。
+  文字列は `L("key")` / `T("key")`（`Sources/HumiKit/UI/L10n.swift`）経由。**新規文字列は必ず 5 言語へ。**
+  `bash Scripts/test.sh` の `L10n` スイートがキー一致・プレースホルダ数一致を検査する。
+  SwiftPM は `.lproj` の地域サフィックスを小文字化する（`zh-Hans`→`zh-hans`）ので `Localization.lprojBundle`
+  は大小無視で探す。言語切替は `AppSettings.appLanguage` → `Localization.shared.apply()` で**即時**（再起動不要）。
+- **アプリ本体のダークモード。** `Hum.paper` などは `dyn(light:dark:)` で作る動的 `NSColor`。
+  ウィンドウ側で `preferredColorScheme` を `ThemeStore.resolvedTheme.appAppearance` から与える。
+  トークンを `@MainActor` 計算プロパティにしない（`HumButtonStyle` 等へ isolation が波及する）。
+- **テーマ適用は `TerminalRegistry.applyTheme()`。** `HumiApp` が `ThemeStore.shared.onChange` に接続。
+  ファミリ選択で `mode` をそのテーマの外観へスナップ（`setActive`）。System は明示選択のみ。
+- **`HumiTerminalView`（`LocalProcessTerminalView` サブクラス）。** `requestOpenLink` / `selectionChanged`
+  / `mouseDown` をオーバーライド。SwiftTerm 1.20 は `becomeFirstResponder` / `keyDown` が `open` でないので
+  触らない。「最後に触ったターミナル」は `mouseDown` → `TerminalRegistry.noteFocused`。`focusedController()`
+  はライブ first responder → lastFocused → 単一なら唯一、の順。
+- **OSC 7 は Humi が注入する。** `ShellResolver.osc7Snippet(for:)`（zsh/bash のみ）を `startProcess` 直後に
+  送り、`clearScrollback`+Ctrl-L でノイズを消してから起動コマンドを送る。ログセッションでは注入しない
+  （`script` のログが汚れる）。`TerminalController.normalizeDirectory` が `file://host/path` をプレーンパスへ。
+  home にいるセッションは自動タイトル（ローカライズ既定）を維持する（ユーザ名にしない）。
+- **キーバインドのメニュー反映はアプリ再起動が必要。** SwiftUI の `Scene`/`.commands` は `@ObservedObject`
+  変更に追従しきらない。`keymap.json` への保存と `KeyRecorder` の表示は即時。動作は保存値ベース。
+- **ステータスバーの Git は `GitStatus`（actor, 5s/dir キャッシュ）。** `StatusBarView` の 12s タイマーは
+  ビューが載っている間だけ。CPU/メモリ系コンポーネントは入れていない（表示中のみサンプリングする設計に留める）。
+- **`RootView` のアクションは 1 本の Merge publisher + `handle(_:)`。** `.onReceive` を並べると body が
+  型チェック不能になる。新アクションは `Notification.Name.humiAllActions` に足して `handle` に分岐を足す。
+
 ## 4. 既知の未対応事項・今後の予定
 
 ### 優先度: 高
@@ -98,21 +131,32 @@ gh release create vX.Y.Z dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 
 - **アプリアイコンが未作成。** `Assets/AppIcon.icns` を置けば `build-app.sh` が同梱する。
   Hum テーマ（クリーム地 + 洋梨色ドット）に合わせた 1024px 原画から `iconutil` で生成。
 
-### 優先度: 中
-- **外部ターミナル連携（v1.1 予定）。** `Sources/HumiKit/Core/ExternalTerminal.swift` と
-  `ExternalTerminalApp`、`AppSettings.externalTerminal` は実装済みで dormant。
-  v1.0 は「内蔵のみ」の方針（オーナー確認済み）のため UI 導線を撤去してある。
-  戻すのは NewSessionSheet の副ボタン / タイルのボタン / 設定のピッカーの 3 箇所。
-- **ダークモード非対応。** アプリ全体を Hum のライトテーマで固定。macOS がダークだと
-  ウィンドウのシステムクロームと若干競合する。`SettingsView` の外観タブに注記あり。
-- **セッションのドラッグ並べ替え・タイル分割の手動リサイズは未実装。** 現在は追加順に
-  リフローするだけ。
-- **`⌘K` はキーウィンドウ内でフォーカスが端末にある時のみ。** それ以外は `NSSound.beep()`。
-  タイルのフォーカスリングが弱いので、フォーカス表示の改善余地あり。
-- **`cd` 追従（OSC 7）。** 現状は zshrc が OSC 7 を出す環境でしかタイトル/`workingDirectory` が
-  cwd を追わない。`ShellResolver.childEnvironment` で `TERM_PROGRAM=Apple_Terminal` にする、
-  または子シェル起動時に `precmd`/`PROMPT_COMMAND` で OSC 7 を出す rc スニペットを
-  `-c` 経由で流し込む案。前者は `TERM_PROGRAM` を見て挙動を変えるツールに影響が出うる。
+### v1.2 ロードマップ（v1.1 でオーナー了承のうえ先送り。優先度 B の重量級）
+
+- **分割ペイン / ペインツリー。** `SessionGridView` のフラット `[Session]` を再帰的な
+  `enum PaneNode { case leaf(UUID); case split(axis, [PaneNode], [CGFloat]) }` に置換。
+  分割 H/V・フォーカス移動（⌥⌘矢印）・入れ替え・比率永続・旧 `sessions.json` からの移行。
+  純粋なツリー操作を先にユニットテスト化する。いちばん重く risk 高。
+- **ウィンドウ配置（Arrangement）。** `{windowFrame, layout, leaves:[{cwd,profileID,title,color}]}`
+  を `arrangements.json` に名前付き保存 → 一括復元。ペインツリー完了後。
+- **グローバルホットキー / Quake ウィンドウ。** Carbon `RegisterEventHotKey` で show/hide トグル。
+  ドロップダウンアニメは stretch。
+- **通知マトリクス。** `UNUserNotificationCenter`。長時間プロセス終了 / bell / エラー文字列一致 /
+  入力待ち。プロファイル単位の有効化。
+- **正規表現トリガー**（iTerm2 の Triggers 相当）。上の通知基盤の上に。
+- 複数ウィンドウ、メニューバー常駐、Directory/Command 履歴 UI、SwiftTerm 2.x 系
+  （Metal / インライン画像 / Sixel / 録画）。
+
+### 優先度: 中（v1.1 で対応済み or 部分対応）
+
+- ~~ダークモード非対応~~ → v1.1 で対応（動的トークン + `preferredColorScheme`）。
+- ~~ドラッグ並べ替え~~ → v1.1 で対応（`.onDrag`/`.onDrop` → `SessionStore.move`）。
+  **タイルの手動リサイズ**はペインツリー（v1.2）で。
+- ~~`cd` 追従（OSC 7）~~ → v1.1 で Humi 側注入（zsh/bash）。fish/カスタムは未対応。
+- **外部ターミナル連携。** `ExternalTerminal.swift` / `ExternalTerminalApp` / `AppSettings.externalTerminal`
+  は dormant のまま。今のところ需要待ち。
+- **キーバインドのメニュー即時反映**（現状は再起動要）。`NSMenu` を自前管理するか、
+  `NSEvent` ローカルモニタで keymap を引く方式に。
 
 ### 優先度: 低
 - スクロールバック上限 200,000 行 × 多数セッションはメモリを食う。既定 10,000 は妥当。
