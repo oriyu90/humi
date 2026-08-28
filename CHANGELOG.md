@@ -3,6 +3,37 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.2.0] - 2026-08-28
+
+Split panes and everything that builds on them, plus a global hotkey, notifications,
+and regex output triggers. See `docs/TEST_PLAN_v1.2.0.md`.
+
+### Added
+- **Split panes / pane tree.** The flat tile grid is now a recursive `PaneNode`
+  layout: `⌘D` splits left/right, `⌘⇧D` top/bottom, `⌘⌃←→↑↓` moves focus by
+  geometry, `⌘⌥=` evens out every split. Drag a divider to change the ratio; drag
+  one tile onto another to swap. A close collapses the emptied split. The focused
+  pane gets an accent ring. Layout persists (`sessions.json` is now
+  `{sessions, layout}`; pre-1.2 files migrate to a single row).
+- **Window arrangements.** File › Save Arrangement… snapshots the pane tree, every
+  session's metadata, and the window frame; File › Restore Arrangement rebuilds it
+  with fresh sessions. `.humiarrangement` import/export.
+- **Global toggle hotkey.** A Carbon-registered system-wide chord (default ⌘⌥⌃T)
+  that shows Humi, or hides it when it's frontmost. No Accessibility permission.
+  Settings › General.
+- **Notifications.** Optional alerts when a long-running command finishes (with a
+  threshold), on the terminal bell, and when output contains a watch string. Taps
+  focus the pane. "Only when Humi is in the background" gate. Settings › Alerts.
+- **Regex output triggers.** Per completed output line, match regular expressions
+  and notify / beep / recolour the tile. Settings › Alerts.
+- **fish OSC 7.** cwd tracking and the status bar now work under fish.
+- Rebound shortcuts take effect immediately (menu shortcuts still need a relaunch
+  to redraw, but the key works now).
+
+### Changed
+- `SessionGridView` / `GridLayout` removed, replaced by `PaneTreeView` + `PaneTree`.
+- `⌥⌘←→` still cycles panes in visual order; directional focus is `⌘⌃` + arrows.
+
 ## [1.1.0] - 2026-08-28
 
 A large feature release: 5-language localization plus the "Priority A + B" items

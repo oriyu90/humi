@@ -3,7 +3,7 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.1.0（多言語化 + テーマ / プロファイル / キーバインド / 検索 / ステータスバー）
+対象バージョン: v1.2.0（分割ペイン / ウィンドウ配置 / グローバルホットキー / 通知 / 正規表現トリガー）
 
 ---
 
@@ -121,6 +121,30 @@ gh release create vX.Y.Z dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 
   ビューが載っている間だけ。CPU/メモリ系コンポーネントは入れていない（表示中のみサンプリングする設計に留める）。
 - **`RootView` のアクションは 1 本の Merge publisher + `handle(_:)`。** `.onReceive` を並べると body が
   型チェック不能になる。新アクションは `Notification.Name.humiAllActions` に足して `handle` に分岐を足す。
+  `handle` は `Notification`（`.name` と `.object` 両方）を受け取る。
+
+### v1.2 で増えた構造・注意
+
+- **ペインツリー。** `PaneTree.swift` の `PaneNode { case leaf(UUID); case split(axis, [PaneNode], [CGFloat]) }`
+  が構造の真実。`SessionStore.layout: PaneNode?`。`sessions: [Session]` は葉レジストリ（メタデータ）に降格。
+  純粋操作（`insert/remove/swap/setRatio/equalized/normalized/frames/focusNeighbor/dividers/settingRatio`）は
+  すべて `PaneNode` 上でユニットテスト済み。**すべての操作の出口で `normalized()`。**
+- **`PaneTreeView` は絶対配置の単一 ZStack。** `layout.frames(in:gap:)` の矩形へ各葉を `.position` で置き、
+  葉ごとに安定した `.id(session.id)`。Lazy 禁止・eager は v1.1 と同じ。分割線は自前の `DividerHandle`
+  （`PaneNode.DividerSpec` / `.dividers(in:)` / `.settingRatio(at:path)`）。`SessionGridView` / `GridLayout` は削除。
+- **`sessions.json` は `{sessions, layout}`（`SessionsFile`）。** `SessionStore.loadFile()` が旧トップレベル
+  `[Session]` 配列にフォールバックして 1 列 layout を合成。`reconcile()` がツリーとレジストリの食い違いを常に補正。
+- **`arrangements.json` = `ArrangementStore`。** `Arrangement { windowFrame, layout, leaves:[LeafSpec] }`。
+  葉 id はローカル、`materialize` で新規 UUID に振り直す。`SessionStore.load(sessions:layout:)` で丸ごと差し替え。
+- **グローバルホットキーは `HotKeyCenter`（Carbon `RegisterEventHotKey`）。** `AppSettings.globalHotkeyChord`
+  は `keymap.json` とは別、UserDefaults に `KeyChord` の JSON 文字列。`HotKeyCenter.bootstrap()` を `HumiApp.init` で呼ぶ。
+- **通知は `HumiNotifier`（`UNUserNotificationCenter`）+ `OutputMonitor` + `Trigger`/`TriggerEngine`。**
+  出力監視は `HumiTerminalView.dataReceived(slice:)` の override（SwiftTerm 1.20 で `open`）。
+  watch 文字列もトリガーも無ければ `onOutput` を張らない＝アイドルコスト 0。設定は `AlertsPane`（グローバル）。
+- **再割り当てショートカットの即時反映は `KeymapStore.installLocalMonitor()`（`NSEvent` ローカルモニタ）。**
+  既定値のままのチョードはメニュー（`.commands`）に任せて二重発火を回避。メニュー表示の更新は依然再起動が必要。
+- **`⌘M`（`maximizeTile` 既定）は macOS のウィンドウ最小化に飲まれる。** タイルの最大化ボタンは正常。
+  直すなら別チョードに変えるか §5-F の案 2 と統合。
 
 ## 4. 既知の未対応事項・今後の予定
 
@@ -131,19 +155,17 @@ gh release create vX.Y.Z dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 
 - **アプリアイコンが未作成。** `Assets/AppIcon.icns` を置けば `build-app.sh` が同梱する。
   Hum テーマ（クリーム地 + 洋梨色ドット）に合わせた 1024px 原画から `iconutil` で生成。
 
-### v1.2 ロードマップ（v1.1 でオーナー了承のうえ先送り。優先度 B の重量級）
+### v1.3 以降ロードマップ（v1.2 で骨格は入ったが MVP 止まり / 未着手）
 
-- **分割ペイン / ペインツリー。** `SessionGridView` のフラット `[Session]` を再帰的な
-  `enum PaneNode { case leaf(UUID); case split(axis, [PaneNode], [CGFloat]) }` に置換。
-  分割 H/V・フォーカス移動（⌥⌘矢印）・入れ替え・比率永続・旧 `sessions.json` からの移行。
-  純粋なツリー操作を先にユニットテスト化する。いちばん重く risk 高。
-- **ウィンドウ配置（Arrangement）。** `{windowFrame, layout, leaves:[{cwd,profileID,title,color}]}`
-  を `arrangements.json` に名前付き保存 → 一括復元。ペインツリー完了後。
-- **グローバルホットキー / Quake ウィンドウ。** Carbon `RegisterEventHotKey` で show/hide トグル。
-  ドロップダウンアニメは stretch。
-- **通知マトリクス。** `UNUserNotificationCenter`。長時間プロセス終了 / bell / エラー文字列一致 /
-  入力待ち。プロファイル単位の有効化。
-- **正規表現トリガー**（iTerm2 の Triggers 相当）。上の通知基盤の上に。
+- ~~分割ペイン / ペインツリー~~ → **v1.2 で対応**（`PaneTree` + `PaneTreeView`）。
+- ~~ウィンドウ配置（Arrangement）~~ → **v1.2 で対応**（`ArrangementStore`）。
+- **Quake ウィンドウ。** v1.2 のグローバルホットキーは MVP（activate / hide トグルのみ）。
+  画面上端に貼るボーダレス + スライドインは未実装。
+- **通知・トリガーのプロファイル単位化。** v1.2 は `AppSettings` にグローバル。
+  `Profile.notify: NotifyPrefs` / `Profile.triggers: [Trigger]` へ移す。
+- **Snippets**（`⌘⇧V` パレット）、**設定 Import/Export/Reset**（Advanced ペイン）、
+  **外部ターミナル起動オプション**の復帰（`ExternalTerminal.swift` は dormant のまま）。
+- **`⌘M` 問題。** `maximizeTile` の既定 `⌘M` が macOS のウィンドウ最小化に飲まれる。別チョードへ。
 - 複数ウィンドウ、メニューバー常駐、Directory/Command 履歴 UI、SwiftTerm 2.x 系
   （Metal / インライン画像 / Sixel / 録画）。
 
@@ -151,12 +173,12 @@ gh release create vX.Y.Z dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 
 
 - ~~ダークモード非対応~~ → v1.1 で対応（動的トークン + `preferredColorScheme`）。
 - ~~ドラッグ並べ替え~~ → v1.1 で対応（`.onDrag`/`.onDrop` → `SessionStore.move`）。
-  **タイルの手動リサイズ**はペインツリー（v1.2）で。
-- ~~`cd` 追従（OSC 7）~~ → v1.1 で Humi 側注入（zsh/bash）。fish/カスタムは未対応。
+  ~~タイルの手動リサイズ~~ → v1.2 のペインツリーで分割線ドラッグに対応。
+- ~~`cd` 追従（OSC 7）~~ → v1.1 で Humi 側注入（zsh/bash）、**v1.2 で fish も対応**。カスタムは未対応。
 - **外部ターミナル連携。** `ExternalTerminal.swift` / `ExternalTerminalApp` / `AppSettings.externalTerminal`
   は dormant のまま。今のところ需要待ち。
-- **キーバインドのメニュー即時反映**（現状は再起動要）。`NSMenu` を自前管理するか、
-  `NSEvent` ローカルモニタで keymap を引く方式に。
+- ~~キーバインドのメニュー即時反映~~ → **v1.2 で動作は即時**（`KeymapStore.installLocalMonitor`）。
+  メニューの**表示**更新は依然再起動要。
 
 ### 優先度: 低
 - スクロールバック上限 200,000 行 × 多数セッションはメモリを食う。既定 10,000 は妥当。
