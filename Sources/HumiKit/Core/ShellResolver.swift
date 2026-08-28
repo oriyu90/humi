@@ -72,7 +72,9 @@ enum ShellResolver {
             return #"autoload -Uz add-zsh-hook 2>/dev/null; __humi_osc7(){ printf '\033]7;file://%s%s\033\\' "${HOST:-localhost}" "$PWD" }; add-zsh-hook precmd __humi_osc7 2>/dev/null || precmd_functions+=(__humi_osc7)"#
         case .bash:
             return #"__humi_osc7(){ printf '\033]7;file://%s%s\033\\' "${HOSTNAME:-localhost}" "$PWD"; }; case "$PROMPT_COMMAND" in *__humi_osc7*) ;; *) PROMPT_COMMAND="__humi_osc7${PROMPT_COMMAND:+; $PROMPT_COMMAND}";; esac"#
-        case .fish, .custom:
+        case .fish:
+            return #"function __humi_osc7 --on-event fish_prompt; printf '\033]7;file://%s%s\033\\' (hostname) "$PWD"; end"#
+        case .custom:
             return nil
         }
     }

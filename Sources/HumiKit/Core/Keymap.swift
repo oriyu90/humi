@@ -141,9 +141,27 @@ public final class KeymapStore: ObservableObject {
         .equalizeSplits: KeyChord(key: "=", modifiers: cmdOpt),
     ]
 
+    private var localMonitor: Any?
+
     private init() {
         if let saved = Persistence.decode([String: KeyChord].self, from: Self.fileName) {
             map = saved
+        }
+    }
+
+    /// Watch key-downs so a *rebound* chord takes effect without an app restart —
+    /// SwiftUI's `.commands` shortcuts only re-evaluate on relaunch. Chords still set to
+    /// their built-in default are left for the menu to handle (no double-invoke).
+    public func installLocalMonitor() {
+        guard localMonitor == nil else { return }
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, let chord = KeyChord.from(event: event) else { return event }
+            for action in HumiAction.allCases where self.chord(for: action) == chord {
+                if Self.defaults[action] == chord { return event }   // menu already covers it
+                NotificationCenter.default.post(name: action.notification, object: nil)
+                return nil
+            }
+            return event
         }
     }
 

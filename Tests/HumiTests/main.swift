@@ -104,6 +104,14 @@ suite("ShellResolver") {
     check(env.contains("TERM=xterm-256color"), "env: TERM set")
     check(env.contains(where: { $0.hasPrefix("LANG=") }), "env: LANG present")
     check(env.contains("TERM_PROGRAM=Humi"), "env: TERM_PROGRAM=Humi")
+
+    // OSC 7 snippets (v1.2: fish now covered)
+    check(ShellResolver.osc7Snippet(for: .zsh)?.contains("add-zsh-hook") == true, "osc7: zsh hook")
+    check(ShellResolver.osc7Snippet(for: .bash)?.contains("PROMPT_COMMAND") == true, "osc7: bash hook")
+    let fish = ShellResolver.osc7Snippet(for: .fish)
+    check(fish?.contains("--on-event fish_prompt") == true, "osc7: fish uses a fish_prompt event function")
+    check(fish?.contains("]7;file://") == true, "osc7: fish emits the OSC 7 sequence")
+    check(ShellResolver.osc7Snippet(for: .custom) == nil, "osc7: custom shell has no snippet")
 }
 
 // MARK: ShellResolver.startDirectory (deleted-folder fallback)

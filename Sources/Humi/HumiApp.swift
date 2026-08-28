@@ -32,6 +32,8 @@ struct HumiApp: App {
         AppSettings.shared.onTerminalPrefsChange = {
             TerminalRegistry.shared.applyTerminalPrefs()
         }
+        // Rebound shortcuts take effect immediately (menu shortcuts need a relaunch).
+        KeymapStore.shared.installLocalMonitor()
         // Global toggle hotkey (Carbon) — kept in sync with its pref.
         HotKeyCenter.bootstrap()
         // Notifications: route taps, and let terminals re-check watchers when prefs change.
