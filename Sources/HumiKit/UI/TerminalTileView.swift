@@ -117,7 +117,9 @@ struct TerminalTileView: View {
             onDirectory: { dir in
                 if let dir { store.updateWorkingDirectory(session.id, dir) }
             },
-            onExit: { code in store.markExited(session.id, code: code) }
+            onExit: { code in store.markExited(session.id, code: code) },
+            displayName: session.displayTitle,
+            onTriggerColor: { store.setAccentOverride(session.id, $0) }
         )
         .padding(.horizontal, max(6, CGFloat(settings.terminalMargin)))
         .padding(.vertical, max(4, CGFloat(settings.terminalMargin) * 0.66))

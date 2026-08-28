@@ -34,6 +34,11 @@ struct HumiApp: App {
         }
         // Global toggle hotkey (Carbon) — kept in sync with its pref.
         HotKeyCenter.bootstrap()
+        // Notifications: route taps, and let terminals re-check watchers when prefs change.
+        HumiNotifier.bootstrap()
+        AppSettings.shared.onAlertPrefsChange = {
+            TerminalRegistry.shared.refreshAlertWatchers()
+        }
     }
 
     var body: some Scene {

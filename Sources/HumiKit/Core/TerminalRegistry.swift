@@ -111,6 +111,11 @@ public final class TerminalRegistry {
         for (_, c) in controllers { c.applyTheme(theme, fontSize: size) }
     }
 
+    /// Re-evaluate notification / trigger watchers on every live terminal.
+    public func refreshAlertWatchers() {
+        for (_, c) in controllers { c.refreshAlertWatchers() }
+    }
+
     /// Re-apply terminal-behaviour prefs to every live terminal.
     public func applyTerminalPrefs() {
         let s = AppSettings.shared

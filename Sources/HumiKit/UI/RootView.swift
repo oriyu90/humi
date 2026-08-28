@@ -144,6 +144,9 @@ public struct RootView: View {
             )
         }
         .onReceive(actionPublisher) { note in handle(note) }
+        .onReceive(NotificationCenter.default.publisher(for: HumiNotifier.focusRequest)) { note in
+            if let id = note.object as? UUID { focusSpecificPane(id) }
+        }
         .alert(L("arrangement.save.title"), isPresented: $savingArrangement) {
             TextField(L("arrangement.save.prompt"), text: $arrangementName)
             Button(L("common.cancel"), role: .cancel) {}
@@ -257,6 +260,16 @@ public struct RootView: View {
             _ = store.split(besideLeaf: id, axis: axis,
                             workingDirectory: source.workingDirectory, profileID: source.profileID)
         }
+    }
+
+    /// Make a specific pane first responder (notification tap).
+    private func focusSpecificPane(_ id: UUID) {
+        guard let view = TerminalRegistry.shared.existing(id)?.terminalView,
+              let window = view.window else { return }
+        window.makeKeyAndOrderFront(nil)
+        window.makeFirstResponder(view)
+        TerminalRegistry.shared.noteFocused(id)
+        NotificationCenter.default.post(name: .humiFocusChanged, object: id)
     }
 
     /// ⌘⌃arrow — move keyboard focus to the neighbouring pane in that direction.

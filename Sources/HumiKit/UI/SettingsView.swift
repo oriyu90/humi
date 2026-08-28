@@ -14,6 +14,7 @@ public struct SettingsView: View {
             ProfilesPane().tabItem { Label(L("settings.tab.profiles"), systemImage: "person.crop.rectangle.stack") }
             ShortcutsPane().tabItem { Label(L("settings.tab.shortcuts"), systemImage: "keyboard") }
             StatusBarPane().tabItem { Label(L("settings.tab.statusbar"), systemImage: "menubar.rectangle") }
+            AlertsPane().tabItem { Label(L("settings.tab.alerts"), systemImage: "bell.badge") }
             ShellPane().tabItem { Label(L("settings.tab.shell"), systemImage: "chevron.left.forwardslash.chevron.right") }
         }
         .frame(width: 620, height: 480)

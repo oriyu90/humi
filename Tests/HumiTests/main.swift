@@ -694,6 +694,54 @@ MainActor.assumeIsolated {
     }
 }
 
+// MARK: OutputMonitor + Triggers (v1.2 phase D/E)
+
+suite("OutputMonitor") {
+    check(OutputMonitor.stripANSI("\u{1B}[31mred\u{1B}[0m") == "red", "stripANSI: CSI colour codes removed")
+    check(OutputMonitor.stripANSI("a\u{1B}]0;title\u{07}b") == "ab", "stripANSI: OSC sequence removed")
+    check(OutputMonitor.stripANSI("plain text") == "plain text", "stripANSI: plain text untouched")
+
+    var m = OutputMonitor()
+    check(m.ingest("no newline yet") == [], "ingest: buffers until a newline")
+    check(m.ingest(" still\nfirst done\n") == ["no newline yet still", "first done"],
+          "ingest: joins the buffered tail and splits completed lines")
+    check(m.ingest("carriage\r\nreturn\rlf\n") == ["carriage", "return", "lf"],
+          "ingest: CRLF and bare CR both split")
+    check(m.ingest("\u{1B}[32mBUILD OK\u{1B}[0m\n") == ["BUILD OK"], "ingest: strips ANSI from completed lines")
+}
+
+suite("Trigger + TriggerEngine") {
+    let t1 = Trigger(pattern: "ERROR|FAIL", action: TriggerAction(kind: .notify))
+    let t2 = Trigger(pattern: "warning:", action: TriggerAction(kind: .color, colorIndex: 2))
+    let disabled = Trigger(pattern: "never", action: TriggerAction(kind: .bell), enabled: false)
+    let bad = Trigger(pattern: "([", action: TriggerAction(kind: .bell))
+
+    let engine = TriggerEngine([t1, t2, disabled, bad])
+    check(!engine.isEmpty, "engine: keeps the valid enabled rows")
+    check(engine.matches("BUILD FAILED with 3 errors").map(\.id) == [t1.id], "engine: regex alternation matches")
+    check(engine.matches("main.swift:1: warning: unused").map(\.id) == [t2.id], "engine: second rule matches")
+    check(engine.matches("all good").isEmpty, "engine: non-matching line → nothing")
+    check(TriggerEngine([disabled, bad]).isEmpty, "engine: disabled + uncompilable rows → empty")
+
+    // codec round-trips through the flat action shape
+    let data = try! JSONEncoder().encode([t1, t2])
+    let back = try? JSONDecoder().decode([Trigger].self, from: data)
+    check(back == [t1, t2], "codec: Trigger list round-trips")
+    check((try? JSONDecoder().decode(TriggerAction.self, from: Data(#"{}"#.utf8)))?.kind == .notify,
+          "codec: empty action object defaults to .notify")
+}
+
+MainActor.assumeIsolated {
+    suite("AppSettings.triggers") {
+        let s = AppSettings.shared
+        let saved = s.triggers
+        s.triggers = [Trigger(pattern: "\\bpanic\\b", action: TriggerAction(kind: .bell))]
+        check(s.triggers.count == 1 && s.triggers[0].pattern == "\\bpanic\\b",
+              "triggers: persist via UserDefaults JSON")
+        s.triggers = saved
+    }
+}
+
 print("\n\(count - failures)/\(count) checks passed")
 if failures > 0 {
     print("FAILED")

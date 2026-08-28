@@ -18,6 +18,15 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
     var onTitle: ((String) -> Void)?
     var onDirectory: ((String?) -> Void)?
     var onExit: ((Int32?) -> Void)?
+    /// A trigger asked to recolour this tile (index into `Hum.accents`).
+    var onTriggerColor: ((Int) -> Void)?
+    /// Tile title for notification bodies; refreshed from the store.
+    var displayName: String = ""
+
+    private var childStartedAt: Date?
+    private var outputMonitor = OutputMonitor()
+    private var watchStrings: [String] = []
+    private var triggerEngine = TriggerEngine([])
 
     private var theme: Theme
     private var fontSize: CGFloat
@@ -74,6 +83,9 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
                        osc7Snippet: String? = nil) {
         guard !started else { return }
         started = true
+        childStartedAt = Date()
+        refreshAlertWatchers()
+        terminalView.onBell = { [weak self] in self?.handleBell() }
         currentDirectory = workingDirectory
         terminalView.startProcess(executable: invocation.executable,
                                   args: invocation.args,
@@ -101,6 +113,60 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
                 self.terminalView.send(txt: cmd + "\n")
             }
         }
+    }
+
+    // MARK: Alerts (notifications + output triggers)
+
+    /// Re-read the alert prefs and attach or detach the output watcher accordingly.
+    /// Called on start and whenever the prefs change.
+    func refreshAlertWatchers() {
+        let s = AppSettings.shared
+        watchStrings = s.notifyWatchStrings
+            .split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        triggerEngine = TriggerEngine(s.triggers)
+        let active = !watchStrings.isEmpty || !triggerEngine.isEmpty
+        terminalView.onOutput = active ? { [weak self] slice in self?.handleOutput(slice) } : nil
+    }
+
+    private var alertsAllowed: Bool {
+        !AppSettings.shared.notifyOnlyWhenInactive || !NSApp.isActive
+    }
+
+    private func handleBell() {
+        guard AppSettings.shared.notifyOnBell, alertsAllowed else { return }
+        HumiNotifier.shared.post(title: L("notify.bell"),
+                                 body: notifyBody(L("notify.bell.body")),
+                                 sessionID: sessionID)
+    }
+
+    private func handleOutput(_ slice: ArraySlice<UInt8>) {
+        let lines = outputMonitor.ingest(String(decoding: slice, as: UTF8.self))
+        guard !lines.isEmpty else { return }
+        for line in lines {
+            if !watchStrings.isEmpty,
+               watchStrings.contains(where: { line.localizedCaseInsensitiveContains($0) }),
+               alertsAllowed {
+                HumiNotifier.shared.post(title: L("notify.match"), body: line, sessionID: sessionID)
+            }
+            for trigger in triggerEngine.matches(line) {
+                switch trigger.action.kind {
+                case .notify:
+                    if alertsAllowed {
+                        HumiNotifier.shared.post(title: L("notify.match"), body: line, sessionID: sessionID)
+                    }
+                case .bell:
+                    NSSound.beep()
+                case .color:
+                    onTriggerColor?(trigger.action.colorIndex)
+                }
+            }
+        }
+    }
+
+    private func notifyBody(_ fallback: String) -> String {
+        displayName.isEmpty ? fallback : "\(displayName) — \(fallback)"
     }
 
     // MARK: Search (⌘F)
@@ -267,8 +333,19 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
         let code = exitCode
         Task { @MainActor in
             self.exited = true
+            self.notifyLongRunExitIfNeeded()
             self.onExit?(code)
         }
+    }
+
+    private func notifyLongRunExitIfNeeded() {
+        let s = AppSettings.shared
+        guard s.notifyProcessExit, let started = childStartedAt else { return }
+        let elapsed = Date().timeIntervalSince(started)
+        guard elapsed >= Double(s.notifyProcessExitThreshold), alertsAllowed else { return }
+        HumiNotifier.shared.post(title: L("notify.process_done"),
+                                 body: notifyBody(L("notify.process_done.body", Int(elapsed))),
+                                 sessionID: sessionID)
     }
 }
 

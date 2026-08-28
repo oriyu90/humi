@@ -11,6 +11,8 @@ struct TerminalEmulatorView: NSViewRepresentable {
     var onTitle: (String) -> Void
     var onDirectory: (String?) -> Void
     var onExit: (Int32?) -> Void
+    var displayName: String = ""
+    var onTriggerColor: (Int) -> Void = { _ in }
 
     func makeNSView(context: Context) -> ContainerView {
         let container = ContainerView()
@@ -28,6 +30,8 @@ struct TerminalEmulatorView: NSViewRepresentable {
         controller.onTitle = onTitle
         controller.onDirectory = onDirectory
         controller.onExit = onExit
+        controller.onTriggerColor = onTriggerColor
+        controller.displayName = displayName
         container.host(controller.terminalView)
     }
 

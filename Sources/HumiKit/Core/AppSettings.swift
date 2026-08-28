@@ -69,6 +69,9 @@ public final class AppSettings: ObservableObject {
     public var onTerminalPrefsChange: (() -> Void)?
     /// Called after the global hotkey pref changes so the Carbon registration is redone.
     public var onGlobalHotkeyChange: (() -> Void)?
+    /// Called after a notification / output-trigger pref changes so live terminals
+    /// re-evaluate whether they need an output watcher.
+    public var onAlertPrefsChange: (() -> Void)?
 
     private init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -103,6 +106,10 @@ public final class AppSettings: ObservableObject {
             Keys.statusClock: true,
             Keys.statusProcess: false,
             Keys.globalHotkeyEnabled: false,
+            Keys.notifyProcessExit: false,
+            Keys.notifyProcessExitThreshold: 30,
+            Keys.notifyOnBell: false,
+            Keys.notifyOnlyWhenInactive: true,
         ])
         Localization.shared.apply(appLanguage)
     }
@@ -139,6 +146,12 @@ public final class AppSettings: ObservableObject {
         static let statusProcess = "statusProcess"
         static let globalHotkeyEnabled = "globalHotkeyEnabled"
         static let globalHotkeyChord = "globalHotkeyChord"
+        static let notifyProcessExit = "notifyProcessExit"
+        static let notifyProcessExitThreshold = "notifyProcessExitThreshold"
+        static let notifyOnBell = "notifyOnBell"
+        static let notifyOnlyWhenInactive = "notifyOnlyWhenInactive"
+        static let notifyWatchStrings = "notifyWatchStrings"
+        static let triggers = "outputTriggers"
     }
 
     private func set<T>(_ value: T, _ key: String) {
@@ -287,6 +300,43 @@ public final class AppSettings: ObservableObject {
             let s = (try? JSONEncoder().encode(newValue)).flatMap { String(data: $0, encoding: .utf8) } ?? ""
             set(s, Keys.globalHotkeyChord)
             onGlobalHotkeyChange?()
+        }
+    }
+
+    // MARK: v1.2 — notifications + output triggers
+
+    var notifyProcessExit: Bool {
+        get { defaults.bool(forKey: Keys.notifyProcessExit) }
+        set { set(newValue, Keys.notifyProcessExit); onAlertPrefsChange?() }
+    }
+    var notifyProcessExitThreshold: Int {
+        get { max(1, defaults.integer(forKey: Keys.notifyProcessExitThreshold)) }
+        set { set(min(max(newValue, 1), 3600), Keys.notifyProcessExitThreshold) }
+    }
+    var notifyOnBell: Bool {
+        get { defaults.bool(forKey: Keys.notifyOnBell) }
+        set { set(newValue, Keys.notifyOnBell); onAlertPrefsChange?() }
+    }
+    var notifyOnlyWhenInactive: Bool {
+        get { defaults.bool(forKey: Keys.notifyOnlyWhenInactive) }
+        set { set(newValue, Keys.notifyOnlyWhenInactive) }
+    }
+    /// Newline-separated substrings; a completed output line containing any of them fires
+    /// a notification.
+    var notifyWatchStrings: String {
+        get { defaults.string(forKey: Keys.notifyWatchStrings) ?? "" }
+        set { set(newValue, Keys.notifyWatchStrings); onAlertPrefsChange?() }
+    }
+    var triggers: [Trigger] {
+        get {
+            guard let s = defaults.string(forKey: Keys.triggers), let data = s.data(using: .utf8),
+                  let list = try? JSONDecoder().decode([Trigger].self, from: data) else { return [] }
+            return list
+        }
+        set {
+            let s = (try? JSONEncoder().encode(newValue)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
+            set(s, Keys.triggers)
+            onAlertPrefsChange?()
         }
     }
 
