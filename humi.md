@@ -36,16 +36,20 @@ bash Scripts/build-app.sh release
 # 4. 動作確認（TEST_PLAN の手動項目）
 open dist/Humi.app
 
-# 5. 配布アーカイブ + チェックサム
-cd dist && ditto -c -k --sequesterRsrc --keepParent Humi.app Humi-X.Y.Z.app.zip
+# 5. 配布アーカイブ + チェックサム（DMG が主、zip も従来どおり添付）
+bash Scripts/make-dmg.sh          # dist/Humi-X.Y.Z.dmg（Applications シンボリックリンク入り）
+cd dist && shasum -a 256 Humi-X.Y.Z.dmg > Humi-X.Y.Z.dmg.sha256
+ditto -c -k --sequesterRsrc --keepParent Humi.app Humi-X.Y.Z.app.zip
 shasum -a 256 Humi-X.Y.Z.app.zip > Humi-X.Y.Z.app.zip.sha256 && cd ..
 
 # 6. コミット・タグ・push
 git tag -a vX.Y.Z -m "Humi vX.Y.Z"
 git push origin main && git push origin vX.Y.Z
 
-# 7. GitHub Release（zip + sha256 を添付）
-gh release create vX.Y.Z dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 \
+# 7. GitHub Release（dmg + zip + それぞれの sha256 を添付。dmg が主）
+gh release create vX.Y.Z \
+  dist/Humi-X.Y.Z.dmg dist/Humi-X.Y.Z.dmg.sha256 \
+  dist/Humi-X.Y.Z.app.zip dist/Humi-X.Y.Z.app.zip.sha256 \
   --title "Humi vX.Y.Z" --notes-file docs/RELEASE_NOTES_vX.Y.Z.md
 
 # 8. 紹介サイト（common-rules ルール1: 実装完了後の最終工程）

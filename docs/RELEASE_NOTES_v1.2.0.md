@@ -32,11 +32,13 @@ notifications, and regex output triggers.
 - `⌥⌘←→` は引き続き「順送り」でペインを移動。方向指定のフォーカス移動は `⌘⌃` + 矢印。
 
 ### 動作環境・インストール
-macOS 14 以降、ad-hoc 署名（公証なし）。`Humi-1.2.0.app.zip` を展開して置き換えてください。
-初回起動は「システム設定 › プライバシーとセキュリティ」から許可。通知は初回利用時に許可を求めます。
+macOS 14 以降、ad-hoc 署名（公証なし）。`Humi-1.2.0.dmg` を開き、`Humi.app` を Applications へドラッグ
+（`Humi-1.2.0.app.zip` も従来どおり添付）。初回起動は「システム設定 › プライバシーとセキュリティ」から許可。
+通知は初回利用時に許可を求めます。
 
 ### チェックサム
 ```
+SHA-256 (Humi-1.2.0.dmg)     = 6613668b00d47710f7559a80582f241ac94b25f7f763e4f6e3ade4cc42a247fe
 SHA-256 (Humi-1.2.0.app.zip) = 3c63a872edf20c1352fb63a7bf804697581d01e81553d7c3979fa04a77b7de45
 ```
 
@@ -71,11 +73,13 @@ SHA-256 (Humi-1.2.0.app.zip) = 3c63a872edf20c1352fb63a7bf804697581d01e81553d7c39
 - `⌥⌘←→` still cycles panes in visual order; directional focus is `⌘⌃` + arrows.
 
 ### Requirements / install
-macOS 14+, ad-hoc signed (not notarized). Unzip `Humi-1.2.0.app.zip` and replace.
-On first launch, allow it in System Settings › Privacy & Security. Notifications ask
-for permission the first time they're used.
+macOS 14+, ad-hoc signed (not notarized). Open `Humi-1.2.0.dmg` and drag `Humi.app`
+to Applications (`Humi-1.2.0.app.zip` is also attached). On first launch, allow it in
+System Settings › Privacy & Security. Notifications ask for permission the first time
+they're used.
 
 ### Checksum
 ```
+SHA-256 (Humi-1.2.0.dmg)     = 6613668b00d47710f7559a80582f241ac94b25f7f763e4f6e3ade4cc42a247fe
 SHA-256 (Humi-1.2.0.app.zip) = 3c63a872edf20c1352fb63a7bf804697581d01e81553d7c3979fa04a77b7de45
 ```
