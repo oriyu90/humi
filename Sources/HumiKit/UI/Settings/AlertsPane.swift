@@ -49,26 +49,37 @@ struct AlertsPane: View {
     @ViewBuilder
     private func triggerRow(_ trigger: Trigger) -> some View {
         HStack(spacing: Hum.Space.sm) {
-            Toggle("", isOn: binding(trigger, \.enabled)).labelsHidden()
+            Toggle("", isOn: binding(trigger, \.enabled))
+                .labelsHidden()
+                .accessibilityLabel(L("alerts.triggers.enabled"))
             TextField(L("alerts.triggers.pattern"), text: binding(trigger, \.pattern))
                 .font(Hum.Font.mono(12))
                 .frame(minWidth: 160)
+                .accessibilityLabel(L("alerts.triggers.pattern"))
             Picker("", selection: binding(trigger, \.action.kind)) {
                 Text(L("alerts.triggers.action.notify")).tag(TriggerAction.Kind.notify)
                 Text(L("alerts.triggers.action.bell")).tag(TriggerAction.Kind.bell)
                 Text(L("alerts.triggers.action.color")).tag(TriggerAction.Kind.color)
             }
             .labelsHidden().frame(width: 110)
+            .accessibilityLabel(L("alerts.section.triggers"))
             if trigger.action.kind == .color {
                 Stepper(value: binding(trigger, \.action.colorIndex), in: 0...(Hum.accents.count - 1)) {
-                    Circle().fill(Hum.accent(trigger.action.colorIndex).tint).frame(width: 12, height: 12)
+                    HStack(spacing: 4) {
+                        Circle().fill(Hum.accent(trigger.action.colorIndex).tint).frame(width: 12, height: 12)
+                        Text(Hum.accentName(trigger.action.colorIndex)).font(Hum.Font.body(11))
+                    }
                 }
-                .labelsHidden()
+                .accessibilityLabel(Hum.accentName(trigger.action.colorIndex))
             }
             Button(role: .destructive) {
                 settings.triggers.removeAll { $0.id == trigger.id }
-            } label: { Image(systemName: "trash") }
+            } label: {
+                Image(systemName: "trash").frame(width: 26, height: 26).contentShape(Rectangle())
+            }
             .buttonStyle(.plain)
+            .help(L("alerts.triggers.remove"))
+            .accessibilityLabel(L("alerts.triggers.remove"))
         }
     }
 

@@ -9,6 +9,8 @@ public enum HumiAction: String, CaseIterable, Codable, Identifiable, Sendable {
     case splitH, splitV
     case focusPaneLeft, focusPaneRight, focusPaneUp, focusPaneDown
     case equalizeSplits
+    // v1.3 — keyboard pane resize
+    case growPane, shrinkPane
 
     public var id: String { rawValue }
 
@@ -34,6 +36,8 @@ public enum HumiAction: String, CaseIterable, Codable, Identifiable, Sendable {
         case .focusPaneUp:     return .humiFocusPaneUp
         case .focusPaneDown:   return .humiFocusPaneDown
         case .equalizeSplits:  return .humiEqualizeSplits
+        case .growPane:        return .humiGrowPane
+        case .shrinkPane:      return .humiShrinkPane
         }
     }
 
@@ -122,7 +126,7 @@ public final class KeymapStore: ObservableObject {
         .newSession:   KeyChord(key: "n", modifiers: cmd),
         .closeTile:    KeyChord(key: "w", modifiers: cmd),
         .restartTile:  KeyChord(key: "r", modifiers: cmd),
-        .maximizeTile: KeyChord(key: "m", modifiers: cmd),
+        .maximizeTile: KeyChord(key: "m", modifiers: cmdCtrl),   // ⌘M is swallowed by macOS window-minimize
         .clearBuffer:  KeyChord(key: "k", modifiers: cmd),
         .find:         KeyChord(key: "f", modifiers: cmd),
         .fontIn:       KeyChord(key: "+", modifiers: cmd),
@@ -139,6 +143,8 @@ public final class KeymapStore: ObservableObject {
         .focusPaneUp:    KeyChord(key: "up", modifiers: cmdCtrl),
         .focusPaneDown:  KeyChord(key: "down", modifiers: cmdCtrl),
         .equalizeSplits: KeyChord(key: "=", modifiers: cmdOpt),
+        .growPane:       KeyChord(key: "]", modifiers: cmdCtrl),
+        .shrinkPane:     KeyChord(key: "[", modifiers: cmdCtrl),
     ]
 
     private var localMonitor: Any?

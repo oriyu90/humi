@@ -199,6 +199,10 @@
 "key.action.focusPaneUp" = "Enfocar panel superior";
 "key.action.focusPaneDown" = "Enfocar panel inferior";
 "key.action.equalizeSplits" = "Igualar divisiones";
+"key.action.growPane" = "Ampliar panel";
+"key.action.shrinkPane" = "Reducir panel";
+"alerts.triggers.remove" = "Eliminar disparador";
+"alerts.triggers.enabled" = "Disparador activado";
 "arrangement.save" = "Guardar disposición…";
 "arrangement.restore" = "Restaurar disposición";
 "arrangement.none" = "No hay disposiciones guardadas";

@@ -77,6 +77,8 @@ struct HumiApp: App {
                 Divider()
                 actionButton(.splitH, "key.action.splitH")
                 actionButton(.splitV, "key.action.splitV")
+                actionButton(.growPane, "key.action.growPane")
+                actionButton(.shrinkPane, "key.action.shrinkPane")
                 actionButton(.equalizeSplits, "key.action.equalizeSplits")
                 Divider()
                 actionButton(.maximizeTile, "tile.maximize")

@@ -158,6 +158,13 @@ final class SessionStore: ObservableObject {
         persist()
     }
 
+    /// Keyboard resize (⌃⌘] / ⌃⌘[): grow or shrink the pane holding `id`.
+    func nudgePaneRatio(forLeaf id: UUID, by delta: CGFloat) {
+        guard let layout else { return }
+        self.layout = layout.adjustingRatio(forLeaf: id, delta: delta)
+        persist()
+    }
+
     /// Geometry-based directional focus target for the pane `id`, or `nil` at an edge.
     func paneNeighbor(of id: UUID, _ direction: Direction) -> UUID? {
         layout?.focusNeighbor(of: id, direction: direction)

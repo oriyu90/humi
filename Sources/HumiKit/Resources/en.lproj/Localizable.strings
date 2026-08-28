@@ -199,6 +199,10 @@
 "key.action.focusPaneUp" = "Focus pane up";
 "key.action.focusPaneDown" = "Focus pane down";
 "key.action.equalizeSplits" = "Equalize splits";
+"key.action.growPane" = "Grow pane";
+"key.action.shrinkPane" = "Shrink pane";
+"alerts.triggers.remove" = "Remove trigger";
+"alerts.triggers.enabled" = "Trigger enabled";
 "arrangement.save" = "Save Arrangement…";
 "arrangement.restore" = "Restore Arrangement";
 "arrangement.none" = "No saved arrangements";

@@ -173,6 +173,36 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
         }
     }
 
+    /// Nudge the pane containing leaf `id` larger (`delta > 0`) or smaller by moving the
+    /// divider it shares with an adjacent sibling. The pair's combined share is preserved
+    /// and each side stays within 5–95 % of it. Used by keyboard resize.
+    func adjustingRatio(forLeaf id: UUID, delta: CGFloat) -> PaneNode {
+        _adjustRatio(forLeaf: id, delta: delta).normalized()
+    }
+
+    private func _adjustRatio(forLeaf id: UUID, delta: CGFloat) -> PaneNode {
+        switch self {
+        case .leaf:
+            return self
+        case .split(let axis, var children, var ratios):
+            if let idx = children.firstIndex(of: .leaf(id)), children.count >= 2 {
+                let a = idx + 1 < children.count ? idx : idx - 1   // left/top index of the pair
+                let b = a + 1
+                let pairSum = ratios[a] + ratios[b]
+                var ra = ratios[a] + (idx == a ? delta : -delta)
+                ra = min(max(ra, 0.05 * pairSum), 0.95 * pairSum)
+                ratios[a] = ra
+                ratios[b] = pairSum - ra
+                return .split(axis: axis, children: children, ratios: ratios)
+            }
+            for j in children.indices where children[j].contains(id) {
+                children[j] = children[j]._adjustRatio(forLeaf: id, delta: delta)
+                break
+            }
+            return .split(axis: axis, children: children, ratios: ratios)
+        }
+    }
+
     /// Even out every split so all children of each split share its length equally.
     func equalized() -> PaneNode {
         switch self {

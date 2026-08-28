@@ -33,12 +33,18 @@ struct TerminalTileView: View {
         .background(Hum.paper)
         .overlay(
             RoundedRectangle(cornerRadius: Hum.Radius.tile, style: .continuous)
-                .strokeBorder((isMaximized || isFocused) ? accent.edge.opacity(0.9) : Hum.hairline,
-                              lineWidth: (isMaximized || isFocused) ? 2 : 1)
+                .strokeBorder(isMaximized ? accent.edge.opacity(0.9) : Hum.hairline,
+                              lineWidth: isMaximized ? 2 : 1)
+        )
+        // Hallmark: the focused pane gets a dedicated high-contrast ring, not the accent.
+        .overlay(
+            RoundedRectangle(cornerRadius: Hum.Radius.tile, style: .continuous)
+                .strokeBorder(Hum.focusRing, lineWidth: Hum.increaseContrast ? 4 : 3)
+                .opacity(isFocused ? 1 : 0)
         )
         .background(
             RoundedRectangle(cornerRadius: Hum.Radius.tile, style: .continuous)
-                .fill(accent.tint.opacity(hovering ? 0.12 : 0.06))
+                .fill(accent.tint.opacity(Hum.tileTintOpacity(hovering: hovering)))
         )
         .clipShape(RoundedRectangle(cornerRadius: Hum.Radius.tile, style: .continuous))
         .shadow(color: Hum.ink.opacity(hovering ? 0.14 : 0.08),
@@ -194,14 +200,35 @@ struct TerminalTileView: View {
     }
 
     private func tileButton(_ systemName: String, label: String, action: @escaping () -> Void) -> some View {
+        TileIconButton(systemName: systemName, label: label, action: action)
+    }
+}
+
+/// A title-bar icon control with the Hallmark states: hover fill, keyboard focus ring,
+/// a comfortable 26pt target. `.help` + `.accessibilityLabel` carry the name.
+private struct TileIconButton: View {
+    let systemName: String
+    let label: String
+    let action: () -> Void
+
+    @State private var hovering = false
+    @FocusState private var focused: Bool
+
+    var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Hum.ink2)
-                .frame(width: 22, height: 22)
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(Hum.paper3).opacity(hovering ? 1 : 0))
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .focusable(true)
+        .focused($focused)
+        .humFocusRing(focused, cornerRadius: 13)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.1), value: hovering)
         .help(label)
         .accessibilityLabel(label)
     }

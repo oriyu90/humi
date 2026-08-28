@@ -29,6 +29,8 @@ public extension Notification.Name {
     static let humiFocusPaneUp = Notification.Name("humi.focusPaneUp")
     static let humiFocusPaneDown = Notification.Name("humi.focusPaneDown")
     static let humiEqualizeSplits = Notification.Name("humi.equalizeSplits")
+    static let humiGrowPane = Notification.Name("humi.growPane")
+    static let humiShrinkPane = Notification.Name("humi.shrinkPane")
     /// Posted (object: session UUID) when a terminal becomes the working terminal.
     /// Not a user action — drives the pane focus ring, so it's kept out of `humiAllActions`.
     static let humiFocusChanged = Notification.Name("humi.focusChanged")
@@ -39,6 +41,7 @@ public extension Notification.Name {
         .humiToggleNotes, .humiProfileLauncher,
         .humiSplitH, .humiSplitV, .humiFocusPaneLeft, .humiFocusPaneRight,
         .humiFocusPaneUp, .humiFocusPaneDown, .humiEqualizeSplits,
+        .humiGrowPane, .humiShrinkPane,
         .humiSaveArrangement, .humiRestoreArrangement,
     ]
 }
@@ -215,6 +218,8 @@ public struct RootView: View {
         case .humiFocusPaneDown:  focusPane(.down)
         case .humiEqualizeSplits:
             withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) { store.equalizeSplits() }
+        case .humiGrowPane:   nudgeFocusedPane(by: 0.03)
+        case .humiShrinkPane: nudgeFocusedPane(by: -0.03)
         case .humiSaveArrangement:
             arrangementName = ""
             savingArrangement = true
@@ -259,6 +264,15 @@ public struct RootView: View {
         withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
             _ = store.split(besideLeaf: id, axis: axis,
                             workingDirectory: source.workingDirectory, profileID: source.profileID)
+        }
+    }
+
+    /// ⌃⌘] / ⌃⌘[ — grow / shrink the focused pane.
+    private func nudgeFocusedPane(by delta: CGFloat) {
+        let id = TerminalRegistry.shared.focusedController()?.sessionID ?? store.layout?.leaves().first
+        guard let id else { return }
+        withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) {
+            store.nudgePaneRatio(forLeaf: id, by: delta)
         }
     }
 

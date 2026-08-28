@@ -814,6 +814,69 @@ MainActor.assumeIsolated {
             ])
         let (mats, matLayout) = ArrangementStore.shared.materialize(arr)
         check(mats.count == 1 && matLayout.leaves().count == 1, "S7: out-of-tree LeafSpec dropped on materialize")
+
+        // R1: ⌘M default moved to ⌃⌘M (macOS eats plain ⌘M)
+        let km = KeymapStore.shared
+        km.resetAll()
+        check(km.chord(for: .maximizeTile) == KeyChord(key: "m", modifiers: KeymapStore.cmdCtrl),
+              "R1: maximizeTile default is ⌃⌘M")
+        check(km.chord(for: .growPane).display == "⌃⌘]", "H5: growPane default ⌃⌘]")
+        check(km.chord(for: .shrinkPane).display == "⌃⌘[", "H5: shrinkPane default ⌃⌘[")
+        for a: HumiAction in [.growPane, .shrinkPane, .maximizeTile] {
+            check(km.conflicts(km.chord(for: a), excluding: a).isEmpty, "\(a.rawValue) default doesn't collide")
+        }
+    }
+
+    suite("PaneTree.adjustingRatio (H5)") {
+        let a = UUID(), b = UUID(), c = UUID()
+        let row = PaneNode.split(axis: .horizontal, children: [.leaf(a), .leaf(b), .leaf(c)],
+                                 ratios: [1.0/3, 1.0/3, 1.0/3])
+        func approx(_ x: CGFloat, _ y: CGFloat) -> Bool { abs(x - y) < 0.001 }
+
+        if case .split(_, _, let r) = row.adjustingRatio(forLeaf: a, delta: 0.1) {
+            check(approx(r[0], 1.0/3 + 0.1), "grow: target pane gains delta")
+            check(approx(r[1], 1.0/3 - 0.1), "grow: its neighbour loses delta")
+            check(approx(r[2], 1.0/3), "grow: other siblings untouched")
+        } else { check(false, "adjustingRatio: still a split") }
+
+        // last child grows against the divider on its left
+        if case .split(_, _, let r) = row.adjustingRatio(forLeaf: c, delta: 0.1) {
+            check(approx(r[2], 1.0/3 + 0.1) && approx(r[1], 1.0/3 - 0.1), "grow: last pane uses the left divider")
+        } else { check(false, "adjustingRatio: last child still a split") }
+
+        // clamp: can't shove a neighbour below 5% of the pair
+        if case .split(_, _, let r) = row.adjustingRatio(forLeaf: a, delta: 5) {
+            check(r[0] / (r[0] + r[1]) <= 0.95 + 0.001, "grow: clamped at 95% of the pair")
+        } else { check(false, "adjustingRatio: clamp still a split") }
+
+        check(PaneNode.leaf(a).adjustingRatio(forLeaf: a, delta: 0.1) == .leaf(a), "adjustingRatio: bare leaf is a no-op")
+    }
+}
+
+// MARK: v1.3 Hallmark — palette contrast
+
+suite("Contrast (WCAG)") {
+    // sanity on the math
+    check(abs(Hum.contrastRatio(0xFFFFFF, 0x000000) - 21.0) < 0.1, "contrast: white/black ≈ 21")
+    check(abs(Hum.contrastRatio(0x777777, 0x777777) - 1.0) < 0.001, "contrast: same colour = 1")
+
+    let R = Hum.RGB.self
+    // (name, fg, bg, minimum). Body text ≥ 4.5, large/secondary ≥ 3.0, non-text ≥ 3.0.
+    let pairs: [(String, UInt32, UInt32, Double)] = [
+        ("ink / paper (light)",       R.inkL,  R.paperL,  4.5),
+        ("ink / paper (dark)",        R.inkD,  R.paperD,  4.5),
+        ("ink / paper2 (light)",      R.inkL,  R.paper2L, 4.5),
+        ("ink / paper2 (dark)",       R.inkD,  R.paper2D, 4.5),
+        ("ink2 / paper (light)",      R.ink2L, R.paperL,  4.5),
+        ("ink2 / paper (dark)",       R.ink2D, R.paperD,  4.5),
+        ("ink2 / paper2 (light)",     R.ink2L, R.paper2L, 4.0),
+        ("ink2 / paper2 (dark)",      R.ink2D, R.paper2D, 4.0),
+        ("focusRing / paper (light)", R.focusRingL, R.paperL, 3.0),
+        ("focusRing / paper (dark)",  R.focusRingD, R.paperD, 3.0),
+    ]
+    for (name, fg, bg, minRatio) in pairs {
+        let r = Hum.contrastRatio(fg, bg)
+        check(r >= minRatio, "\(name): \(String(format: "%.2f", r)) ≥ \(minRatio)")
     }
 }
 

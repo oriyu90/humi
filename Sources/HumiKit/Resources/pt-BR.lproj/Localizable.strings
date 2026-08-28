@@ -199,6 +199,10 @@
 "key.action.focusPaneUp" = "Focar painel acima";
 "key.action.focusPaneDown" = "Focar painel abaixo";
 "key.action.equalizeSplits" = "Igualar divisões";
+"key.action.growPane" = "Aumentar painel";
+"key.action.shrinkPane" = "Reduzir painel";
+"alerts.triggers.remove" = "Remover gatilho";
+"alerts.triggers.enabled" = "Gatilho ativado";
 "arrangement.save" = "Salvar disposição…";
 "arrangement.restore" = "Restaurar disposição";
 "arrangement.none" = "Nenhuma disposição salva";

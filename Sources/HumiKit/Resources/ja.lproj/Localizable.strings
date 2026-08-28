@@ -199,6 +199,10 @@
 "key.action.focusPaneUp" = "上のペインへ";
 "key.action.focusPaneDown" = "下のペインへ";
 "key.action.equalizeSplits" = "分割を均等化";
+"key.action.growPane" = "ペインを広げる";
+"key.action.shrinkPane" = "ペインを狭める";
+"alerts.triggers.remove" = "トリガーを削除";
+"alerts.triggers.enabled" = "トリガー有効";
 "arrangement.save" = "配置を保存…";
 "arrangement.restore" = "配置を復元";
 "arrangement.none" = "保存された配置はありません";

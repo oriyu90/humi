@@ -199,6 +199,10 @@
 "key.action.focusPaneUp" = "聚焦上方窗格";
 "key.action.focusPaneDown" = "聚焦下方窗格";
 "key.action.equalizeSplits" = "平均分配窗格";
+"key.action.growPane" = "扩大窗格";
+"key.action.shrinkPane" = "缩小窗格";
+"alerts.triggers.remove" = "删除触发器";
+"alerts.triggers.enabled" = "启用触发器";
 "arrangement.save" = "保存布局…";
 "arrangement.restore" = "恢复布局";
 "arrangement.none" = "没有已保存的布局";

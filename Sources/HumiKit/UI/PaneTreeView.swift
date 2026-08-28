@@ -124,39 +124,65 @@ struct PaneTreeView: View {
 
 /// A single split boundary. A thin visible rule inside a wider transparent hit area;
 /// dragging reports the earlier pane's new fraction of the resized pair (0.05–0.95).
+/// The resize cursor comes from an `NSTrackingArea` (`ResizeCursorArea`) so it can never
+/// leak a pushed cursor when the tree restructures under the pointer.
 private struct DividerHandle: View {
     let spec: PaneNode.DividerSpec
     let coordinateSpace: String
     var onChange: (CGFloat) -> Void
 
+    @State private var hovering = false
+    @State private var dragging = false
+
     private var isHorizontal: Bool { spec.axis == .horizontal }
+    private var active: Bool { hovering || dragging }
 
     var body: some View {
         ZStack {
-            Rectangle().fill(Color.clear).contentShape(Rectangle())
+            ResizeCursorArea(horizontal: isHorizontal)
             Rectangle()
-                .fill(Hum.hairline)
-                .frame(width: isHorizontal ? 1 : spec.rect.width,
-                       height: isHorizontal ? spec.rect.height : 1)
+                .fill(active ? Hum.ink2 : Hum.hairline)
+                .frame(width: isHorizontal ? (active ? 2 : 1) : spec.rect.width,
+                       height: isHorizontal ? spec.rect.height : (active ? 2 : 1))
         }
         .frame(width: spec.rect.width, height: spec.rect.height)
         .position(x: spec.rect.midX, y: spec.rect.midY)
-        .onHover { inside in
-            if inside {
-                (isHorizontal ? NSCursor.resizeLeftRight : NSCursor.resizeUpDown).push()
-            } else {
-                NSCursor.pop()
-            }
-        }
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.1), value: active)
         .gesture(
             DragGesture(minimumDistance: 1, coordinateSpace: .named(coordinateSpace))
                 .onChanged { value in
+                    dragging = true
                     let p = spec.pairRect
                     let fraction = isHorizontal
                         ? (value.location.x - p.minX) / max(1, p.width)
                         : (value.location.y - p.minY) / max(1, p.height)
                     onChange(min(max(fraction, 0.05), 0.95))
                 }
+                .onEnded { _ in dragging = false }
         )
+    }
+}
+
+/// A transparent AppKit view that owns a tracking area and sets the resize cursor while
+/// the pointer is inside. When SwiftUI removes it, the tracking area goes with it — no
+/// `NSCursor.push()`/`pop()` bookkeeping to get unbalanced.
+private struct ResizeCursorArea: NSViewRepresentable {
+    let horizontal: Bool
+
+    func makeNSView(context: Context) -> NSView { CursorView(cursor: cursor) }
+    func updateNSView(_ nsView: NSView, context: Context) {
+        (nsView as? CursorView)?.cursor = cursor
+    }
+    private var cursor: NSCursor { horizontal ? .resizeLeftRight : .resizeUpDown }
+
+    final class CursorView: NSView {
+        var cursor: NSCursor
+        init(cursor: NSCursor) { self.cursor = cursor; super.init(frame: .zero) }
+        required init?(coder: NSCoder) { fatalError() }
+
+        override func resetCursorRects() {
+            addCursorRect(bounds, cursor: cursor)
+        }
     }
 }
