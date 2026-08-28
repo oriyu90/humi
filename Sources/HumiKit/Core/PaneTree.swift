@@ -128,6 +128,12 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
         return _mapLeaves { $0 == a ? b : ($0 == b ? a : $0) }
     }
 
+    /// Return a copy with every leaf id replaced via `map` (ids absent from `map` are
+    /// kept). Used when materializing a saved arrangement into fresh sessions.
+    func remappingLeaves(_ map: [UUID: UUID]) -> PaneNode {
+        _mapLeaves { map[$0] ?? $0 }
+    }
+
     private func _mapLeaves(_ transform: (UUID) -> UUID) -> PaneNode {
         switch self {
         case .leaf(let id):

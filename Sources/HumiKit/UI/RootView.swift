@@ -18,6 +18,9 @@ public extension Notification.Name {
     static let humiMaximizeTile = Notification.Name("humi.maximizeTile")
     static let humiToggleNotes = Notification.Name("humi.toggleNotes")
     static let humiProfileLauncher = Notification.Name("humi.profileLauncher")
+    // v1.2 — arrangements (menu-driven; object carries the arrangement UUID on restore)
+    static let humiSaveArrangement = Notification.Name("humi.saveArrangement")
+    static let humiRestoreArrangement = Notification.Name("humi.restoreArrangement")
     // v1.2 — pane tree
     static let humiSplitH = Notification.Name("humi.splitH")
     static let humiSplitV = Notification.Name("humi.splitV")
@@ -36,6 +39,7 @@ public extension Notification.Name {
         .humiToggleNotes, .humiProfileLauncher,
         .humiSplitH, .humiSplitV, .humiFocusPaneLeft, .humiFocusPaneRight,
         .humiFocusPaneUp, .humiFocusPaneDown, .humiEqualizeSplits,
+        .humiSaveArrangement, .humiRestoreArrangement,
     ]
 }
 
@@ -48,10 +52,14 @@ public struct RootView: View {
     @ObservedObject private var loc = Localization.shared
     @ObservedObject private var themes = ThemeStore.shared
     @ObservedObject private var profiles = ProfileStore.shared
+    @ObservedObject private var arrangements = ArrangementStore.shared
 
     @State private var showingNewSheet = false
     @State private var pendingFolder: String?
     @State private var searchVisible = false
+    @State private var savingArrangement = false
+    @State private var restoringArrangement = false
+    @State private var arrangementName = ""
     @Environment(\.scenePhase) private var scenePhase
 
     public var body: some View {
@@ -135,7 +143,23 @@ public struct RootView: View {
                 onCancel: { showingNewSheet = false }
             )
         }
-        .onReceive(actionPublisher) { note in handle(note.name) }
+        .onReceive(actionPublisher) { note in handle(note) }
+        .alert(L("arrangement.save.title"), isPresented: $savingArrangement) {
+            TextField(L("arrangement.save.prompt"), text: $arrangementName)
+            Button(L("common.cancel"), role: .cancel) {}
+            Button(L("arrangement.save")) { saveArrangement(named: arrangementName) }
+        }
+        .confirmationDialog(L("arrangement.restore"), isPresented: $restoringArrangement,
+                            titleVisibility: .visible) {
+            if arrangements.arrangements.isEmpty {
+                Text(L("arrangement.none"))
+            } else {
+                ForEach(arrangements.arrangements) { a in
+                    Button(a.name) { restoreArrangement(a) }
+                }
+            }
+            Button(L("common.cancel"), role: .cancel) {}
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active {
                 notes.flush()
@@ -150,7 +174,8 @@ public struct RootView: View {
         ).eraseToAnyPublisher()
     }
 
-    private func handle(_ name: Notification.Name) {
+    private func handle(_ note: Notification) {
+        let name = note.name
         let focusedID = TerminalRegistry.shared.focusedController()?.sessionID
         switch name {
         case .humiNewSession:  beginNewSession()
@@ -187,7 +212,37 @@ public struct RootView: View {
         case .humiFocusPaneDown:  focusPane(.down)
         case .humiEqualizeSplits:
             withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) { store.equalizeSplits() }
+        case .humiSaveArrangement:
+            arrangementName = ""
+            savingArrangement = true
+        case .humiRestoreArrangement:
+            if let id = note.object as? UUID, let a = arrangements.arrangement(id) {
+                restoreArrangement(a)
+            } else {
+                restoringArrangement = true
+            }
         default: break
+        }
+    }
+
+    // MARK: arrangements
+
+    private func saveArrangement(named raw: String) {
+        let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let frame = NSApp.keyWindow?.frame ?? .zero
+        guard let a = arrangements.snapshot(name: name, layout: store.layout,
+                                            sessions: store.sessions, windowFrame: frame) else { return }
+        arrangements.add(a)
+    }
+
+    private func restoreArrangement(_ a: Arrangement) {
+        let (sessions, layout) = arrangements.materialize(a)
+        withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
+            store.load(sessions: sessions, layout: layout)
+        }
+        if a.windowFrame != .zero {
+            NSApp.keyWindow?.setFrame(a.windowFrame, display: true, animate: true)
         }
     }
 

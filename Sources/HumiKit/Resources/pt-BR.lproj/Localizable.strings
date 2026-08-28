@@ -199,6 +199,11 @@
 "key.action.focusPaneUp" = "Focar painel acima";
 "key.action.focusPaneDown" = "Focar painel abaixo";
 "key.action.equalizeSplits" = "Igualar divisões";
+"arrangement.save" = "Salvar disposição…";
+"arrangement.restore" = "Restaurar disposição";
+"arrangement.none" = "Nenhuma disposição salva";
+"arrangement.save.title" = "Salvar disposição";
+"arrangement.save.prompt" = "Nome da disposição";
 "shortcuts.reset" = "Restaurar padrões";
 "shortcuts.import" = "Importar…";
 "shortcuts.export" = "Exportar…";

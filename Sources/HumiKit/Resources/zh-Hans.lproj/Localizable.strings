@@ -199,6 +199,11 @@
 "key.action.focusPaneUp" = "聚焦上方窗格";
 "key.action.focusPaneDown" = "聚焦下方窗格";
 "key.action.equalizeSplits" = "平均分配窗格";
+"arrangement.save" = "保存布局…";
+"arrangement.restore" = "恢复布局";
+"arrangement.none" = "没有已保存的布局";
+"arrangement.save.title" = "保存布局";
+"arrangement.save.prompt" = "布局名称";
 "shortcuts.reset" = "恢复默认";
 "shortcuts.import" = "导入…";
 "shortcuts.export" = "导出…";

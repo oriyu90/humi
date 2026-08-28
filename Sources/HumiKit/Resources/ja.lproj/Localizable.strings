@@ -199,6 +199,11 @@
 "key.action.focusPaneUp" = "上のペインへ";
 "key.action.focusPaneDown" = "下のペインへ";
 "key.action.equalizeSplits" = "分割を均等化";
+"arrangement.save" = "配置を保存…";
+"arrangement.restore" = "配置を復元";
+"arrangement.none" = "保存された配置はありません";
+"arrangement.save.title" = "配置を保存";
+"arrangement.save.prompt" = "配置の名前";
 "shortcuts.reset" = "既定に戻す";
 "shortcuts.import" = "読み込み…";
 "shortcuts.export" = "書き出し…";

@@ -47,6 +47,13 @@ struct HumiApp: App {
             CommandGroup(replacing: .newItem) {
                 actionButton(.newSession, "app.menu.new_session")
                 actionButton(.profileLauncher, "launcher.title")
+                Divider()
+                Button(L("arrangement.save")) {
+                    NotificationCenter.default.post(name: .humiSaveArrangement, object: nil)
+                }
+                Button(L("arrangement.restore")) {
+                    NotificationCenter.default.post(name: .humiRestoreArrangement, object: nil)
+                }
             }
             CommandGroup(after: .pasteboard) {
                 actionButton(.clearBuffer, "app.menu.clear_buffer")

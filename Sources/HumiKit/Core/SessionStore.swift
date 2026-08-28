@@ -173,6 +173,19 @@ final class SessionStore: ObservableObject {
         persist()
     }
 
+    /// Replace every session and the layout wholesale — used to restore a saved
+    /// `Arrangement`. Existing terminals are torn down first.
+    func load(sessions newSessions: [Session], layout newLayout: PaneNode?) {
+        for s in sessions { TerminalRegistry.shared.terminate(s.id) }
+        sessions = newSessions
+        layout = Self.reconcile(newLayout ?? Self.linearLayout(for: newSessions), with: newSessions)
+        exitCodes.removeAll()
+        maximizedID = nil
+        nextAccent = (newSessions.map(\.accentIndex).max() ?? -1) + 1
+        lastAddedID = layout?.leaves().last
+        persist()
+    }
+
     func markExited(_ id: UUID, code: Int32?) {
         guard let session = sessions.first(where: { $0.id == id }) else { return }
         switch session.onExit {

@@ -199,6 +199,11 @@
 "key.action.focusPaneUp" = "Focus pane up";
 "key.action.focusPaneDown" = "Focus pane down";
 "key.action.equalizeSplits" = "Equalize splits";
+"arrangement.save" = "Save Arrangement…";
+"arrangement.restore" = "Restore Arrangement";
+"arrangement.none" = "No saved arrangements";
+"arrangement.save.title" = "Save Arrangement";
+"arrangement.save.prompt" = "Arrangement name";
 "shortcuts.reset" = "Reset to defaults";
 "shortcuts.import" = "Import…";
 "shortcuts.export" = "Export…";

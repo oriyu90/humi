@@ -617,6 +617,55 @@ MainActor.assumeIsolated {
         let fixed = SessionStore()
         check(fixed.layout?.leaves() == [orphan], "reconcile: unknown leaf pruned, orphan session kept")
     }
+
+    suite("Arrangement") {
+        try? FileManager.default.removeItem(at: Persistence.url(SessionStore.fileName))
+        try? FileManager.default.removeItem(at: Persistence.url(ArrangementStore.fileName))
+        let store = SessionStore()
+        let a = store.add(workingDirectory: "/a")
+        let b = store.add(workingDirectory: "/b")
+        store.split(besideLeaf: a.id, axis: .vertical, workingDirectory: "/c")
+        let arr = ArrangementStore.shared
+
+        let frame = CGRect(x: 10, y: 20, width: 800, height: 600)
+        guard let snap = arr.snapshot(name: "Work", layout: store.layout,
+                                      sessions: store.sessions, windowFrame: frame) else {
+            check(false, "snapshot: produced an arrangement"); return
+        }
+        check(snap.leaves.count == 3, "snapshot: one LeafSpec per pane")
+        check(snap.layout.leaves() == store.layout?.leaves(), "snapshot: layout captured verbatim")
+        check(snap.windowFrame == frame, "snapshot: window frame captured")
+        check(arr.snapshot(name: "x", layout: nil, sessions: [], windowFrame: .zero) == nil,
+              "snapshot: nil layout → nil")
+
+        // materialize → brand-new session ids, same shape
+        let (fresh, layout) = arr.materialize(snap)
+        check(fresh.count == 3, "materialize: rebuilds every session")
+        check(Set(fresh.map(\.id)).isDisjoint(with: Set(store.sessions.map(\.id))),
+              "materialize: fresh UUIDs, no collision with live sessions")
+        check(layout.leaves().count == 3 && Set(layout.leaves()) == Set(fresh.map(\.id)),
+              "materialize: layout points at the new sessions")
+        check(fresh.first?.workingDirectory == "/a", "materialize: leaf metadata carried over")
+
+        // Codable round-trip
+        let data = try! JSONEncoder().encode(snap)
+        let back = try? JSONDecoder().decode(Arrangement.self, from: data)
+        check(back == snap, "codec: Arrangement round-trips")
+
+        // store CRUD + same-name overwrite
+        arr.add(snap)
+        check(arr.arrangements.contains { $0.id == snap.id }, "store: add")
+        var snap2 = snap; snap2.id = UUID()
+        arr.add(snap2)   // same name "Work"
+        check(arr.arrangements.filter { $0.name == "Work" }.count == 1, "store: same name overwrites")
+        arr.rename(id: arr.arrangements[0].id, to: "Home")
+        check(arr.arrangements.contains { $0.name == "Home" }, "store: rename")
+        arr.delete(id: arr.arrangements[0].id)
+        check(arr.arrangements.isEmpty, "store: delete")
+
+        store.load(sessions: fresh, layout: layout)
+        check(store.sessions.count == 3 && store.layout?.leaves().count == 3, "SessionStore.load: swaps everything in")
+    }
 }
 
 print("\n\(count - failures)/\(count) checks passed")
