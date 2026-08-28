@@ -150,6 +150,12 @@ public struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: HumiNotifier.focusRequest)) { note in
             if let id = note.object as? UUID { focusSpecificPane(id) }
         }
+        .onChange(of: store.lastAddedID) { _, id in
+            // A new / split pane should take the keyboard, so the focus ring never
+            // points somewhere the keys don't go. Wait a beat for its view to mount.
+            guard let id else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { focusSpecificPane(id) }
+        }
         .alert(L("arrangement.save.title"), isPresented: $savingArrangement) {
             TextField(L("arrangement.save.prompt"), text: $arrangementName)
             Button(L("common.cancel"), role: .cancel) {}
