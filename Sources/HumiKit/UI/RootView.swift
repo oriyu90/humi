@@ -274,7 +274,9 @@ public struct RootView: View {
 
     /// ⌘⌃arrow — move keyboard focus to the neighbouring pane in that direction.
     private func focusPane(_ direction: Direction) {
-        guard let current = TerminalRegistry.shared.focusedController()?.sessionID,
+        // No pane focused yet (fresh launch, no click): start from the first leaf.
+        let current = TerminalRegistry.shared.focusedController()?.sessionID ?? store.layout?.leaves().first
+        guard let current,
               let target = store.paneNeighbor(of: current, direction),
               let view = TerminalRegistry.shared.existing(target)?.terminalView,
               let window = view.window else { return }

@@ -44,10 +44,13 @@ final class ArrangementStore: ObservableObject {
     }
 
     /// Turn a saved arrangement into fresh sessions + a layout that references them.
+    /// Only specs that actually appear in the layout become sessions — a hand-edited
+    /// `.humiarrangement` can't smuggle in extra panes.
     func materialize(_ arrangement: Arrangement) -> (sessions: [Session], layout: PaneNode) {
+        let inTree = Set(arrangement.layout.leaves())
         var idMap: [UUID: UUID] = [:]
         var sessions: [Session] = []
-        for spec in arrangement.leaves {
+        for spec in arrangement.leaves where inTree.contains(spec.localID) {
             var s = Session(workingDirectory: spec.workingDirectory,
                             accentIndex: spec.accentIndex,
                             profileID: spec.profileID,

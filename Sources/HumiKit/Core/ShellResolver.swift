@@ -63,6 +63,25 @@ enum ShellResolver {
         }
     }
 
+    /// Map a shell executable basename to the dialect its OSC 7 snippet needs.
+    static func osc7Kind(forShellBasename name: String) -> ShellKind {
+        switch name {
+        case "fish": return .fish
+        case "bash": return .bash
+        default:     return .zsh
+        }
+    }
+
+    /// Which shell dialect the OSC 7 snippet should target. For `.login` the `kind` says
+    /// nothing about the actual shell, so resolve it — otherwise a fish login shell gets
+    /// the zsh snippet fed to it and errors on `autoload` / `add-zsh-hook`.
+    static func effectiveKindForOSC7(config: ShellConfig,
+                                     environment: [String: String] = ProcessInfo.processInfo.environment) -> ShellKind {
+        guard config.kind == .login else { return config.kind }
+        let path = loginShellPath(environment: environment)
+        return osc7Kind(forShellBasename: (path as NSString).lastPathComponent)
+    }
+
     /// A one-liner that makes the shell report its working directory (OSC 7) on every
     /// prompt, so Humi's title / status bar / git panel follow `cd`. Stock macOS zsh
     /// only emits OSC 7 for Terminal.app, so Humi injects this itself.

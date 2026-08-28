@@ -47,36 +47,34 @@ struct PaneTreeView: View {
             let frames = layout.frames(in: rect, gap: gap)
             let dividers = layout.dividers(in: rect, gap: gap, thickness: 12)
 
-            ScrollViewReader { proxy in
-                ZStack(alignment: .topLeading) {
-                    // Leaves — always present, stable id, positioned absolutely.
-                    ForEach(store.sessions) { session in
-                        if let f = frames[session.id] {
-                            TerminalTileView(session: session, isMaximized: false,
-                                             isFocused: focusedID == session.id,
-                                             store: store, settings: settings)
-                                .frame(width: max(1, f.width), height: max(1, f.height))
-                                .position(x: f.midX, y: f.midY)
-                                .id(session.id)
-                                .onDrag { NSItemProvider(object: session.id.uuidString as NSString) }
-                                .onDrop(of: [.text], isTargeted: nil) { providers in
-                                    handleDrop(providers, onto: session.id)
-                                }
-                        }
-                    }
-                    // Split handles on top.
-                    ForEach(dividers, id: \.id) { spec in
-                        DividerHandle(spec: spec, coordinateSpace: Self.canvasSpace) { fraction in
-                            store.setPaneRatio(atPath: spec.path, dividerIndex: spec.index, to: fraction)
-                        }
+            ZStack(alignment: .topLeading) {
+                // Leaves — always present, stable id, positioned absolutely.
+                ForEach(store.sessions) { session in
+                    if let f = frames[session.id] {
+                        TerminalTileView(session: session, isMaximized: false,
+                                         isFocused: focusedID == session.id,
+                                         store: store, settings: settings)
+                            .frame(width: max(1, f.width), height: max(1, f.height))
+                            .position(x: f.midX, y: f.midY)
+                            .id(session.id)
+                            .onDrag { NSItemProvider(object: session.id.uuidString as NSString) }
+                            .onDrop(of: [.text], isTargeted: nil) { providers in
+                                handleDrop(providers, onto: session.id)
+                            }
                     }
                 }
-                .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
-                .coordinateSpace(name: Self.canvasSpace)
-                .onChange(of: store.lastAddedID) { _, id in
-                    guard let id else { return }
-                    withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) { proxy.scrollTo(id) }
+                // Split handles on top.
+                ForEach(dividers, id: \.id) { spec in
+                    DividerHandle(spec: spec, coordinateSpace: Self.canvasSpace) { fraction in
+                        store.setPaneRatio(atPath: spec.path, dividerIndex: spec.index, to: fraction)
+                    }
                 }
+            }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+            .coordinateSpace(name: Self.canvasSpace)
+            // A freshly added / split pane takes the focus ring so the eye lands on it.
+            .onChange(of: store.lastAddedID) { _, id in
+                if let id { focusedID = id }
             }
         }
     }

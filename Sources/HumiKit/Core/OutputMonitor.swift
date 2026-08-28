@@ -1,33 +1,70 @@
 import Foundation
 
-/// Turns a stream of raw pty output into completed, ANSI-stripped text lines for
-/// substring / regex matching. The owner only feeds bytes in while something is
-/// actually watching, so idle cost is zero.
+/// Turns a stream of raw pty output bytes into completed, ANSI-stripped text lines for
+/// substring / regex matching. Byte-based so a multi-byte character split across two pty
+/// chunks is never corrupted (only whole, newline-terminated lines are decoded). The
+/// owner only feeds bytes in while something is actually watching, so idle cost is zero.
 struct OutputMonitor {
-    private var pending = ""
-    /// Cap the unterminated tail so a process that never emits a newline can't grow this
-    /// without bound.
-    private static let maxPendingLine = 8192
+    /// Undecoded tail (bytes seen since the last newline).
+    private var pending: [UInt8] = []
+    /// Lines dropped because a single ingest produced more than `maxLinesPerIngest`.
+    /// Diagnostic only — never surfaced in the UI.
+    private(set) var droppedLines = 0
 
-    /// Append `text`, then return every line that just completed (newline-terminated),
-    /// ANSI-stripped and whitespace-trimmed. Blank lines are dropped.
-    mutating func ingest(_ text: String) -> [String] {
-        pending += text
-        guard pending.contains("\n") || pending.contains("\r") else {
-            if pending.count > Self.maxPendingLine {
-                pending = String(pending.suffix(Self.maxPendingLine))
+    /// Cap the unterminated tail so a process that never emits a newline can't grow this.
+    static let maxPendingBytes = 8192
+    /// Longest line handed to a matcher; longer lines are truncated first.
+    static let maxLineLength = 4096
+    /// Most lines one `ingest` call will return; a huge paste is clipped so the caller
+    /// never does thousands of regex evaluations synchronously on the main actor.
+    static let maxLinesPerIngest = 200
+
+    /// Append `bytes`, then return every line that just completed (newline-terminated),
+    /// ANSI-stripped, whitespace-trimmed, and length-capped. Blank lines are dropped.
+    mutating func ingest(_ bytes: ArraySlice<UInt8>) -> [String] {
+        pending.append(contentsOf: bytes)
+        guard pending.contains(0x0A) || pending.contains(0x0D) else {
+            if pending.count > Self.maxPendingBytes {
+                pending.removeFirst(pending.count - Self.maxPendingBytes)
             }
             return []
         }
-        let normalized = pending
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-        let parts = normalized.components(separatedBy: "\n")
-        pending = parts.last ?? ""
-        return parts.dropLast().compactMap { raw in
-            let clean = OutputMonitor.stripANSI(raw).trimmingCharacters(in: .whitespaces)
-            return clean.isEmpty ? nil : clean
+
+        // Split on \n, treating \r\n and bare \r as line breaks too.
+        var lines: [String] = []
+        var start = pending.startIndex
+        var i = pending.startIndex
+        var lastBreakEnd = pending.startIndex
+        while i < pending.endIndex {
+            let b = pending[i]
+            if b == 0x0A || b == 0x0D {
+                let slice = pending[start ..< i]
+                if lines.count < Self.maxLinesPerIngest {
+                    if let line = Self.finish(slice) { lines.append(line) }
+                } else {
+                    droppedLines += 1
+                }
+                // step over a \r\n pair
+                var next = pending.index(after: i)
+                if b == 0x0D, next < pending.endIndex, pending[next] == 0x0A {
+                    next = pending.index(after: next)
+                }
+                start = next
+                lastBreakEnd = next
+                i = next
+            } else {
+                i = pending.index(after: i)
+            }
         }
+        pending.removeSubrange(pending.startIndex ..< lastBreakEnd)
+        return lines
+    }
+
+    private static func finish(_ slice: ArraySlice<UInt8>) -> String? {
+        let capped = slice.count > maxLineLength ? slice.prefix(maxLineLength) : slice
+        let text = String(decoding: capped, as: UTF8.self)
+        let clean = stripANSI(text).trimmingCharacters(in: .whitespaces)
+        return clean.isEmpty ? nil : clean
     }
 
     /// Strip CSI (`ESC [ … final`) and OSC (`ESC ] … BEL/ST`) sequences plus stray C0

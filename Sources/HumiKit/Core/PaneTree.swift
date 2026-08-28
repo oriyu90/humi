@@ -195,7 +195,10 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
         case .split(let axis, let rawChildren, let rawRatios):
             let children = rawChildren.map { $0.normalized() }
             if children.count == 1 { return children[0] }
-            if children.isEmpty { return .leaf(UUID()) } // unreachable via public API; keeps type total
+            // A 0-child split can't be built through the public API (mutations return nil
+            // for an empty tree before normalizing; the decoder rejects empty `children`).
+            // If one is somehow constructed, collapse rather than invent a phantom leaf.
+            guard !children.isEmpty else { return rawChildren.first?.normalized() ?? self }
 
             var ratios = rawRatios
             if ratios.count != children.count {

@@ -1,16 +1,41 @@
 import SwiftUI
+import Combine
+
+/// One process-wide 12s heartbeat for every tile's status bar, instead of a `Timer`
+/// per visible tile. Only ticks while at least one status bar is on screen.
+@MainActor
+final class StatusBarClock: ObservableObject {
+    static let shared = StatusBarClock()
+    @Published private(set) var now = Date()
+
+    private var timer: AnyCancellable?
+    private var subscribers = 0
+
+    func subscribe() {
+        subscribers += 1
+        guard timer == nil else { return }
+        timer = Timer.publish(every: 12, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] date in self?.now = date }
+    }
+
+    func unsubscribe() {
+        subscribers = max(0, subscribers - 1)
+        if subscribers == 0 { timer?.cancel(); timer = nil }
+    }
+}
 
 /// A thin per-tile status strip: cwd · shell · git branch/dirty · process · clock.
 /// Components are toggled globally in Settings › Status Bar. Git + clock refresh on
-/// a lazy 12s cadence tied to this view's lifetime (no cost when the bar is off).
+/// a lazy 12s cadence (one shared timer for all tiles; no cost when the bar is off).
 struct StatusBarView: View {
     let session: Session
     @ObservedObject var settings: AppSettings
+    @ObservedObject private var clock = StatusBarClock.shared
 
     @State private var git: GitStatus.Info?
-    @State private var now = Date()
 
-    private let tick = Timer.publish(every: 12, on: .main, in: .common).autoconnect()
+    private var now: Date { clock.now }
 
     private var cwd: String? {
         TerminalRegistry.shared.existing(session.id)?.currentDirectory ?? session.workingDirectory
@@ -48,7 +73,9 @@ struct StatusBarView: View {
         .padding(.vertical, 3)
         .background(Hum.paper2)
         .task(id: cwd) { await refreshGit() }
-        .onReceive(tick) { now = $0; Task { await refreshGit() } }
+        .onChange(of: clock.now) { _, _ in Task { await refreshGit() } }
+        .onAppear { clock.subscribe() }
+        .onDisappear { clock.unsubscribe() }
     }
 
     private func label(_ icon: String, _ text: String) -> some View {

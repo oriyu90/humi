@@ -28,7 +28,7 @@ actor GitStatus {
                     dirty: !porcelain.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
 
-    private static func git(_ args: [String]) -> String? {
+    private static func git(_ args: [String], timeout: TimeInterval = 2.0) -> String? {
         guard let exe = ["/usr/bin/git", "/opt/homebrew/bin/git", "/usr/local/bin/git"]
             .first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else { return nil }
         let p = Process()
@@ -36,8 +36,14 @@ actor GitStatus {
         p.arguments = args
         let out = Pipe(); p.standardOutput = out; p.standardError = Pipe()
         do { try p.run() } catch { return nil }
+
+        // Kill a hung `git` (network FS, index lock) so it can't wedge the actor.
+        let deadline = DispatchWorkItem { if p.isRunning { p.terminate() } }
+        DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: deadline)
+
         let data = out.fileHandleForReading.readDataToEndOfFile()
         p.waitUntilExit()
+        deadline.cancel()
         guard p.terminationStatus == 0 else { return nil }
         return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
     }

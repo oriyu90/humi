@@ -22,6 +22,23 @@ public final class TerminalRegistry {
         reaped = reaped.filter { $0.value > cutoff }
     }
 
+    /// Child pids that a `TerminalController.terminate()` has SIGTERM'd but whose
+    /// deferred SIGKILL-backstop + `waitpid` hasn't completed yet. If the app quits
+    /// inside that ~1.8s window, `terminateAllSync()` must finish the job here — the
+    /// deferred block on the global queue would otherwise never run before exit.
+    private var pendingReap: [pid_t: Date] = [:]
+
+    func notePendingReap(_ pid: pid_t) {
+        guard pid > 0 else { return }
+        pendingReap[pid] = Date()
+        if pendingReap.count > 32 {
+            let cutoff = Date().addingTimeInterval(-10)
+            pendingReap = pendingReap.filter { $0.value > cutoff }
+        }
+    }
+
+    func clearPendingReap(_ pid: pid_t) { pendingReap.removeValue(forKey: pid) }
+
     func controller(for session: Session,
                     settings: AppSettings,
                     makeStart: Bool = true) -> TerminalController? {
@@ -59,12 +76,13 @@ public final class TerminalRegistry {
                                                 pattern: settings.logFilenamePattern) {
                 invocation = SessionLogger.wrap(invocation, logPath: path)
             }
-            let shellKind = profile?.shellConfig.kind ?? settings.shellConfig.kind
+            let shellConfig = profile?.shellConfig ?? settings.shellConfig
+            let osc7Kind = ShellResolver.effectiveKindForOSC7(config: shellConfig)
             controller.startIfNeeded(invocation: invocation,
                                      environment: env,
                                      workingDirectory: cwd,
                                      startupCommand: profile?.startupCommand ?? "",
-                                     osc7Snippet: session.logging ? nil : ShellResolver.osc7Snippet(for: shellKind))
+                                     osc7Snippet: session.logging ? nil : ShellResolver.osc7Snippet(for: osc7Kind))
         }
         return controller
     }
@@ -98,6 +116,24 @@ public final class TerminalRegistry {
         for (_, c) in controllers { c.terminateSync() }
         controllers.removeAll()
         reaped.removeAll()
+
+        // Finish any reap that a recently-closed tile deferred. Only touch entries
+        // younger than the deferred delay — older pids were almost certainly already
+        // reaped off-main (the global queue isn't blocked by shutdown), and a reaped
+        // pid could have been recycled, so SIGKILL'ing it would hit an innocent process.
+        let now = Date()
+        for (pid, since) in pendingReap where now.timeIntervalSince(since) < 2.0 {
+            var status: Int32 = 0
+            if waitpid(pid, &status, WNOHANG) == 0 {   // still alive, still ours
+                kill(pid, SIGKILL)
+                let hard = now.addingTimeInterval(0.2)
+                while Date() < hard {
+                    if waitpid(pid, &status, WNOHANG) != 0 { break }
+                    usleep(20_000)
+                }
+            }
+        }
+        pendingReap.removeAll()
     }
 
     public func setFontSize(_ size: CGFloat) {

@@ -2,6 +2,7 @@
 // XCTest / swift-testing aren't available under Command Line Tools, so this is a
 // plain executable: `swift run HumiTests`. Exit code 0 = all passed.
 
+import AppKit
 import Foundation
 @testable import HumiKit
 
@@ -631,7 +632,7 @@ MainActor.assumeIsolated {
         try? FileManager.default.removeItem(at: Persistence.url(ArrangementStore.fileName))
         let store = SessionStore()
         let a = store.add(workingDirectory: "/a")
-        let b = store.add(workingDirectory: "/b")
+        _ = store.add(workingDirectory: "/b")
         store.split(besideLeaf: a.id, axis: .vertical, workingDirectory: "/c")
         let arr = ArrangementStore.shared
 
@@ -705,17 +706,38 @@ MainActor.assumeIsolated {
 // MARK: OutputMonitor + Triggers (v1.2 phase D/E)
 
 suite("OutputMonitor") {
+    func bytes(_ s: String) -> ArraySlice<UInt8> { Array(s.utf8)[...] }
+
     check(OutputMonitor.stripANSI("\u{1B}[31mred\u{1B}[0m") == "red", "stripANSI: CSI colour codes removed")
     check(OutputMonitor.stripANSI("a\u{1B}]0;title\u{07}b") == "ab", "stripANSI: OSC sequence removed")
     check(OutputMonitor.stripANSI("plain text") == "plain text", "stripANSI: plain text untouched")
 
     var m = OutputMonitor()
-    check(m.ingest("no newline yet") == [], "ingest: buffers until a newline")
-    check(m.ingest(" still\nfirst done\n") == ["no newline yet still", "first done"],
+    check(m.ingest(bytes("no newline yet")) == [], "ingest: buffers until a newline")
+    check(m.ingest(bytes(" still\nfirst done\n")) == ["no newline yet still", "first done"],
           "ingest: joins the buffered tail and splits completed lines")
-    check(m.ingest("carriage\r\nreturn\rlf\n") == ["carriage", "return", "lf"],
+    check(m.ingest(bytes("carriage\r\nreturn\rlf\n")) == ["carriage", "return", "lf"],
           "ingest: CRLF and bare CR both split")
-    check(m.ingest("\u{1B}[32mBUILD OK\u{1B}[0m\n") == ["BUILD OK"], "ingest: strips ANSI from completed lines")
+    check(m.ingest(bytes("\u{1B}[32mBUILD OK\u{1B}[0m\n")) == ["BUILD OK"], "ingest: strips ANSI from completed lines")
+
+    // v1.3 S3: a multi-byte character split across two ingests is not corrupted
+    var b = OutputMonitor()
+    let ao: [UInt8] = Array("あ".utf8)   // E3 81 82
+    check(b.ingest(ao[0..<2]) == [], "ingest: holds a partial UTF-8 sequence")
+    check(b.ingest(ao[2..<3] + Array("!\n".utf8)) == ["あ!"], "ingest: reassembles the split character")
+
+    // v1.3 S3: a huge burst is clipped, not evaluated line-by-line forever
+    var c = OutputMonitor()
+    let flood = String(repeating: "x\n", count: 5000)
+    let got = c.ingest(bytes(flood))
+    check(got.count == OutputMonitor.maxLinesPerIngest, "ingest: burst clipped to maxLinesPerIngest")
+    check(c.droppedLines == 5000 - OutputMonitor.maxLinesPerIngest, "ingest: dropped count tracked")
+
+    // v1.3 S3: an over-long line is truncated before matching
+    var d = OutputMonitor()
+    let long = String(repeating: "z", count: OutputMonitor.maxLineLength + 500)
+    check(d.ingest(bytes(long + "\n")).first?.count == OutputMonitor.maxLineLength,
+          "ingest: line capped at maxLineLength")
 }
 
 suite("Trigger + TriggerEngine") {
@@ -747,6 +769,51 @@ MainActor.assumeIsolated {
         check(s.triggers.count == 1 && s.triggers[0].pattern == "\\bpanic\\b",
               "triggers: persist via UserDefaults JSON")
         s.triggers = saved
+    }
+}
+
+// MARK: v1.3 stability track
+
+MainActor.assumeIsolated {
+    suite("v1.3 — stability fixes") {
+        // S4: rebound-shortcut monitor must not swallow keys while text is being edited
+        check(KeymapStore.responderIsTextInput(NSTextView()) == true, "S4: NSTextView counts as text input")
+        check(KeymapStore.responderIsTextInput(NSView()) == false, "S4: a plain NSView doesn't")
+        check(KeymapStore.responderIsTextInput(nil) == false, "S4: nil responder → not text")
+
+        // S8: a `.login` shell that's really fish gets the fish OSC 7 snippet
+        check(ShellResolver.osc7Kind(forShellBasename: "fish") == .fish, "S8: basename fish → .fish")
+        check(ShellResolver.osc7Kind(forShellBasename: "bash") == .bash, "S8: basename bash → .bash")
+        check(ShellResolver.osc7Kind(forShellBasename: "zsh") == .zsh, "S8: basename zsh → .zsh")
+        check(ShellResolver.osc7Kind(forShellBasename: "xonsh") == .zsh, "S8: unknown basename → .zsh default")
+        check(ShellResolver.effectiveKindForOSC7(
+                config: ShellConfig(kind: .fish, customPath: "", customArgs: "", useLoginArgs: false),
+                environment: [:]) == .fish, "S8: an explicit kind is passed through")
+        // .login resolves to *some* real dialect (this machine's passwd shell)
+        let loginKind = ShellResolver.effectiveKindForOSC7(
+            config: ShellConfig(kind: .login, customPath: "", customArgs: "", useLoginArgs: true))
+        check([.zsh, .bash, .fish].contains(loginKind), "S8: .login resolves to a concrete dialect")
+
+        // S1: pending-reap bookkeeping
+        let reg = TerminalRegistry.shared
+        reg.notePendingReap(999_991)
+        reg.notePendingReap(0)                    // ignored
+        reg.clearPendingReap(999_991)             // no crash, idempotent
+        check(true, "S1: notePendingReap / clearPendingReap don't crash")
+
+        // S7: materialize ignores a LeafSpec that isn't in the layout
+        let live = UUID(), ghostSpec = UUID()
+        let arr = Arrangement(
+            name: "x", windowFrame: .zero,
+            layout: .leaf(live),
+            leaves: [
+                .init(localID: live, workingDirectory: "/a", profileID: nil, customTitle: nil,
+                      accentIndex: 0, accentOverride: nil, onExit: .keep, logging: false),
+                .init(localID: ghostSpec, workingDirectory: "/ghost", profileID: nil, customTitle: nil,
+                      accentIndex: 1, accentOverride: nil, onExit: .keep, logging: false),
+            ])
+        let (mats, matLayout) = ArrangementStore.shared.materialize(arr)
+        check(mats.count == 1 && matLayout.leaves().count == 1, "S7: out-of-tree LeafSpec dropped on materialize")
     }
 }
 

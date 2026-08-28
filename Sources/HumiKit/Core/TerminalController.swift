@@ -142,7 +142,7 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
     }
 
     private func handleOutput(_ slice: ArraySlice<UInt8>) {
-        let lines = outputMonitor.ingest(String(decoding: slice, as: UTF8.self))
+        let lines = outputMonitor.ingest(slice)
         guard !lines.isEmpty else { return }
         for line in lines {
             if !watchStrings.isEmpty,
@@ -193,8 +193,19 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
         return PathActioner.open(text, cwd: currentDirectory, editorCommand: AppSettings.shared.editorCommand)
     }
 
+    private var foregroundChildCache: (value: Bool, at: Date)?
+
     /// Heuristic "is something running in the foreground": the shell has a child process.
+    /// Cached 1.5s — `KERN_PROC_ALL` walks every process on the machine, and this is
+    /// polled from a couple of places (close-confirm, status bar).
     var hasLiveForegroundChild: Bool {
+        if let c = foregroundChildCache, Date().timeIntervalSince(c.at) < 1.5 { return c.value }
+        let value = computeHasLiveForegroundChild()
+        foregroundChildCache = (value, Date())
+        return value
+    }
+
+    private func computeHasLiveForegroundChild() -> Bool {
         let pid = terminalView.process.shellPid
         guard pid > 0 else { return false }
         var name = [CTL_KERN, KERN_PROC, KERN_PROC_ALL]
@@ -235,7 +246,10 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
         terminalView.processDelegate = nil
         terminalView.terminate()
         onTitle = nil; onDirectory = nil; onExit = nil
+        onTriggerColor = nil
+        terminalView.onOutput = nil; terminalView.onBell = nil
         guard pid > 0 else { return }
+        TerminalRegistry.shared.notePendingReap(pid)
         DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
             var status: Int32 = 0
             // Reap first: if it already exited, this clears the zombie.
@@ -245,7 +259,10 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
                 DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) {
                     var s: Int32 = 0
                     _ = waitpid(pid, &s, WNOHANG)
+                    Task { @MainActor in TerminalRegistry.shared.clearPendingReap(pid) }
                 }
+            } else {
+                Task { @MainActor in TerminalRegistry.shared.clearPendingReap(pid) }
             }
         }
     }
@@ -262,6 +279,8 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
         terminalView.processDelegate = nil
         terminalView.terminate()          // sends SIGTERM, closes the pty
         onTitle = nil; onDirectory = nil; onExit = nil
+        onTriggerColor = nil
+        terminalView.onOutput = nil; terminalView.onBell = nil
         guard pid > 0 else { return }
 
         var status: Int32 = 0

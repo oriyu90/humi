@@ -151,17 +151,36 @@ public final class KeymapStore: ObservableObject {
 
     /// Watch key-downs so a *rebound* chord takes effect without an app restart —
     /// SwiftUI's `.commands` shortcuts only re-evaluate on relaunch. Chords still set to
-    /// their built-in default are left for the menu to handle (no double-invoke).
+    /// their built-in default are left for the menu to handle (no double-invoke), and the
+    /// event is never swallowed while a text field / editor has focus (so ⌘-combos while
+    /// editing Notes, a rename dialog, or Settings behave normally).
     public func installLocalMonitor() {
         guard localMonitor == nil else { return }
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, let chord = KeyChord.from(event: event) else { return event }
+            guard !Self.responderIsTextInput(event.window?.firstResponder ?? NSApp.keyWindow?.firstResponder)
+            else { return event }
             for action in HumiAction.allCases where self.chord(for: action) == chord {
                 if Self.defaults[action] == chord { return event }   // menu already covers it
                 NotificationCenter.default.post(name: action.notification, object: nil)
                 return nil
             }
             return event
+        }
+    }
+
+    /// Whether `responder` is somewhere text is being edited — an `NSTextView` (SwiftUI
+    /// `TextEditor` / a window's field editor) or an `NSControl` whose class name looks
+    /// like a text field / search field.
+    static func responderIsTextInput(_ responder: NSResponder?) -> Bool {
+        switch responder {
+        case is NSTextView:
+            return true
+        case let view as NSView:
+            let name = view.className
+            return name.contains("TextField") || name.contains("SearchField") || name.contains("FieldEditor")
+        default:
+            return false
         }
     }
 
