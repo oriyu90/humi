@@ -204,6 +204,10 @@
 "arrangement.none" = "保存された配置はありません";
 "arrangement.save.title" = "配置を保存";
 "arrangement.save.prompt" = "配置の名前";
+"settings.general.global_hotkey" = "グローバル切替ホットキー";
+"settings.general.global_hotkey.chord" = "ホットキー";
+"settings.general.global_hotkey.hint" = "どのアプリからでも動作: Humi を前面に出す（前面なら隠す）。アクセシビリティ許可は不要。";
+"settings.general.global_hotkey.failed" = "この組み合わせを登録できませんでした。他のアプリが使用中かもしれません。";
 "shortcuts.reset" = "既定に戻す";
 "shortcuts.import" = "読み込み…";
 "shortcuts.export" = "書き出し…";

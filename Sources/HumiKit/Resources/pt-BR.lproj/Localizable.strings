@@ -204,6 +204,10 @@
 "arrangement.none" = "Nenhuma disposição salva";
 "arrangement.save.title" = "Salvar disposição";
 "arrangement.save.prompt" = "Nome da disposição";
+"settings.general.global_hotkey" = "Atalho global de alternância";
+"settings.general.global_hotkey.chord" = "Atalho";
+"settings.general.global_hotkey.hint" = "Funciona em qualquer app: mostra o Humi, ou o oculta quando está em primeiro plano. Não exige permissão de Acessibilidade.";
+"settings.general.global_hotkey.failed" = "Não foi possível registrar essa combinação — outro app pode estar usando-a.";
 "shortcuts.reset" = "Restaurar padrões";
 "shortcuts.import" = "Importar…";
 "shortcuts.export" = "Exportar…";

@@ -67,6 +67,8 @@ public final class AppSettings: ObservableObject {
     /// Called after a terminal-behaviour pref changes (option-as-meta, mouse
     /// reporting, scroll sensitivity, scrollbar style) so live terminals re-apply.
     public var onTerminalPrefsChange: (() -> Void)?
+    /// Called after the global hotkey pref changes so the Carbon registration is redone.
+    public var onGlobalHotkeyChange: (() -> Void)?
 
     private init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -100,6 +102,7 @@ public final class AppSettings: ObservableObject {
             Keys.statusGit: true,
             Keys.statusClock: true,
             Keys.statusProcess: false,
+            Keys.globalHotkeyEnabled: false,
         ])
         Localization.shared.apply(appLanguage)
     }
@@ -134,6 +137,8 @@ public final class AppSettings: ObservableObject {
         static let statusGit = "statusGit"
         static let statusClock = "statusClock"
         static let statusProcess = "statusProcess"
+        static let globalHotkeyEnabled = "globalHotkeyEnabled"
+        static let globalHotkeyChord = "globalHotkeyChord"
     }
 
     private func set<T>(_ value: T, _ key: String) {
@@ -260,6 +265,30 @@ public final class AppSettings: ObservableObject {
     var statusGit: Bool     { get { defaults.bool(forKey: Keys.statusGit) }     set { set(newValue, Keys.statusGit) } }
     var statusClock: Bool   { get { defaults.bool(forKey: Keys.statusClock) }   set { set(newValue, Keys.statusClock) } }
     var statusProcess: Bool { get { defaults.bool(forKey: Keys.statusProcess) } set { set(newValue, Keys.statusProcess) } }
+
+    // MARK: v1.2 — global hotkey (Carbon; separate from keymap.json)
+
+    var globalHotkeyEnabled: Bool {
+        get { defaults.bool(forKey: Keys.globalHotkeyEnabled) }
+        set { set(newValue, Keys.globalHotkeyEnabled); onGlobalHotkeyChange?() }
+    }
+    /// The chord that toggles the Humi window from anywhere. Stored as a JSON `KeyChord`
+    /// string; defaults to ⌘⌥⌃T when unset.
+    var globalHotkeyChord: KeyChord {
+        get {
+            guard let s = defaults.string(forKey: Keys.globalHotkeyChord),
+                  let data = s.data(using: .utf8),
+                  let chord = try? JSONDecoder().decode(KeyChord.self, from: data) else {
+                return KeyChord(key: "t", modifiers: NSEvent.ModifierFlags([.command, .option, .control]).rawValue)
+            }
+            return chord
+        }
+        set {
+            let s = (try? JSONEncoder().encode(newValue)).flatMap { String(data: $0, encoding: .utf8) } ?? ""
+            set(s, Keys.globalHotkeyChord)
+            onGlobalHotkeyChange?()
+        }
+    }
 
     var shellConfig: ShellConfig {
         ShellConfig(kind: shellKind,

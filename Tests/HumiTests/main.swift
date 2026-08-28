@@ -666,6 +666,32 @@ MainActor.assumeIsolated {
         store.load(sessions: fresh, layout: layout)
         check(store.sessions.count == 3 && store.layout?.leaves().count == 3, "SessionStore.load: swaps everything in")
     }
+
+    suite("HotKeyCenter + global hotkey pref") {
+        // key-token → Carbon virtual keycode
+        check(HotKeyCenter.carbonKeyCode(for: "t") != nil, "carbonKeyCode: letters map")
+        check(HotKeyCenter.carbonKeyCode(for: "5") != nil, "carbonKeyCode: digits map")
+        check(HotKeyCenter.carbonKeyCode(for: "left") != nil, "carbonKeyCode: arrows map")
+        check(HotKeyCenter.carbonKeyCode(for: "space") != nil, "carbonKeyCode: space maps")
+        check(HotKeyCenter.carbonKeyCode(for: "😀") == nil, "carbonKeyCode: unmappable → nil")
+
+        // modifier flags → Carbon mask (non-zero, and grows with more modifiers)
+        let one = HotKeyCenter.carbonModifiers(.command)
+        let many = HotKeyCenter.carbonModifiers([.command, .option, .control])
+        check(one != 0, "carbonModifiers: single modifier is non-zero")
+        check(many != one && many != 0, "carbonModifiers: combined mask differs")
+        check(HotKeyCenter.carbonModifiers([]) == 0, "carbonModifiers: no modifiers → 0")
+
+        // AppSettings chord round-trips through its JSON-string backing
+        let s = AppSettings.shared
+        let saved = s.globalHotkeyEnabled
+        let savedChord = s.globalHotkeyChord
+        s.globalHotkeyChord = KeyChord(key: "j", modifiers: KeymapStore.cmdOpt)
+        check(s.globalHotkeyChord == KeyChord(key: "j", modifiers: KeymapStore.cmdOpt),
+              "globalHotkeyChord: persists via UserDefaults JSON")
+        s.globalHotkeyChord = savedChord
+        s.globalHotkeyEnabled = saved
+    }
 }
 
 print("\n\(count - failures)/\(count) checks passed")

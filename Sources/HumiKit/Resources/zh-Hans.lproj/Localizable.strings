@@ -204,6 +204,10 @@
 "arrangement.none" = "没有已保存的布局";
 "arrangement.save.title" = "保存布局";
 "arrangement.save.prompt" = "布局名称";
+"settings.general.global_hotkey" = "全局切换热键";
+"settings.general.global_hotkey.chord" = "热键";
+"settings.general.global_hotkey.hint" = "在任何应用中都有效：显示 Humi，或在其位于最前时将其隐藏。无需辅助功能权限。";
+"settings.general.global_hotkey.failed" = "无法注册该组合键，可能已被其他应用占用。";
 "shortcuts.reset" = "恢复默认";
 "shortcuts.import" = "导入…";
 "shortcuts.export" = "导出…";

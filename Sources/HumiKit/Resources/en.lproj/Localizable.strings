@@ -204,6 +204,10 @@
 "arrangement.none" = "No saved arrangements";
 "arrangement.save.title" = "Save Arrangement";
 "arrangement.save.prompt" = "Arrangement name";
+"settings.general.global_hotkey" = "Global toggle hotkey";
+"settings.general.global_hotkey.chord" = "Hotkey";
+"settings.general.global_hotkey.hint" = "Works from any app: shows Humi, or hides it when it is frontmost. Needs no Accessibility permission.";
+"settings.general.global_hotkey.failed" = "Could not register that combination — another app may be using it.";
 "shortcuts.reset" = "Reset to defaults";
 "shortcuts.import" = "Import…";
 "shortcuts.export" = "Export…";

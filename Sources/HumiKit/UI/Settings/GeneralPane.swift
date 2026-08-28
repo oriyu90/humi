@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GeneralPane: View {
     @ObservedObject private var settings = AppSettings.shared
+    @State private var hotkeyChord = AppSettings.shared.globalHotkeyChord
 
     var body: some View {
         SettingsPane {
@@ -24,6 +25,20 @@ struct GeneralPane: View {
                     .labelsHidden()
             }
             settingsHint(L("settings.general.scrollback_hint"))
+
+            Divider().padding(.vertical, Hum.Space.sm)
+
+            Toggle(L("settings.general.global_hotkey"), isOn: settings.bind(\.globalHotkeyEnabled))
+            if settings.globalHotkeyEnabled {
+                SettingRow(label: L("settings.general.global_hotkey.chord")) {
+                    KeyRecorder(chord: $hotkeyChord) { c in settings.globalHotkeyChord = c }
+                        .frame(width: 140, height: 24)
+                }
+                if !HotKeyCenter.shared.isRegistered {
+                    settingsHint(L("settings.general.global_hotkey.failed"))
+                }
+            }
+            settingsHint(L("settings.general.global_hotkey.hint"))
         }
     }
 }

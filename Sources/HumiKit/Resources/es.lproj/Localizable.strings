@@ -204,6 +204,10 @@
 "arrangement.none" = "No hay disposiciones guardadas";
 "arrangement.save.title" = "Guardar disposición";
 "arrangement.save.prompt" = "Nombre de la disposición";
+"settings.general.global_hotkey" = "Atajo global de alternancia";
+"settings.general.global_hotkey.chord" = "Atajo";
+"settings.general.global_hotkey.hint" = "Funciona desde cualquier app: muestra Humi, o lo oculta cuando está en primer plano. No requiere permiso de Accesibilidad.";
+"settings.general.global_hotkey.failed" = "No se pudo registrar esa combinación: puede estar en uso por otra app.";
 "shortcuts.reset" = "Restablecer valores predeterminados";
 "shortcuts.import" = "Importar…";
 "shortcuts.export" = "Exportar…";

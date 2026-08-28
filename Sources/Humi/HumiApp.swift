@@ -32,6 +32,8 @@ struct HumiApp: App {
         AppSettings.shared.onTerminalPrefsChange = {
             TerminalRegistry.shared.applyTerminalPrefs()
         }
+        // Global toggle hotkey (Carbon) — kept in sync with its pref.
+        HotKeyCenter.bootstrap()
     }
 
     var body: some Scene {
