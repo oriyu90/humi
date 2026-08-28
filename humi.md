@@ -3,7 +3,7 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.2.0（分割ペイン / ウィンドウ配置 / グローバルホットキー / 通知 / 正規表現トリガー）
+対象バージョン: v1.3.0（v1.2 の精査 — 安定性・安全性 + Hallmark GUI。`docs/AUDIT_2026-08-28.md`）
 
 ---
 
@@ -147,8 +147,34 @@ gh release create vX.Y.Z \
   watch 文字列もトリガーも無ければ `onOutput` を張らない＝アイドルコスト 0。設定は `AlertsPane`（グローバル）。
 - **再割り当てショートカットの即時反映は `KeymapStore.installLocalMonitor()`（`NSEvent` ローカルモニタ）。**
   既定値のままのチョードはメニュー（`.commands`）に任せて二重発火を回避。メニュー表示の更新は依然再起動が必要。
-- **`⌘M`（`maximizeTile` 既定）は macOS のウィンドウ最小化に飲まれる。** タイルの最大化ボタンは正常。
-  直すなら別チョードに変えるか §5-F の案 2 と統合。
+### v1.3 で増えた構造・変更（精査対応）
+
+- **`maximizeTile` の既定は `⌃⌘M`。** 素の `⌘M` は macOS のウィンドウ最小化に飲まれる。
+  `keymap.json` に保存済みのユーザー割り当ては尊重される（新規/リセット時のみ新既定）。
+- **`OutputMonitor` はバイトベース**（`ingest(_ bytes: ArraySlice<UInt8>)`）。行が確定してから
+  UTF-8 decode するので pty チャンク境界のマルチバイト文字が壊れない。`maxLinesPerIngest` /
+  `maxLineLength` で 1 呼び出しの仕事量を上限化（`yes` フラッド + トリガーでメインアクタが詰まらない）。
+- **`TerminalRegistry.pendingReap`。** `TerminalController.terminate()` の遅延 SIGKILL-reap が
+  走る前に ⌘Q すると孤児になるため、pid を記録して `terminateAllSync()` が取りこぼしを回収する
+  （2s 以内の若いエントリのみ。古い pid は再利用リスクがあるので触らない）。
+- **再割り当てショートカット消費のガード**は `KeymapStore.responderIsTextInput(_:)`（純粋関数）。
+  `NSTextView` / TextField 系がファーストレスポンダのときは素通し。
+- **`KeymapStore.contextAllows…` は廃案**（`NSApp.mainWindow` の同定が不安定）。上のガードだけ。
+- **`Hum.focusRing` はテーマ適応**（`RGB.focusRingL/D` = `0x1668A0` / `0x4FB7E8`）。従来の単一
+  `0x2E93C6` は light 3.13:1。`suite("Contrast")` が回帰を検知する（`Hum.luminance` / `contrastRatio`）。
+- **`HumButtonStyle` は入れ子 `StyleBody` View。** `ButtonStyle.Configuration` が hover/focus を
+  出さないため、`@State hovering`（`.onHover`）+ `@Environment(\.isFocused)` を StyleBody 側で読む。
+  `status: HumStatus`（idle/loading/success/error）を追加。`.hum(...)` に `status:` 引数。
+- **`View.humFocusRing(_:cornerRadius:)`** — 3pt（Increase Contrast で 4pt）の共有フォーカスリング。
+- **分割線カーソルは `ResizeCursorArea`（`NSTrackingArea` / `addCursorRect`）。** `NSCursor.push/pop`
+  の不均衡でカーソルが固着する問題を構造的に排除。
+- **`growPane` `⌃⌘]` / `shrinkPane` `⌃⌘[`。** `PaneNode.adjustingRatio(forLeaf:delta:)` +
+  `SessionStore.nudgePaneRatio(forLeaf:by:)`。フォーカス中ペインを含む split の隣接分割を ±0.03。
+- **`StatusBarClock`（共有 12s タイマー）。** タイルごとの `Timer.publish` を廃止。
+  `hasLiveForegroundChild` は `TerminalController` 内で 1.5s キャッシュ。
+- **`GitStatus.git` は 2s タイムアウト**（別スレッドで `Process.terminate()`）。
+- **`ShellResolver.osc7Kind(forShellBasename:)` / `effectiveKindForOSC7(config:)`。** `.login` の
+  実体が fish のとき fish 版スニペットを選ぶ。`TerminalRegistry.controller(for:)` から使う。
 
 ## 4. 既知の未対応事項・今後の予定
 
@@ -169,7 +195,7 @@ gh release create vX.Y.Z \
   `Profile.notify: NotifyPrefs` / `Profile.triggers: [Trigger]` へ移す。
 - **Snippets**（`⌘⇧V` パレット）、**設定 Import/Export/Reset**（Advanced ペイン）、
   **外部ターミナル起動オプション**の復帰（`ExternalTerminal.swift` は dormant のまま）。
-- **`⌘M` 問題。** `maximizeTile` の既定 `⌘M` が macOS のウィンドウ最小化に飲まれる。別チョードへ。
+- ~~`⌘M` 問題~~ → v1.3 で既定を `⌃⌘M` に変更。
 - 複数ウィンドウ、メニューバー常駐、Directory/Command 履歴 UI、SwiftTerm 2.x 系
   （Metal / インライン画像 / Sixel / 録画）。
 

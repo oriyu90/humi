@@ -3,6 +3,42 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.3.0] - 2026-08-28
+
+A quality release: a stability/safety pass over the terminal internals and a
+Hallmark interaction-state pass over the custom controls. See
+`docs/AUDIT_2026-08-28.md` and `docs/TEST_PLAN_v1.3.0.md`. Only two new bindings.
+
+### Fixed
+- **Orphaned shell on close-then-quit.** A tile closed less than ~1.8s before
+  ⌘Q could leave its shell for launchd to adopt. `TerminalRegistry` now tracks
+  pids whose deferred SIGKILL-reap hasn't run and finishes them on quit.
+- **Output-trigger flood.** A fast-scrolling log with a trigger active could jam
+  the main thread; `OutputMonitor` is byte-based now (a multi-byte character
+  split across two pty reads is no longer corrupted), clips a burst, and caps
+  line length before matching.
+- **Rebound shortcut swallowed keystrokes** while a text field / editor had
+  focus (Notes, rename, Settings). It now only fires when text isn't being edited.
+- One shared 12s status-bar timer instead of one per visible tile;
+  `hasLiveForegroundChild` (a whole-machine process walk) is cached.
+- `git` in the status bar gets a 2s timeout so a hung repo can't wedge it.
+- `⌘⌃`+arrow pane focus works before you've clicked a pane.
+- A `.login` shell that is actually **fish** now gets the fish OSC 7 snippet.
+- Stale `ScrollViewReader` removed from the pane canvas.
+
+### Added
+- **Keyboard pane resize** — `⌃⌘]` grows, `⌃⌘[` shrinks the focused pane.
+- Hallmark states on every custom control: hover, keyboard-focus ring
+  (`Hum.focusRing`, a high-contrast theme-adaptive blue, 3–4pt), disabled, and
+  loading/success/error on `HumButtonStyle`. Title-bar icon buttons get 26pt
+  targets and a focus ring. Split handles show a hover highlight and a
+  leak-proof resize cursor. `Increase Contrast` firms up hairlines and washes.
+- A WCAG contrast self-test over the palette (`suite("Contrast")`).
+
+### Changed
+- **`maximizeTile` default is now `⌃⌘M`** — plain `⌘M` is intercepted by macOS
+  window-minimize. Existing `keymap.json` bindings are untouched.
+
 ## [1.2.0] - 2026-08-28
 
 Split panes and everything that builds on them, plus a global hotkey, notifications,
