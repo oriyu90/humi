@@ -22,7 +22,11 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp "$BUILD_DIR/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
 
-# Bundle every SwiftPM resource bundle (fonts live in HumiKit's).
+# SwiftPM resource bundles (HumiKit's fonts + .lproj, SwiftTerm's). These go in the
+# standard Contents/Resources/. NOTE: the Command Line Tools toolchain's generated
+# `Bundle.module` accessor does NOT look here (only the .app root + a build-machine
+# path), so HumiKit resolves resources via `Bundle.humiResources` (see HumiBundle.swift),
+# which checks Contents/Resources/ first. Don't revert to Bundle.module.
 for b in "$BUILD_DIR"/*.bundle; do
   [ -d "$b" ] && cp -R "$b" "$APP/Contents/Resources/"
 done
@@ -59,6 +63,8 @@ PLIST
 cat > "$APP/Contents/PkgInfo" <<< "APPL????"
 
 echo "▸ Ad-hoc codesign"
+# --deep seals the nested resource bundles in Contents/Resources/ as bundle resources.
 codesign --force --deep --sign - "$APP" 2>/dev/null || codesign --force --sign - "$APP"
+codesign --verify --verbose=1 "$APP" || echo "  (verify: ad-hoc, expected for a local build)"
 
 echo "✓ Built $APP  (v$VERSION, $CONFIG)"

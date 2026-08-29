@@ -3,6 +3,19 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.3.1] - 2026-08-29
+
+### Fixed
+- **App crashed on launch (SIGTRAP before the window) on any machine other than
+  the one it was built on.** SwiftPM's generated `Bundle.module` accessor (the
+  Command Line Tools toolchain's minimal variant) only checks the `.app` *root*
+  and a hardcoded build-machine path — never `Contents/Resources/`, where
+  `Scripts/build-app.sh` puts the resource bundles. `registerFonts()` hit the
+  `fatalError`. HumiKit now resolves its fonts + `.lproj` tables via
+  `Bundle.humiResources`, which checks `Contents/Resources/` first.
+- `PaneNode.focusNeighbor` now visits candidates in reading order instead of
+  `Dictionary` hash order, so `⌘⌃`+arrow lands on the same pane every time.
+
 ## [1.3.0] - 2026-08-28
 
 A quality release: a stability/safety pass over the terminal internals and a

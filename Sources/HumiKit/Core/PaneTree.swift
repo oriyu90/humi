@@ -378,13 +378,21 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
                        gap: CGFloat = 0) -> UUID? {
         let boxes = frames(in: rect, gap: gap)
         guard let origin = boxes[id] else { return nil }
-        let slack: CGFloat = 0.5
+        // Tolerance for "starts where the origin ends", scaled to the canvas so a unit
+        // rect (used by the keyboard nav) doesn't treat the far side as adjacent.
+        let slack = max(rect.width, rect.height) * 0.02
 
         var best: UUID?
         var bestDistance = CGFloat.greatestFiniteMagnitude
         var bestOverlap: CGFloat = -1
 
-        for (candidate, box) in boxes where candidate != id {
+        // Visit candidates in reading order, not Dictionary hash order, so ties break
+        // deterministically (Swift randomizes Dictionary iteration per run).
+        let ordered = leaves().compactMap { leaf -> (UUID, CGRect)? in
+            guard leaf != id, let box = boxes[leaf] else { return nil }
+            return (leaf, box)
+        }
+        for (candidate, box) in ordered {
             let onSide: Bool
             let distance: CGFloat
             let overlap: CGFloat

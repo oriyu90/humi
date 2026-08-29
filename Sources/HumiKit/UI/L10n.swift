@@ -14,7 +14,7 @@ public final class Localization: ObservableObject {
     /// `"system"` or a language code that has an `.lproj` (`ja`, `en`, `zh-Hans`, `pt-BR`, `es`).
     public static let supported = ["system", "ja", "en", "zh-Hans", "pt-BR", "es"]
 
-    private(set) var bundle: Bundle = .module
+    private(set) var bundle: Bundle = .humiResources
     private(set) var languageCode = "system"
 
     private init() { apply(readStoredOverride()) }
@@ -29,7 +29,7 @@ public final class Localization: ObservableObject {
     /// (`zh-Hans.lproj` → `zh-hans.lproj`), so look the `.lproj` up case-insensitively.
     private static func lprojBundle(_ code: String) -> Bundle? {
         for candidate in [code, code.lowercased()] {
-            if let path = Bundle.module.path(forResource: candidate, ofType: "lproj"),
+            if let path = Bundle.humiResources.path(forResource: candidate, ofType: "lproj"),
                let b = Bundle(path: path) { return b }
         }
         return nil
@@ -39,9 +39,9 @@ public final class Localization: ObservableObject {
         let wanted = Self.supported.contains(code) ? code : "system"
         languageCode = wanted
         if wanted == "system" {
-            bundle = .module
+            bundle = .humiResources
         } else {
-            bundle = Self.lprojBundle(wanted) ?? .module
+            bundle = Self.lprojBundle(wanted) ?? .humiResources
         }
         // Best-effort for any framework-level strings; SwiftUI text updates come from
         // the objectWillChange below, so no relaunch is needed for our own strings.

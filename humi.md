@@ -3,7 +3,7 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.3.0（v1.2 の精査 — 安定性・安全性 + Hallmark GUI。`docs/AUDIT_2026-08-28.md`）
+対象バージョン: v1.3.1（v1.3.0 の起動時クラッシュ ホットフィックス。§3「リソースバンドルの解決」必読）
 
 ---
 
@@ -147,6 +147,18 @@ gh release create vX.Y.Z \
   watch 文字列もトリガーも無ければ `onOutput` を張らない＝アイドルコスト 0。設定は `AlertsPane`（グローバル）。
 - **再割り当てショートカットの即時反映は `KeymapStore.installLocalMonitor()`（`NSEvent` ローカルモニタ）。**
   既定値のままのチョードはメニュー（`.commands`）に任せて二重発火を回避。メニュー表示の更新は依然再起動が必要。
+### ⚠️ リソースバンドルの解決（v1.3.1 のクラッシュ修正。絶対に戻さない）
+
+- **`Bundle.module` を HumiKit から使わない。** Command Line Tools ツールチェーンが生成する
+  `resource_bundle_accessor.swift` は最小版で、`.app` **直下**（`Contents/Resources/` ではない）と
+  ビルドマシンの固定パスしか見ない。`build-app.sh` は標準どおり `Contents/Resources/` に置くので
+  配布先で必ず `registerFonts()` が `fatalError` する（手元では固定パスが効いて偶然動く）。
+- 代わりに **`Bundle.humiResources`（`Sources/HumiKit/Core/HumiBundle.swift`）** を使う。
+  `Bundle.main.resourceURL`（= `Contents/Resources/`）→ `.app` 直下 → フレームワーク bundle の順。
+  `L10n.swift` / `DesignSystem.registerFonts` はこれ経由。
+- `build-app.sh` はバンドルを `Contents/Resources/` に置く（`.app` 直下だと `codesign` が
+  "bundle format unrecognized" で失敗する）。Xcode でビルドできるようになったら `Bundle.module` に戻してよい。
+
 ### v1.3 で増えた構造・変更（精査対応）
 
 - **`maximizeTile` の既定は `⌃⌘M`。** 素の `⌘M` は macOS のウィンドウ最小化に飲まれる。

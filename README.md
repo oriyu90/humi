@@ -5,7 +5,7 @@
 **タイル型の macOS ターミナルワークスペース。**
 `+` を押してフォルダを選ぶと、そのフォルダで開いたターミナルセッションがウィンドウ内のタイルに並びます。セッションはいくつでも。
 
-Version 1.3.0 · macOS 14+ · Apple Silicon / Intel
+Version 1.3.1 · macOS 14+ · Apple Silicon / Intel
 Author: Yuki_Orita · MIT License
 日本語 / English / 中文 / Português / Español（OS 言語で自動選択）
 

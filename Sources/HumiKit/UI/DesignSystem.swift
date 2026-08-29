@@ -166,7 +166,7 @@ public enum Hum {
             "JetBrainsMono-Regular", "JetBrainsMono-Medium",
         ]
         for name in names {
-            guard let url = Bundle.module.url(forResource: name, withExtension: "ttf") else { continue }
+            guard let url = Bundle.humiResources.url(forResource: name, withExtension: "ttf") else { continue }
             CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         }
     }
