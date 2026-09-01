@@ -3,7 +3,8 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.3.1（v1.3.0 の起動時クラッシュ ホットフィックス。§3「リソースバンドルの解決」必読）
+対象バージョン: v1.3.2（メモのコードブロックにコピーボタン + ウィンドウ chrome の小修正。
+§3「リソースバンドルの解決」は依然必読）
 
 ---
 
@@ -187,6 +188,27 @@ gh release create vX.Y.Z \
 - **`GitStatus.git` は 2s タイムアウト**（別スレッドで `Process.terminate()`）。
 - **`ShellResolver.osc7Kind(forShellBasename:)` / `effectiveKindForOSC7(config:)`。** `.login` の
   実体が fish のとき fish 版スニペットを選ぶ。`TerminalRegistry.controller(for:)` から使う。
+
+### v1.3.2 で増えた構造・変更
+
+- **`MarkdownView` の `.code` ケースは `CodeBlockView`（private struct）が描画。** コピーボタンは
+  **コード上部の帯**（`VStack` の先頭 `HStack`）に置く。`.overlay` で選択可能テキストに重ねると
+  クリックが通らない — macOS では `Text(...).textSelection(.enabled)` が text-interaction ビューを
+  張り、その上に来た `Button` のクリックを吸う。帯に分離すれば確実に効く。コピーは
+  `NSPasteboard.general` に本文をそのまま（末尾改行のみ除去）。1.4s で「コピーしました」表示が戻る。
+  文字列 `notes.copy_code` / `notes.code_copied` を 5 言語へ。`MarkdownView.swift` は `import AppKit` 追加。
+- **ウィンドウタイトル文字の非表示は `RootView` の `TitleTextHider`（`NSViewRepresentable`）で行う。**
+  `updateNSView` で毎回 `window.titleVisibility = .hidden` を再適用する。`AppDelegate` で 1 回だけ
+  隠すと、最初のセッションを開いた時に SwiftUI が `titleVisibility` を `.visible` に戻して
+  「Humi」が 2 つ出る（ツールバーのブランドマーク + タイトルバー文字）。一度きりの方式に戻さない。
+- **`NewSessionSheet` の幅は 520**（旧 480）。フォルダ行のパス `Text` に `.layoutPriority(1)`。
+  等幅フォントの CJK フォールバックが広く、480 だと「フォルダ未選択（ホームで開く）」が中央省略された。
+- **`NotesSidebarView` の 編集/プレビュー セグメントは `.fixedSize()`**（旧 `.frame(width: 150)`）。
+  150pt 固定だと pt「Pré-visualizar」/ es「Vista previa」が見切れる。
+- self-test 1464 → 1474（新 L10n キー 2 種 × 5 言語のパリティ +10）。
+- **既知の未修正**: アプリの Light/Dark 切替が、開いたままの Settings ウィンドウに追従しないことがある
+  （SwiftUI `Settings` シーンで `.preferredColorScheme` が sticky）。再オープンで直る。リリース直前の
+  設定シーン改変はリスクが高いので v1.3.2 では見送り。
 
 ## 4. 既知の未対応事項・今後の予定
 
