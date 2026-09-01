@@ -3,8 +3,8 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.4.0（メモ欄のタブ化 + ZIP 入出力 + 編集/プレビューのスクロール保持 +
-設定ウィンドウの Light/Dark 追従。§3「リソースバンドルの解決」は依然必読）
+対象バージョン: v1.4.1（v1.4.0 タブ式メモの上書きバグ ホットフィックス。§3「v1.4.1」必読。
+§3「リソースバンドルの解決」も依然必読）
 
 ---
 
@@ -243,6 +243,26 @@ gh release create vX.Y.Z \
   `notes.delete.confirm.message` のみ `%@` 1 個。
 - self-test 1474 → 1560（`Notes` スイート 16 + L10n +70）。`Notes` スイートは `ditto` 経由の
   archive round-trip を含む（CI = macos-15 で通る）。
+
+### v1.4.1（データ消失ホットフィックス）
+
+- **不具合**: タブ 2 つ以上で、片方に切替→編集すると、もう片方のメモ本文が編集中タブの内容で
+  まるごと上書きされる。ユーザーは `##` 入力 → スペース追加で気づいたが、実際は切替後の
+  最初のキー入力すべてで発生していた。
+- **原因**: `NotesSidebarView.noteTab` の `NotesEditor` は構造上同じ位置なので、`activeID` が
+  変わっても SwiftUI が `NSViewRepresentable` を使い回す（`updateNSView` のみ）。`Coordinator` は
+  生成時の `parent`（最初のノートの `textBinding`）を保持し続け、`textDidChange` が
+  `parent.text = s` でそのノートへ全文書き込み。
+- **修正**:
+  1. `NotesSidebarView` — エディタとプレビュー両方に **`.id(note.id)`**。ノートが変われば
+     SwiftUI が破棄→再生成し `makeNSView` が正しい初期値・新 `Coordinator`・新 `ScrollSync` で
+     作り直す（スクロール先頭リセットも自然に得られる）。**この `.id` を外さない。**
+  2. `NotesEditor` — `Coordinator.parent` を `var` にし `updateNSView` 冒頭で
+     `context.coordinator.parent = self`。`textDidChange` は `let current = parent` で
+     スナップショットしてから async。
+  3. `NotesStore.init` — `if let d = decode(...), !d.notes.isEmpty` に変更。空配列でデコード
+     されても seed 経路に落とし、「メモ 0 件」で固まらないようにする。
+- `textBinding` 分離の self-test 追加。self-test 1560 → 1562。
 
 ## 4. 既知の未対応事項・今後の予定
 
