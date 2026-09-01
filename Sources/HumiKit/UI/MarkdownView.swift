@@ -12,15 +12,27 @@ struct MarkdownView: View {
     }
 }
 
-/// The rendered blocks without a scroll container — so it can be dropped into a
-/// `TrackingScroll` (which needs a plain, self-sizing subtree) as well as `MarkdownView`.
+/// The rendered blocks without a scroll container — reused by `MarkdownView` and by
+/// `NotesMarkdownPreview`. With `anchored`, each block carries a stable `.id` so a
+/// `ScrollViewReader` can jump to one (used to restore scroll position on Edit⇄Preview).
 struct MarkdownBlocks: View {
     let text: String
+    var anchored: Bool = false
+
+    /// Stable scroll-anchor id for the block at `index`.
+    static func anchorID(_ index: Int) -> String { "md-block-\(index)" }
+
+    /// How many blocks `text` parses into (for proportional scroll restore).
+    static func blockCount(of text: String) -> Int { parse(text).count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Hum.Space.sm) {
-            ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
-                block.view
+            ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
+                if anchored {
+                    block.view.id(Self.anchorID(index))
+                } else {
+                    block.view
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -42,16 +54,19 @@ struct MarkdownBlocks: View {
                 Text(inline(text))
                     .font(Hum.Font.display(headingSize(level), weight: .bold))
                     .foregroundStyle(Hum.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, level <= 2 ? Hum.Space.sm : 2)
             case let .bullet(text):
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Circle().fill(Hum.pearDeep).frame(width: 5, height: 5).offset(y: -2)
                     Text(inline(text)).font(Hum.Font.body(13)).foregroundStyle(Hum.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             case let .ordered(n, text):
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("\(n).").font(Hum.Font.mono(12)).foregroundStyle(Hum.ink2)
                     Text(inline(text)).font(Hum.Font.body(13)).foregroundStyle(Hum.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             case .rule:
                 Rectangle().fill(Hum.hairline).frame(height: 1).padding(.vertical, 4)
@@ -59,6 +74,7 @@ struct MarkdownBlocks: View {
                 CodeBlockView(code: body)
             case let .paragraph(text):
                 Text(inline(text)).font(Hum.Font.body(13)).foregroundStyle(Hum.ink)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
 
@@ -73,7 +89,9 @@ struct MarkdownBlocks: View {
         }
     }
 
-    private var blocks: [Block] {
+    private var blocks: [Block] { Self.parse(text) }
+
+    private static func parse(_ text: String) -> [Block] {
         var result: [Block] = []
         var inFence = false
         var fence: [String] = []
@@ -133,7 +151,8 @@ private struct CodeBlockView: View {
             Text(code)
                 .font(Hum.Font.mono(12))
                 .foregroundStyle(Hum.ink)
-                .textSelection(.enabled)
+                // Never let a container squash the block into fewer lines with a "…".
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(Hum.Space.sm)

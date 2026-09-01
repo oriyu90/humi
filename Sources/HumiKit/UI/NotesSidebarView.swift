@@ -85,7 +85,10 @@ struct NotesSidebarView: View {
                                     Button {
                                         deletingID = note.id
                                     } label: {
-                                        Image(systemName: "xmark").font(.system(size: 8, weight: .bold))
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 8, weight: .bold))
+                                            .frame(width: 16, height: 16)
+                                            .contentShape(Rectangle())
                                     }
                                     .buttonStyle(.plain)
                                     .foregroundStyle(Hum.ink2)
@@ -124,6 +127,9 @@ struct NotesSidebarView: View {
                         .padding(.horizontal, Hum.Space.xs)
                         .opacity(selected ? 1 : 0)
                 }
+                // Make the whole chip (padding included) the hit target, not just
+                // the glyphs — but no larger than the chip itself.
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -196,7 +202,10 @@ struct NotesSidebarView: View {
             .buttonStyle(.plain)
 
             Button { renamingID = note.id; draftTitle = note.title } label: {
-                Image(systemName: "pencil").font(.system(size: 11, weight: .semibold))
+                Image(systemName: "pencil")
+                    .font(.system(size: 11, weight: .semibold))
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .foregroundStyle(Hum.ink2)
@@ -204,7 +213,10 @@ struct NotesSidebarView: View {
             .accessibilityLabel(L("notes.rename"))
 
             Button { deletingID = note.id } label: {
-                Image(systemName: "xmark").font(.system(size: 11, weight: .semibold))
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .semibold))
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .foregroundStyle(Hum.ink2)
@@ -244,11 +256,9 @@ struct NotesSidebarView: View {
             Divider().overlay(Hum.hairline)
 
             if settings.notesPreview {
-                TrackingScroll(scrollFraction: $scrollFraction) {
-                    MarkdownBlocks(text: note.text)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .id(id)
+                NotesMarkdownPreview(text: note.text, scrollFraction: $scrollFraction)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .id(id)
             } else {
                 NotesEditor(text: notes.textBinding(for: id),
                             scrollFraction: $scrollFraction,

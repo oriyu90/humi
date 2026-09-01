@@ -1,15 +1,10 @@
 import SwiftUI
 import AppKit
 
-/// A flipped container so y = 0 is the top (natural for scroll-fraction math).
-private final class FlippedView: NSView {
-    override var isFlipped: Bool { true }
-}
-
-/// Shared scroll-position bridging for the notes sidebar. Both the editor and the
-/// preview write a normalised 0…1 `fraction` as the user scrolls and restore it once
-/// when they first appear — so toggling Edit⇄Preview keeps you roughly where you were.
-/// The fraction is reset to 0 by the sidebar when the active note changes.
+/// Scroll-position bridging for the notes editor (`NSTextView`). Writes a normalised
+/// 0…1 `fraction` as the user scrolls and restores it once when the editor first
+/// appears — so toggling Edit⇄Preview keeps you roughly where you were. The fraction
+/// is reset to 0 by the sidebar when the active note changes.
 fileprivate final class ScrollSync: NSObject {
     let fraction: Binding<CGFloat>
     weak var scroll: NSScrollView?
@@ -138,50 +133,68 @@ struct NotesEditor: NSViewRepresentable {
 
 // MARK: - Preview
 
-/// Hosts arbitrary SwiftUI `content` in an `NSScrollView` with scroll-fraction bridging.
-struct TrackingScroll<Content: View>: NSViewRepresentable {
+private struct PreviewMetricsKey: PreferenceKey {
+    struct M: Equatable { var offset: CGFloat = 0; var content: CGFloat = 1 }
+    static let defaultValue = M()
+    static func reduce(value: inout M, nextValue: () -> M) {
+        let n = nextValue()
+        if n != M() { value = n }
+    }
+}
+
+/// Markdown preview in a plain SwiftUI `ScrollView`. The `NSHostingView`-in-`NSScrollView`
+/// route used before squashed tall code blocks into a truncated "…" (or blanked the
+/// whole preview). Scroll position is bridged to `scrollFraction` with a
+/// coordinate-space read (capture) and `ScrollViewReader` block anchors (restore), so
+/// Edit⇄Preview keeps you roughly where you were. A failed restore just opens at the
+/// top — never a clip.
+struct NotesMarkdownPreview: View {
+    let text: String
     @Binding var scrollFraction: CGFloat
-    @ViewBuilder var content: Content
 
-    func makeCoordinator() -> Coordinator { Coordinator() }
+    @State private var viewportHeight: CGFloat = 1
+    @State private var contentHeight: CGFloat = 1
+    @State private var didRestore = false
 
-    func makeNSView(context: Context) -> NSScrollView {
-        let scroll = NSScrollView()
-        scroll.hasVerticalScroller = true
-        scroll.drawsBackground = false
-        scroll.borderType = .noBorder
-        scroll.automaticallyAdjustsContentInsets = false
+    private var blockCount: Int { max(1, MarkdownBlocks.blockCount(of: text)) }
 
-        let doc = FlippedView()
-        doc.translatesAutoresizingMaskIntoConstraints = false
-        let host = NSHostingView(rootView: content)
-        host.translatesAutoresizingMaskIntoConstraints = false
-        doc.addSubview(host)
-        scroll.documentView = doc
-        context.coordinator.host = host
-
-        NSLayoutConstraint.activate([
-            doc.topAnchor.constraint(equalTo: scroll.contentView.topAnchor),
-            doc.leadingAnchor.constraint(equalTo: scroll.contentView.leadingAnchor),
-            doc.trailingAnchor.constraint(equalTo: scroll.contentView.trailingAnchor),
-            host.topAnchor.constraint(equalTo: doc.topAnchor),
-            host.leadingAnchor.constraint(equalTo: doc.leadingAnchor),
-            host.trailingAnchor.constraint(equalTo: doc.trailingAnchor),
-            host.bottomAnchor.constraint(equalTo: doc.bottomAnchor),
-        ])
-
-        context.coordinator.sync = ScrollSync($scrollFraction)
-        context.coordinator.sync?.attach(scroll)
-        return scroll
-    }
-
-    func updateNSView(_ scroll: NSScrollView, context: Context) {
-        context.coordinator.host?.rootView = content
-        context.coordinator.sync?.restoreIfNeeded()
-    }
-
-    final class Coordinator {
-        fileprivate var sync: ScrollSync?
-        var host: NSHostingView<Content>?
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                MarkdownBlocks(text: text, anchored: true)
+                    .background(
+                        GeometryReader { g in
+                            Color.clear.preference(
+                                key: PreviewMetricsKey.self,
+                                value: .init(offset: -g.frame(in: .named("notesPreview")).minY,
+                                             content: g.size.height))
+                        }
+                    )
+            }
+            .coordinateSpace(name: "notesPreview")
+            .background(
+                GeometryReader { g in
+                    Color.clear.onAppear { viewportHeight = max(1, g.size.height) }
+                        .onChange(of: g.size.height) { _, h in viewportHeight = max(1, h) }
+                }
+            )
+            .onPreferenceChange(PreviewMetricsKey.self) { m in
+                contentHeight = max(1, m.content)
+                guard didRestore else { return }
+                let span = max(1, contentHeight - viewportHeight)
+                let f = min(1, max(0, m.offset / span))
+                if abs(f - scrollFraction) > 0.002 { scrollFraction = f }
+            }
+            .onAppear {
+                let target = scrollFraction
+                DispatchQueue.main.async {
+                    if target > 0.001 {
+                        let idx = min(blockCount - 1, max(0, Int((target * CGFloat(blockCount)).rounded())))
+                        withAnimation(nil) { proxy.scrollTo(MarkdownBlocks.anchorID(idx), anchor: .top) }
+                    }
+                    didRestore = true
+                }
+            }
+        }
     }
 }

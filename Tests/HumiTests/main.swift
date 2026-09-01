@@ -164,6 +164,12 @@ MainActor.assumeIsolated {
         check(decoded?.title == "x", "NoteDoc: decodes with only a title")
         check(decoded?.text == "", "NoteDoc: missing text → empty")
 
+        // MarkdownBlocks parsing (drives the preview scroll-restore anchors).
+        let md = "# H\n\npara one\n\n```\na\nb\nc\n```\n\npara two\n"
+        check(MarkdownBlocks.blockCount(of: md) == 4, "MarkdownBlocks: heading+para+code+para = 4 blocks")
+        check(MarkdownBlocks.blockCount(of: "") == 0, "MarkdownBlocks: empty text → 0 blocks")
+        check(MarkdownBlocks.anchorID(2) == "md-block-2", "MarkdownBlocks: stable anchor id")
+
         // Disk round-trips through Persistence.
         let name = "selftest-notes-\(UUID().uuidString).json"
         defer { try? FileManager.default.removeItem(at: Persistence.url(name)) }
