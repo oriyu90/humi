@@ -3,8 +3,8 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.4.1（v1.4.0 タブ式メモの上書きバグ ホットフィックス。§3「v1.4.1」必読。
-§3「リソースバンドルの解決」も依然必読）
+対象バージョン: v1.4.2（新規セッションフロー修正 + タイトル二重表示修正。§3「v1.4.2」/「v1.4.1」/
+「リソースバンドルの解決」いずれも必読）
 
 ---
 
@@ -263,6 +263,23 @@ gh release create vX.Y.Z \
   3. `NotesStore.init` — `if let d = decode(...), !d.notes.isEmpty` に変更。空配列でデコード
      されても seed 経路に落とし、「メモ 0 件」で固まらないようにする。
 - `textBinding` 分離の self-test 追加。self-test 1560 → 1562。
+
+### v1.4.2（新規セッションフロー）
+
+- **`+` → `beginNewSession()` は `showingNewSheet = true` だけ。** 先にフォルダ `NSOpenPanel` を
+  出す旧挙動をやめた。`RootView` から `runFolderPanel()` / `pendingFolder` / `onPickFolder` 経路を削除。
+- **`NewSessionSheet` が `@State folder` を自分で持つ**（旧: `RootView` が `folder:` prop で渡す）。
+  フォルダ選択は `.fileImporter(isPresented:$choosingFolder, allowedContentTypes:[.folder],
+  allowsMultipleSelection:false)`。結果 `Result<[URL],Error>` → `urls.first?.path` を `folder` に入れる。
+  **旧フローの「シート閉じる→`NSOpenPanel.runModal`→シート開き直す」は競合で選択パスを落とすことが
+  あった（報告バグ）。この dismiss/再提示の dance に戻さない。**
+- Humi は非サンドボックスなので `.fileImporter` の URL `.path` はそのまま使える
+  （`startAccessingSecurityScopedResource` 不要）。
+- **`.windowStyle(.hiddenTitleBar)` を追加。** sheet / `.fileImporter` の提示・解除まわりで
+  SwiftUI が `titleVisibility` を戻し、`TitleTextHider` の再適用が間に合わず「Humi」が二重表示に
+  なることがあった。タイトルバー文字自体を無くして根本解決。`TitleTextHider` は保険で残置。
+  `Window("Humi", …)` のタイトル文字列はウィンドウメニュー等のために残る。
+- 未使用の `panel.choose` / `panel.message` を 5 言語から削除。self-test 1562 → 1552。
 
 ## 4. 既知の未対応事項・今後の予定
 
