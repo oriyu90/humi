@@ -3,8 +3,8 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.4.2（新規セッションフロー修正 + タイトル二重表示修正。§3「v1.4.2」/「v1.4.1」/
-「リソースバンドルの解決」いずれも必読）
+対象バージョン: v1.4.3（メモのコードブロック表示切れ修正 + タブ当たり判定 + アプリアイコン。
+§3「v1.4.3」/「v1.4.2」/「v1.4.1」/「リソースバンドルの解決」いずれも必読）
 
 ---
 
@@ -280,6 +280,31 @@ gh release create vX.Y.Z \
   なることがあった。タイトルバー文字自体を無くして根本解決。`TitleTextHider` は保険で残置。
   `Window("Humi", …)` のタイトル文字列はウィンドウメニュー等のために残る。
 - 未使用の `panel.choose` / `panel.message` を 5 言語から削除。self-test 1562 → 1552。
+
+### v1.4.3（メモプレビューの表示切れ修正・アプリアイコン）
+
+- **不具合（実データで再現・修正確認済み）**: メモのコードブロックが 8 行以上、または折り返す
+  ほど長い行を含むと、プレビューの末尾が「…」で切れる／プレビュー全体が真っ白になることがあった。
+- **原因**: v1.4.0 で入れた `TrackingScroll`（`NSHostingView` を `NSScrollView` に載せてプレビューの
+  スクロール位置を保持）が、`NSHostingView` に渡す高さを実際より短く測ることがあり、SwiftUI が
+  `Text` を強制的に省略記号で切り詰めていた。再現が不安定（同内容でも起きたり起きなかったり）で、
+  `sizingOptions` 系の対症療法では解消しなかったため、**プレビューを素の SwiftUI `ScrollView` に
+  戻した**（`NotesMarkdownPreview`、`TrackingScroll` は削除）。
+- **スクロール位置保持の再実装**: `MarkdownBlocks(anchored: true)` が各ブロックに
+  `md-block-<i>` の `.id` を付与し、`ScrollViewReader.scrollTo` で編集側のフラクションに近い
+  ブロックへ復元する。取得は `GeometryReader`（コンテンツの `.background`）+ 名前空間オフセット。
+  復元に失敗しても「先頭で開く」だけで、表示欠落は起きない。
+- **`MarkdownBlocks` の見出し／箇条書き／番号付き／段落／コードの `Text` すべてに
+  `.fixedSize(horizontal: false, vertical: true)` を付与。** コンテナに高さを圧迫されても
+  省略記号で切り詰めない。**この `.fixedSize` を外さない。** コード `Text` の冗長な
+  `.textSelection(.enabled)` は削除（外側 `MarkdownBlocks` VStack の分で選択可能）。
+- **タブ chip / ホームボタン / `×` / 鉛筆に `.contentShape(Rectangle())` + 最小フレーム
+  （16〜22pt）。** 見た目の padding 込み領域を当たり判定にする。それより外へは広げない
+  （オーナー指定）。
+- **アプリアイコン**: `Assets/AppIcon.icns`（ユーザー提供の `.ico` から `sips`/`iconutil` で生成）。
+  再生成用 `Scripts/make-icns.sh` を追加（`Assets/AppIcon-source-1024.png` から作る）。
+  `build-app.sh` は既存のとおり `Assets/AppIcon.icns` があれば拾う（変更不要だった）。
+- self-test 1552 → 1555（`MarkdownBlocks.blockCount` / `anchorID` チェック追加）。
 
 ## 4. 既知の未対応事項・今後の予定
 
