@@ -47,6 +47,8 @@
 "notes.edit" = "Editar";
 "notes.preview" = "Pré-visualizar";
 "notes.placeholder" = "# Notas\n\nEscreva notas aqui. Elas persistem entre reinícios do app.\nMarkdown é suportado.";
+"notes.copy_code" = "Copiar";
+"notes.code_copied" = "Copiado";
 
 "settings.tab.general" = "Geral";
 "settings.tab.shell" = "Shell";

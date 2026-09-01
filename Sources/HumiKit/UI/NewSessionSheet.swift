@@ -33,6 +33,7 @@ struct NewSessionSheet: View {
                     .foregroundStyle(folder == nil ? Hum.ink2 : Hum.ink)
                     .lineLimit(1)
                     .truncationMode(.middle)
+                    .layoutPriority(1)
                 Spacer(minLength: Hum.Space.sm)
                 Button(folder == nil ? L("sheet.new.choose_folder") : L("sheet.new.change_folder")) { onPickFolder() }
                     .buttonStyle(.hum(.outline, accent: Hum.accent(1)))
@@ -72,7 +73,7 @@ struct NewSessionSheet: View {
             }
         }
         .padding(Hum.Space.xl)
-        .frame(width: 480)
+        .frame(width: 520)
         .background(Hum.paper)
         .onAppear { if profileID == nil { profileID = profiles.defaultProfileID } }
     }

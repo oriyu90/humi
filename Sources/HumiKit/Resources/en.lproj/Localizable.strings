@@ -47,6 +47,8 @@
 "notes.edit" = "Edit";
 "notes.preview" = "Preview";
 "notes.placeholder" = "# Notes\n\nWrite notes here. They persist across app restarts.\nMarkdown is supported.";
+"notes.copy_code" = "Copy";
+"notes.code_copied" = "Copied";
 
 "settings.tab.general" = "General";
 "settings.tab.shell" = "Shell";

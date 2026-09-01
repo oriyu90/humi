@@ -47,6 +47,8 @@
 "notes.edit" = "編集";
 "notes.preview" = "プレビュー";
 "notes.placeholder" = "# メモ\n\nここにメモが書けます。アプリを再起動しても内容は残ります。\nMarkdown 形式に対応。";
+"notes.copy_code" = "コピー";
+"notes.code_copied" = "コピーしました";
 
 "settings.tab.general" = "一般";
 "settings.tab.shell" = "シェル";

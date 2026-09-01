@@ -3,6 +3,31 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.3.2] - 2026-09-01
+
+A small UI pass over the notes sidebar and the window chrome.
+
+### Added
+- **Copy button on fenced code blocks in the notes Markdown preview.** Each
+  ```` ``` ```` block gets a Copy control in its own strip above the code; it puts
+  the block on the pasteboard verbatim (trailing newline trimmed) and briefly
+  confirms with a check. The button sits outside the selectable text on purpose —
+  on macOS a `textSelection`-enabled `Text` installs a text-interaction view that
+  swallows clicks landing on top of it. New strings `notes.copy_code` /
+  `notes.code_copied` in all five languages.
+
+### Fixed
+- **The window showed "Humi" twice** — once as the toolbar brand mark and once as
+  the OS title-bar text. The title-bar text is now hidden. The previous one-shot
+  fix at launch was reverted by SwiftUI re-asserting `titleVisibility = .visible`
+  when the first session opened; the hider now re-applies on every scene update.
+- **New-session sheet: the folder row truncated its own placeholder.** CJK text in
+  the monospace font falls back wider than the fixed row width allowed, so
+  「フォルダ未選択（ホームで開く）」 middle-truncated. The path label now takes layout
+  priority and the sheet is a touch wider (480 → 520).
+- **Notes Edit/Preview segmented control clipped** "Pré-visualizar" / "Vista
+  previa" at its fixed 150 pt width. It now sizes to its content.
+
 ## [1.3.1] - 2026-08-29
 
 ### Fixed

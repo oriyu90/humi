@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Lightweight Markdown preview: renders headings, lists, rules, code and inline styles
 /// block-by-block with `AttributedString(markdown:)`. Good enough for scratch notes;
@@ -47,12 +48,7 @@ struct MarkdownView: View {
             case .rule:
                 Rectangle().fill(Hum.hairline).frame(height: 1).padding(.vertical, 4)
             case let .code(body):
-                Text(body)
-                    .font(Hum.Font.mono(12))
-                    .foregroundStyle(Hum.ink)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(Hum.Space.sm)
-                    .background(RoundedRectangle(cornerRadius: Hum.Radius.input).fill(Hum.paper3))
+                CodeBlockView(code: body)
             case let .paragraph(text):
                 Text(inline(text)).font(Hum.Font.body(13)).foregroundStyle(Hum.ink)
             }
@@ -107,5 +103,63 @@ struct MarkdownView: View {
         }
         if inFence, !fence.isEmpty { result.append(.code(fence.joined(separator: "\n"))) }
         return result
+    }
+}
+
+/// A fenced code block with a Copy button. The button lives in its own strip above the
+/// code — never over the selectable text, which on macOS installs a text-interaction
+/// view that would otherwise swallow the button's clicks. Copy drops the block onto the
+/// pasteboard verbatim (trailing newline trimmed) and flips to a "copied" check.
+private struct CodeBlockView: View {
+    let code: String
+
+    @State private var hovering = false
+    @State private var copied = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Hum.Space.xs) {
+            HStack {
+                Spacer(minLength: 0)
+                copyButton
+            }
+            Text(code)
+                .font(Hum.Font.mono(12))
+                .foregroundStyle(Hum.ink)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(Hum.Space.sm)
+        .background(RoundedRectangle(cornerRadius: Hum.Radius.input).fill(Hum.paper3))
+        .onHover { hovering = $0 }
+    }
+
+    private var copyButton: some View {
+        Button(action: copy) {
+            HStack(spacing: 4) {
+                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                Text(copied ? L("notes.code_copied") : L("notes.copy_code"))
+            }
+            .font(Hum.Font.body(11, weight: .medium))
+            .foregroundStyle(copied ? Hum.mint : Hum.ink2)
+            .padding(.horizontal, Hum.Space.sm)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(Hum.paper))
+            .overlay(Capsule().strokeBorder(Hum.hairline))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .opacity(copied || hovering ? 1 : 0.55)
+        .animation(Hum.Motion.considerate(Hum.Motion.snap), value: hovering)
+        .animation(Hum.Motion.considerate(Hum.Motion.snap), value: copied)
+        .help(L("notes.copy_code"))
+        .accessibilityLabel(L("notes.copy_code"))
+    }
+
+    private func copy() {
+        let text = code.hasSuffix("\n") ? String(code.dropLast()) : code
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        copied = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { copied = false }
     }
 }

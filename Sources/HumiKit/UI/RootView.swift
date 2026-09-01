@@ -83,6 +83,10 @@ public struct RootView: View {
             }
         }
         .background(Hum.paper2)
+        // The toolbar already carries the brand mark ("Humi" + CharacterMark), so the
+        // OS title-bar text is a second, redundant "Humi". Keep hiding it — SwiftUI
+        // re-asserts `.visible` on scene updates, so this runs on every update pass.
+        .background(TitleTextHider())
         .environment(\.locale, loc.locale)
         .preferredColorScheme(themes.resolvedTheme.appAppearance == .dark ? .dark : .light)
         .toolbar {
@@ -176,6 +180,19 @@ public struct RootView: View {
             if phase != .active {
                 notes.flush()
                 store.persistNow()
+            }
+        }
+    }
+
+    /// Hides the redundant window-title text. `updateNSView` re-applies it because
+    /// SwiftUI resets `titleVisibility` to `.visible` whenever the scene updates
+    /// (e.g. the first session opens).
+    private struct TitleTextHider: NSViewRepresentable {
+        func makeNSView(context: Context) -> NSView { NSView() }
+        func updateNSView(_ nsView: NSView, context: Context) {
+            DispatchQueue.main.async {
+                guard let window = nsView.window else { return }
+                if window.titleVisibility != .hidden { window.titleVisibility = .hidden }
             }
         }
     }

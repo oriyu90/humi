@@ -32,7 +32,7 @@ struct NotesSidebarView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .frame(width: 150)
+            .fixedSize()
         }
         .padding(.horizontal, Hum.Space.md)
         .padding(.vertical, Hum.Space.sm)
