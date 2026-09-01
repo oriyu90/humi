@@ -12,8 +12,6 @@
 
 "session.default_title" = "Session";
 
-"panel.choose" = "Choose";
-"panel.message" = "Folder to open the session in (Cancel for home)";
 
 "toolbar.toggle_notes" = "Toggle notes";
 "toolbar.new_session" = "New Session";

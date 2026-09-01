@@ -12,8 +12,6 @@
 
 "session.default_title" = "Sessão";
 
-"panel.choose" = "Escolher";
-"panel.message" = "Pasta para abrir a sessão (Cancelar usa a pasta pessoal)";
 
 "toolbar.toggle_notes" = "Mostrar/ocultar notas";
 "toolbar.new_session" = "Nova sessão";

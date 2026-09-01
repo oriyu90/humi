@@ -58,7 +58,6 @@ public struct RootView: View {
     @ObservedObject private var arrangements = ArrangementStore.shared
 
     @State private var showingNewSheet = false
-    @State private var pendingFolder: String?
     @State private var searchVisible = false
     @State private var savingArrangement = false
     @State private var restoringArrangement = false
@@ -132,15 +131,6 @@ public struct RootView: View {
         .sheet(isPresented: $showingNewSheet) {
             NewSessionSheet(
                 settings: settings,
-                folder: pendingFolder,
-                onPickFolder: {
-                    // Dismiss the sheet, run the panel, then re-present.
-                    showingNewSheet = false
-                    DispatchQueue.main.async {
-                        pendingFolder = Self.runFolderPanel() ?? pendingFolder
-                        showingNewSheet = true
-                    }
-                },
                 onCreate: { dir, pid in
                     showingNewSheet = false
                     withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
@@ -335,21 +325,8 @@ public struct RootView: View {
         window.makeFirstResponder(view)
     }
 
-    /// `+` pressed → choose a folder (Cancel = "no folder"), then show the open-mode sheet.
+    /// `+` pressed → open the choose-how sheet straight away (open as-is, or pick a folder).
     private func beginNewSession() {
-        pendingFolder = Self.runFolderPanel()
         showingNewSheet = true
-    }
-
-    /// App-modal folder picker. Safe here because no SwiftUI sheet is presented yet.
-    @MainActor
-    private static func runFolderPanel() -> String? {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        panel.prompt = L("panel.choose")
-        panel.message = L("panel.message")
-        return panel.runModal() == .OK ? panel.url?.path : nil
     }
 }

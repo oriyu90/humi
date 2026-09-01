@@ -1,18 +1,20 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
-/// Step 2 of the `+` flow: the folder was already chosen (or skipped) via an
-/// `NSOpenPanel` run by `RootView`. Here the user picks *where* the session opens.
-/// No `NSOpenPanel` is run from inside this sheet (that would nest modals).
+/// The `+` flow. Opens straight away with two choices — open as-is (home), or pick a
+/// folder to open in. The folder is chosen with a SwiftUI `.fileImporter` layered over
+/// this sheet (no nested `NSOpenPanel` / dismiss-and-re-present, which used to drop the
+/// picked path). An optional profile applies to either choice.
 struct NewSessionSheet: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject private var profiles = ProfileStore.shared
-    let folder: String?
-    var onPickFolder: () -> Void
     /// workingDirectory?, profileID? — nil dir == "open as-is"; nil profile == global
     var onCreate: (String?, UUID?) -> Void
     var onCancel: () -> Void
 
+    @State private var folder: String?
     @State private var profileID: UUID?
+    @State private var choosingFolder = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Hum.Space.lg) {
@@ -35,8 +37,10 @@ struct NewSessionSheet: View {
                     .truncationMode(.middle)
                     .layoutPriority(1)
                 Spacer(minLength: Hum.Space.sm)
-                Button(folder == nil ? L("sheet.new.choose_folder") : L("sheet.new.change_folder")) { onPickFolder() }
-                    .buttonStyle(.hum(.outline, accent: Hum.accent(1)))
+                Button(folder == nil ? L("sheet.new.choose_folder") : L("sheet.new.change_folder")) {
+                    choosingFolder = true
+                }
+                .buttonStyle(.hum(.outline, accent: Hum.accent(1)))
             }
             .padding(Hum.Space.md)
             .background(RoundedRectangle(cornerRadius: Hum.Radius.input, style: .continuous).fill(Hum.paper2))
@@ -76,6 +80,13 @@ struct NewSessionSheet: View {
         .frame(width: 520)
         .background(Hum.paper)
         .onAppear { if profileID == nil { profileID = profiles.defaultProfileID } }
+        .fileImporter(isPresented: $choosingFolder,
+                      allowedContentTypes: [.folder],
+                      allowsMultipleSelection: false) { result in
+            if case let .success(urls) = result, let url = urls.first {
+                folder = url.path
+            }
+        }
     }
 
     private func actionLabel(title: String, subtitle: String, systemImage: String) -> some View {

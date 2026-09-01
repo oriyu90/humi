@@ -12,8 +12,6 @@
 
 "session.default_title" = "会话";
 
-"panel.choose" = "选择";
-"panel.message" = "在此文件夹中打开会话（取消则用主目录）";
 
 "toolbar.toggle_notes" = "显示/隐藏备忘";
 "toolbar.new_session" = "新建会话";

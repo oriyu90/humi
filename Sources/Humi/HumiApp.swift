@@ -52,6 +52,10 @@ struct HumiApp: App {
         }
         .defaultSize(width: 1120, height: 700)
         .windowResizability(.contentMinSize)
+        // The toolbar already carries the brand mark; hiding the title-bar chrome
+        // keeps the OS title text from coming back after sheets. `TitleTextHider`
+        // in RootView stays as a belt-and-braces re-hide.
+        .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .newItem) {
                 actionButton(.newSession, "app.menu.new_session")

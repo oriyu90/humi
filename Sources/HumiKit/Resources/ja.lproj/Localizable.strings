@@ -12,8 +12,6 @@
 
 "session.default_title" = "セッション";
 
-"panel.choose" = "選択";
-"panel.message" = "セッションを開くフォルダ（キャンセルでホーム）";
 
 "toolbar.toggle_notes" = "メモの表示切替";
 "toolbar.new_session" = "新しいセッション";

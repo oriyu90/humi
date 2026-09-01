@@ -3,6 +3,25 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.4.2] - 2026-09-02
+
+New-session flow fixes.
+
+### Changed
+- **The `+` flow no longer opens a folder picker unprompted.** It now shows the
+  choose-how sheet first (open as-is in home, or pick a folder). The folder is
+  chosen with a SwiftUI `.fileImporter` layered over the sheet.
+
+### Fixed
+- **Picking a folder sometimes started the session in the home directory instead
+  of the chosen folder.** The old flow dismissed the sheet, ran an `NSOpenPanel`,
+  and re-presented — a race that could drop the picked path. The sheet now stays
+  mounted and owns the folder state, so the chosen (including deep-traversed)
+  folder is always the session's working directory.
+- **"Humi" could reappear twice in the title bar after using a sheet.** The
+  window now uses `.hiddenTitleBar`, so SwiftUI can't restore the OS title text.
+- Removed two now-unused localized strings (`panel.choose`, `panel.message`).
+
 ## [1.4.1] - 2026-09-01
 
 Hotfix for a data-loss bug in the new tabbed notes.
