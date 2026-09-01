@@ -49,6 +49,20 @@
 "notes.placeholder" = "# Notas\n\nEscreva notas aqui. Elas persistem entre reinícios do app.\nMarkdown é suportado.";
 "notes.copy_code" = "Copiar";
 "notes.code_copied" = "Copiado";
+"notes.list.title" = "Todas as notas";
+"notes.list.empty" = "Ainda sem notas";
+"notes.tab.new" = "Nova nota";
+"notes.rename" = "Renomear…";
+"notes.rename.prompt" = "Nome da nota";
+"notes.delete" = "Excluir";
+"notes.delete.confirm.title" = "Excluir esta nota?";
+"notes.delete.confirm.message" = "“%@” será excluída. Não é possível desfazer.";
+"notes.delete.confirm.delete" = "Excluir";
+"notes.share" = "Compartilhamento";
+"notes.share.hint" = "Exporte todas as notas como um ZIP e importe no Humi de outro Mac. Notas cujo nome e ID coincidem são substituídas pela cópia importada.";
+"notes.export_zip" = "Exportar como ZIP";
+"notes.import_zip" = "Importar ZIP";
+"notes.export.filename" = "Notas do Humi";
 
 "settings.tab.general" = "Geral";
 "settings.tab.shell" = "Shell";

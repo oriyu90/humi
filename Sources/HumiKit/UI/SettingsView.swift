@@ -1,10 +1,13 @@
 import SwiftUI
+import AppKit
 
 public struct SettingsView: View {
     @ObservedObject private var loc = Localization.shared
     @ObservedObject private var themes = ThemeStore.shared
 
     public init() {}
+
+    private var isDark: Bool { themes.resolvedTheme.appAppearance == .dark }
 
     public var body: some View {
         TabView {
@@ -20,7 +23,26 @@ public struct SettingsView: View {
         .frame(width: 620, height: 480)
         .background(Hum.paper)
         .environment(\.locale, loc.locale)
-        .preferredColorScheme(themes.resolvedTheme.appAppearance == .dark ? .dark : .light)
+        .preferredColorScheme(isDark ? .dark : .light)
+        // `.preferredColorScheme` alone doesn't repaint an already-open Settings
+        // window when the in-app Light/Dark mode flips — force the NSWindow's
+        // appearance on every update pass.
+        .background(SettingsAppearanceSync(dark: isDark))
+    }
+}
+
+/// Keeps the open Settings window's `NSAppearance` in step with the in-app theme mode.
+private struct SettingsAppearanceSync: NSViewRepresentable {
+    let dark: Bool
+    func makeNSView(context: Context) -> NSView { NSView() }
+    func updateNSView(_ nsView: NSView, context: Context) {
+        let wanted: NSAppearance.Name = dark ? .darkAqua : .aqua
+        DispatchQueue.main.async {
+            guard let window = nsView.window else { return }
+            if window.appearance?.name != wanted {
+                window.appearance = NSAppearance(named: wanted)
+            }
+        }
     }
 }
 

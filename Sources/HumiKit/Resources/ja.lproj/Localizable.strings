@@ -49,6 +49,20 @@
 "notes.placeholder" = "# メモ\n\nここにメモが書けます。アプリを再起動しても内容は残ります。\nMarkdown 形式に対応。";
 "notes.copy_code" = "コピー";
 "notes.code_copied" = "コピーしました";
+"notes.list.title" = "メモ一覧";
+"notes.list.empty" = "メモがありません";
+"notes.tab.new" = "新規メモ";
+"notes.rename" = "名前を変更";
+"notes.rename.prompt" = "メモの名前";
+"notes.delete" = "削除";
+"notes.delete.confirm.title" = "このメモを削除しますか？";
+"notes.delete.confirm.message" = "「%@」を削除します。元に戻せません。";
+"notes.delete.confirm.delete" = "削除";
+"notes.share" = "共有";
+"notes.share.hint" = "すべてのメモを ZIP で書き出し、別の端末の Humi に読み込めます。名前と ID が一致するメモは読み込んだ内容で置き換わります。";
+"notes.export_zip" = "ZIP で書き出し";
+"notes.import_zip" = "ZIP を読み込み";
+"notes.export.filename" = "Humi メモ";
 
 "settings.tab.general" = "一般";
 "settings.tab.shell" = "シェル";

@@ -49,6 +49,20 @@
 "notes.placeholder" = "# 备忘\n\n在此记录备忘。重启应用后内容仍会保留。\n支持 Markdown。";
 "notes.copy_code" = "复制";
 "notes.code_copied" = "已复制";
+"notes.list.title" = "所有备忘";
+"notes.list.empty" = "还没有备忘";
+"notes.tab.new" = "新建备忘";
+"notes.rename" = "重命名…";
+"notes.rename.prompt" = "备忘名称";
+"notes.delete" = "删除";
+"notes.delete.confirm.title" = "删除这条备忘？";
+"notes.delete.confirm.message" = "将删除“%@”。此操作无法撤销。";
+"notes.delete.confirm.delete" = "删除";
+"notes.share" = "共享";
+"notes.share.hint" = "将所有备忘导出为 ZIP，并在另一台 Mac 的 Humi 中导入。名称和 ID 均匹配的备忘会被导入的内容替换。";
+"notes.export_zip" = "导出为 ZIP";
+"notes.import_zip" = "导入 ZIP";
+"notes.export.filename" = "Humi 备忘";
 
 "settings.tab.general" = "通用";
 "settings.tab.shell" = "Shell";

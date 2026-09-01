@@ -3,6 +3,40 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.4.0] - 2026-09-01
+
+The notes sidebar becomes multi-tab, with ZIP export/import for moving notes
+between machines.
+
+### Added
+- **Tabbed notes.** The sidebar header is now a tab strip: a pinned **Home** tab
+  (a house icon) plus one tab per note. Home lists every note — create
+  (「新規メモ」), rename (pencil → dialog), open, delete. Each note tab has an `×`
+  that asks for confirmation before deleting. New notes are named "メモ 1",
+  "メモ 2", … Persistence moved from `notes.md` to `notes.json` (`{notes, activeID}`);
+  a pre-1.4 `notes.md` is migrated to a single note on first launch.
+- **ZIP export / import of all notes** (buttons on the Home tab). The archive is a
+  plain `manifest.json` + one `NN--slug.md` per note, made with `/usr/bin/ditto`
+  (no dependency). On import, a note whose **id and title both match** an existing
+  one is replaced in place (the imported copy wins); anything else is added,
+  keeping its id so a later re-import from the same machine updates rather than
+  duplicates. A hand-made ZIP of loose `.md` files also imports (titled by
+  filename). New strings `notes.list.title` / `notes.tab.new` / `notes.rename` /
+  `notes.delete*` / `notes.share*` / `notes.export_zip` / `notes.import_zip` in
+  all five languages.
+
+### Changed
+- **Edit ⇄ Preview keeps your scroll position.** Both panes are now backed by an
+  `NSScrollView` (editor via `NSTextView`, preview via a hosted SwiftUI subtree)
+  sharing one normalised scroll fraction, so toggling lands you roughly where you
+  were. The fraction resets when you switch notes.
+
+### Fixed
+- **The open Settings window now follows the in-app Light/Dark mode live.**
+  `.preferredColorScheme` alone didn't repaint an already-open Settings window;
+  its `NSWindow.appearance` is now forced on every update pass (same trick as the
+  1.3.2 title-text hider).
+
 ## [1.3.2] - 2026-09-01
 
 A small UI pass over the notes sidebar and the window chrome.

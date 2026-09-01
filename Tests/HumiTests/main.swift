@@ -154,6 +154,67 @@ suite("Persistence") {
           "missing file → nil")
 }
 
+// MARK: Notes (tabs + ZIP archive)
+
+MainActor.assumeIsolated {
+    suite("Notes") {
+        // NoteDoc decodes with defaults for missing fields.
+        let sparse = #"{"title":"x"}"#.data(using: .utf8)!
+        let decoded = try? JSONDecoder().decode(NoteDoc.self, from: sparse)
+        check(decoded?.title == "x", "NoteDoc: decodes with only a title")
+        check(decoded?.text == "", "NoteDoc: missing text → empty")
+
+        // Disk round-trips through Persistence.
+        let name = "selftest-notes-\(UUID().uuidString).json"
+        defer { try? FileManager.default.removeItem(at: Persistence.url(name)) }
+        let n1 = NoteDoc(title: "Claude Code")
+        let n2 = NoteDoc(title: "Gemini", text: "# hi\n\nbody")
+        Persistence.encode(NotesStore.Disk(notes: [n1, n2], activeID: n2.id), to: name, sync: true)
+        let back = Persistence.decode(NotesStore.Disk.self, from: name)
+        check(back?.notes.count == 2, "Disk round-trip: two notes")
+        check(back?.notes[1].text.contains("body") == true, "Disk round-trip: body preserved")
+        check(back?.activeID == n2.id, "Disk round-trip: activeID preserved")
+
+        // merge() rule: same id+title replaces; id collision w/ new title → fresh id;
+        // brand-new → appended keeping id.
+        let store = NotesStore.shared
+        let base = store.notes.count
+        let a = NoteDoc(title: "Task A", text: "one")
+        let b = NoteDoc(title: "Task B", text: "two")
+        let r1 = store.merge(imported: [a, b])
+        check(r1 == (added: 2, replaced: 0), "merge: two new notes appended")
+        check(store.notes.count == base + 2, "merge: count grew by 2")
+
+        var a2 = a; a2.text = "one-updated"
+        let r2 = store.merge(imported: [a2])
+        check(r2 == (added: 0, replaced: 1), "merge: same id+title replaces in place")
+        check(store.note(a.id)?.text == "one-updated", "merge: imported body won")
+        check(store.notes.count == base + 2, "merge: replace did not grow the list")
+
+        let collide = NoteDoc(id: a.id, title: "Renamed elsewhere", text: "z")
+        let r3 = store.merge(imported: [collide])
+        check(r3.added == 1, "merge: id collision + different title → added as new")
+        check(store.notes.filter { $0.id == a.id }.count == 1, "merge: no duplicate ids")
+
+        // ZIP archive: export → read round-trips notes, ids and order.
+        let zipURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("humi-selftest-\(UUID().uuidString).zip")
+        defer { try? FileManager.default.removeItem(at: zipURL) }
+        let src = [NoteDoc(title: "First / slashy", text: "alpha"),
+                   NoteDoc(title: "第二", text: "beta\ngamma")]
+        do {
+            try NotesArchive.export(src, to: zipURL)
+            let round = try NotesArchive.read(from: zipURL)
+            check(round.count == 2, "archive: two notes back")
+            check(round[0].id == src[0].id && round[1].id == src[1].id, "archive: ids + order preserved")
+            check(round[1].text == "beta\ngamma", "archive: multi-line body preserved")
+        } catch {
+            check(false, "archive round-trip threw: \(error)")
+        }
+        check(NotesArchive.slug("Claude Code 用!!") == "Claude-Code", "archive: slug is filesystem-safe")
+    }
+}
+
 // MARK: Theme
 
 suite("Theme") {

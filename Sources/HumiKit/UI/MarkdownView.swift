@@ -8,16 +8,24 @@ struct MarkdownView: View {
     let text: String
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Hum.Space.sm) {
-                ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
-                    block.view
-                }
+        ScrollView { MarkdownBlocks(text: text) }
+    }
+}
+
+/// The rendered blocks without a scroll container — so it can be dropped into a
+/// `TrackingScroll` (which needs a plain, self-sizing subtree) as well as `MarkdownView`.
+struct MarkdownBlocks: View {
+    let text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Hum.Space.sm) {
+            ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
+                block.view
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Hum.Space.md)
-            .textSelection(.enabled)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Hum.Space.md)
+        .textSelection(.enabled)
     }
 
     private enum Block {
