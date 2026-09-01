@@ -54,7 +54,7 @@ public final class NotesStore: ObservableObject {
     struct Disk: Codable { var notes: [NoteDoc]; var activeID: UUID? }
 
     private init() {
-        if let d = Persistence.decode(Disk.self, from: Self.fileName) {
+        if let d = Persistence.decode(Disk.self, from: Self.fileName), !d.notes.isEmpty {
             notes = d.notes
             activeID = d.activeID.flatMap { id in d.notes.contains { $0.id == id } ? id : nil }
             return

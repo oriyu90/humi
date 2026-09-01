@@ -3,6 +3,21 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.4.1] - 2026-09-01
+
+Hotfix for a data-loss bug in the new tabbed notes.
+
+### Fixed
+- **Editing a note after switching tabs overwrote a *different* note's entire
+  contents.** SwiftUI reused one `NotesEditor` across tabs; its coordinator kept
+  the binding for whichever note it was first shown with, so every later
+  keystroke wrote the visible editor text into that original note. The editor
+  (and the preview) is now identified by note id so a tab switch rebuilds it, and
+  the coordinator's binding is refreshed on every update. Added a `textBinding`
+  isolation self-test.
+- A `notes.json` that somehow decoded with an empty note list now re-seeds one
+  note instead of leaving the sidebar with nothing.
+
 ## [1.4.0] - 2026-09-01
 
 The notes sidebar becomes multi-tab, with ZIP export/import for moving notes

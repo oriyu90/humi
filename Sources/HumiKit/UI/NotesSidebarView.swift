@@ -248,6 +248,7 @@ struct NotesSidebarView: View {
                     MarkdownBlocks(text: note.text)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .id(id)
             } else {
                 NotesEditor(text: notes.textBinding(for: id),
                             scrollFraction: $scrollFraction,
@@ -255,6 +256,10 @@ struct NotesSidebarView: View {
                             textColor: NSColor(Hum.ink))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(Hum.Space.xs)
+                // Bind the NSTextView identity to the note. Without this SwiftUI
+                // reuses one editor across tabs; its coordinator keeps the first
+                // note's binding and later edits overwrite that note.
+                .id(id)
             }
         }
         .background(Hum.paper)

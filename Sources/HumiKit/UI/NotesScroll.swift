@@ -104,6 +104,9 @@ struct NotesEditor: NSViewRepresentable {
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
+        // Always point the coordinator at the current binding — otherwise a reused
+        // editor writes edits into whichever note it was first created for.
+        context.coordinator.parent = self
         if let tv = scroll.documentView as? NSTextView {
             if tv.string != text {
                 let sel = tv.selectedRange()
@@ -120,14 +123,15 @@ struct NotesEditor: NSViewRepresentable {
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
-        let parent: NotesEditor
+        var parent: NotesEditor
         fileprivate var sync: ScrollSync?
         init(_ parent: NotesEditor) { self.parent = parent }
 
         func textDidChange(_ notification: Notification) {
             guard let tv = notification.object as? NSTextView else { return }
             let s = tv.string
-            DispatchQueue.main.async { self.parent.text = s }
+            let current = parent               // snapshot: parent (hence its binding) is refreshed in updateNSView
+            DispatchQueue.main.async { current.text = s }
         }
     }
 }

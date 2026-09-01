@@ -196,6 +196,17 @@ MainActor.assumeIsolated {
         check(r3.added == 1, "merge: id collision + different title → added as new")
         check(store.notes.filter { $0.id == a.id }.count == 1, "merge: no duplicate ids")
 
+        // textBinding is per-note: writing through one never touches another
+        // (the contract the tab editor relies on — a stale editor binding was
+        // overwriting the wrong note before v1.4.1).
+        let bindA = store.textBinding(for: a.id)
+        let bindB = store.textBinding(for: b.id)
+        bindA.wrappedValue = "A only"
+        bindB.wrappedValue = "B only"
+        bindA.wrappedValue = "A again"
+        check(store.note(a.id)?.text == "A again", "textBinding: A writes reach A")
+        check(store.note(b.id)?.text == "B only", "textBinding: B untouched by A writes")
+
         // ZIP archive: export → read round-trips notes, ids and order.
         let zipURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("humi-selftest-\(UUID().uuidString).zip")
