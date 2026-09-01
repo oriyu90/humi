@@ -3,8 +3,8 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.3.2（メモのコードブロックにコピーボタン + ウィンドウ chrome の小修正。
-§3「リソースバンドルの解決」は依然必読）
+対象バージョン: v1.4.0（メモ欄のタブ化 + ZIP 入出力 + 編集/プレビューのスクロール保持 +
+設定ウィンドウの Light/Dark 追従。§3「リソースバンドルの解決」は依然必読）
 
 ---
 
@@ -206,9 +206,43 @@ gh release create vX.Y.Z \
 - **`NotesSidebarView` の 編集/プレビュー セグメントは `.fixedSize()`**（旧 `.frame(width: 150)`）。
   150pt 固定だと pt「Pré-visualizar」/ es「Vista previa」が見切れる。
 - self-test 1464 → 1474（新 L10n キー 2 種 × 5 言語のパリティ +10）。
-- **既知の未修正**: アプリの Light/Dark 切替が、開いたままの Settings ウィンドウに追従しないことがある
-  （SwiftUI `Settings` シーンで `.preferredColorScheme` が sticky）。再オープンで直る。リリース直前の
-  設定シーン改変はリスクが高いので v1.3.2 では見送り。
+- ~~既知の未修正: Settings ウィンドウの Light/Dark 追従~~ → v1.4.0 で修正（下記）。
+
+### v1.4.0 で増えた構造・変更
+
+- **メモは複数ドキュメント制。** `NoteDoc`（`id`/`title`/`text`/`createdAt`/`modifiedAt`）の配列を
+  `NotesStore` が保持し、`activeID: UUID?`（`nil` = ホームタブ）で表示中を決める。保存は
+  `notes.json`（`Disk{ notes, activeID }`、debounce 0.5s、terminate 時 sync flush）。
+  **旧 `notes.md` は初回のみ移行**（非空 & プレースホルダ以外なら 1 件のメモへ）。空なら新規シード 1 件。
+  `notes.md` は削除しない（放置で無害）。
+- **`NotesStore.merge(imported:)` のマージ規則**（オーナー指定）:
+  既存に `id` と `title` が両方一致 → その場で置換（インポート優先）／`id` 衝突で `title` 相違 →
+  新 `id` で追加／どちらも該当なし → `id` 保持で追加。戻り値 `(added, replaced)`。
+  同一端末からの再インポートで重複しないための設計。
+- **`NotesArchive`（`Core/NotesArchive.swift`）= ZIP 入出力。** `/usr/bin/ditto` を `Process` で呼ぶ
+  （依存追加なし。build スクリプトと同じ手段）。書庫 = ルート直下に `manifest.json` +
+  `NN--<slug>.md`。`slug` は **ASCII 英数のみ**（CJK は `note` に落ちる）。読み込みは manifest 優先、
+  無ければ loose `.md` を拾う（`__MACOSX` 混入 zip も許容）。パネルは `NSSavePanel`/`NSOpenPanel` +
+  `UTType.zip`（他ペインの `.humitheme` 等と同じ流儀）。
+- **編集/プレビューのスクロール保持は `UI/NotesScroll.swift`。**
+  `NotesEditor`（`NSTextView` を `NSScrollView` に載せた `NSViewRepresentable`）と
+  `TrackingScroll<Content>`（`NSHostingView` を `FlippedView` documentView に載せる）が、
+  `ScrollSync`（`fileprivate`）経由で 0…1 の正規化フラクションを共有する。`restoreIfNeeded()` は
+  `updateNSView` から**一度だけ**フラクションを適用（`applying` フラグでエコー防止）。
+  メモ切替時は `NotesSidebarView` が `.onChange(of: notes.activeID)` で `scrollFraction = 0`。
+  `MarkdownView` は `MarkdownBlocks`（スクロール無し本体）を分離し `TrackingScroll` に入れる。
+- **タブ UI（`NotesSidebarView` 全面書き直し）。** 左端にピン留めのホームタブ（`square.grid.2x2`、
+  アンダーラインは `Hum.pear`）、右に各メモのタブ（`×` → `.confirmationDialog`）。ホームタブ本体で
+  一覧・「新規メモ」・リネーム（鉛筆 → `.alert` + `TextField`）・ZIP 入出力。**上のタブ列でのリネームは無し**
+  （オーナー指定）。新規名は `"\(L("notes.title")) \(n)"` の最小空き番号。
+- **`SettingsAppearanceSync`（`SettingsView`）で Settings ウィンドウの Light/Dark 追従を修正。**
+  `updateNSView` で `window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)` を毎回当てる
+  （`TitleTextHider` と同型）。`.preferredColorScheme` 単体では開いている Settings が塗り替わらない。
+- 新規 L10n 14 キー × 5 言語（`notes.list.*` / `notes.tab.new` / `notes.rename*` / `notes.delete*` /
+  `notes.share*` / `notes.export_zip` / `notes.import_zip` / `notes.export.filename`）。
+  `notes.delete.confirm.message` のみ `%@` 1 個。
+- self-test 1474 → 1560（`Notes` スイート 16 + L10n +70）。`Notes` スイートは `ditto` 経由の
+  archive round-trip を含む（CI = macos-15 で通る）。
 
 ## 4. 既知の未対応事項・今後の予定
 
