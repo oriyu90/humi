@@ -3,8 +3,8 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.4.3（メモのコードブロック表示切れ修正 + タブ当たり判定 + アプリアイコン。
-§3「v1.4.3」/「v1.4.2」/「v1.4.1」/「リソースバンドルの解決」いずれも必読）
+対象バージョン: v1.4.4（メニューバー多言語化 + `+` の分割軸可変化。
+§3「v1.4.4」/「v1.4.3」/…/「リソースバンドルの解決」いずれも必読）
 
 ---
 
@@ -305,6 +305,26 @@ gh release create vX.Y.Z \
   再生成用 `Scripts/make-icns.sh` を追加（`Assets/AppIcon-source-1024.png` から作る）。
   `build-app.sh` は既存のとおり `Assets/AppIcon.icns` があれば拾う（変更不要だった）。
 - self-test 1552 → 1555（`MarkdownBlocks.blockCount` / `anchorID` チェック追加）。
+
+### v1.4.4（メニューバー多言語化・分割軸可変化）
+
+- **メニューバーが常に英語だった原因**: 手組みバンドルがローカライズ言語を宣言しておらず、
+  AppKit/SwiftUI がメインバンドルを「非ローカライズ」とみなして標準メニュー
+  （ファイル/編集/表示/ウインドウ/ヘルプ、切り取り/コピー/ペースト、Humi について/隠す/終了 等）を
+  英語のまま出していた。Humi 独自項目は元から `L(...)`。
+- **修正**: `build-app.sh` の Info.plist に `CFBundleDevelopmentRegion` = `en` と
+  `CFBundleLocalizations`（en/ja/zh-Hans/pt-BR/es）を追加。加えて
+  `Contents/Resources/<lang>.lproj/` の**空ディレクトリ**を作成（belt-and-braces）。
+  `Localization.apply` は非 system 言語選択時に `AppleLanguages` を UserDefaults へ書くので、
+  次回起動で標準メニューもアプリ内オーバーライドに追従する。`Humi_HumiKit.bundle` の
+  `.lproj`（`L()` の解決元）とは独立で、L10n self-test に影響なし。
+- **`+` の分割軸**: `SessionStore.add(...)` に `paneAreaSize: CGSize`（既定 `.zero`）を追加。
+  `nonisolated static func appendAxis(for:in:paneAreaSize:)` が分割対象ペインの実 rect を
+  `layout.frames(in:)` で求め、`min(w/2, h)`（新列）と `min(w, h/2)`（新行）の大きい方の軸を返す。
+  縦長ペイン → 上下、横長ペイン → 左右。size 不明時・`split()`（⌘D/⌘⇧D）は従来どおり `.horizontal` /
+  明示軸。`PaneTreeView` が `.background(GeometryReader)` でペイン領域サイズを `onPaneAreaSize` 経由で
+  `RootView` へ渡し、`RootView` が 3 つの `store.add` 呼び出しに渡す。self-test に `appendAxis` 6 ケース。
+- self-test 1555 → 1561。
 
 ## 4. 既知の未対応事項・今後の予定
 
