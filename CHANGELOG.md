@@ -3,6 +3,23 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.4.4] - 2026-09-02
+
+### Fixed
+- **The menu bar was always English.** The hand-assembled bundle didn't declare
+  its localizations, so AppKit/SwiftUI never localized the standard menus (File /
+  Edit / View / Window / Help, Cut / Copy / Paste, About / Hide / Quit).
+  `CFBundleLocalizations` + empty `.lproj` markers are now written into the
+  bundle, so the whole menu bar follows the language (custom items already used
+  `L(...)`).
+
+### Changed
+- **`+` now splits top/bottom when the pane is tall and narrow.** Instead of
+  always adding a new column, the new-session flow measures the pane it's
+  splitting and picks whichever axis keeps the new pane's smaller side larger —
+  a portrait pane (room below, not beside) splits into a row; a landscape pane
+  still gets a new column. `⌘D` / `⌘⇧D` keep their explicit axis.
+
 ## [1.4.3] - 2026-09-02
 
 ### Fixed

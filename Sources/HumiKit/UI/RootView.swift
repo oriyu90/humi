@@ -58,6 +58,7 @@ public struct RootView: View {
     @ObservedObject private var arrangements = ArrangementStore.shared
 
     @State private var showingNewSheet = false
+    @State private var paneAreaSize: CGSize = .zero
     @State private var searchVisible = false
     @State private var savingArrangement = false
     @State private var restoringArrangement = false
@@ -66,7 +67,8 @@ public struct RootView: View {
 
     public var body: some View {
         HSplitView {
-            PaneTreeView(store: store, settings: settings, onNew: beginNewSession)
+            PaneTreeView(store: store, settings: settings, onNew: beginNewSession,
+                         onPaneAreaSize: { paneAreaSize = $0 })
                 .frame(minWidth: 420)
                 .overlay(alignment: .top) {
                     if searchVisible {
@@ -111,7 +113,7 @@ public struct RootView: View {
                         ForEach(profiles.profiles) { p in
                             Button {
                                 withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
-                                    _ = store.add(workingDirectory: p.cwd, profileID: p.id)
+                                    _ = store.add(workingDirectory: p.cwd, profileID: p.id, paneAreaSize: paneAreaSize)
                                 }
                             } label: { Label(p.name, systemImage: p.icon) }
                         }
@@ -134,7 +136,7 @@ public struct RootView: View {
                 onCreate: { dir, pid in
                     showingNewSheet = false
                     withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
-                        _ = store.add(workingDirectory: dir, profileID: pid)
+                        _ = store.add(workingDirectory: dir, profileID: pid, paneAreaSize: paneAreaSize)
                     }
                 },
                 onCancel: { showingNewSheet = false }
@@ -220,7 +222,7 @@ public struct RootView: View {
         case .humiProfileLauncher:
             if let p = profiles.defaultProfile ?? profiles.profiles.first {
                 withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
-                    _ = store.add(workingDirectory: p.cwd, profileID: p.id)
+                    _ = store.add(workingDirectory: p.cwd, profileID: p.id, paneAreaSize: paneAreaSize)
                 }
             } else { beginNewSession() }
         case .humiSplitH: splitFocused(.horizontal, focusedID: focusedID)

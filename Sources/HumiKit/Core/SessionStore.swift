@@ -48,18 +48,35 @@ final class SessionStore: ObservableObject {
     }
 
     @discardableResult
-    func add(workingDirectory: String?, profileID: UUID? = nil) -> Session {
+    func add(workingDirectory: String?, profileID: UUID? = nil, paneAreaSize: CGSize = .zero) -> Session {
         let session = makeSession(workingDirectory: workingDirectory, profileID: profileID)
         sessions.append(session)
-        if let last = layout?.leaves().last {
-            // Append to the end of the arrangement — the v1.1 "one more column" behaviour.
-            layout = layout?.insert(besideLeaf: last, axis: .horizontal, newLeaf: session.id, after: true)
+        if let layout, let last = layout.leaves().last {
+            // Split the last pane. Default is a new column to the right ("one more
+            // column"), but when that pane is tall and narrow — plenty of room below,
+            // little to the side — split it top/bottom instead.
+            let axis = Self.appendAxis(for: last, in: layout, paneAreaSize: paneAreaSize)
+            self.layout = layout.insert(besideLeaf: last, axis: axis, newLeaf: session.id, after: true)
         } else {
             layout = .leaf(session.id)
         }
         lastAddedID = session.id
         persist()
         return session
+    }
+
+    /// Pick the split axis for the `+` flow: whichever keeps the new pane's *smaller*
+    /// dimension larger. A portrait pane (lots of vertical space, not much horizontal)
+    /// therefore splits horizontally on screen → top/bottom. Falls back to the classic
+    /// "new column" when the pane size is unknown.
+    nonisolated static func appendAxis(for leaf: UUID, in layout: PaneNode, paneAreaSize: CGSize) -> Axis {
+        guard paneAreaSize.width > 1, paneAreaSize.height > 1,
+              let r = layout.frames(in: CGRect(origin: .zero, size: paneAreaSize),
+                                    gap: Hum.Space.md)[leaf]
+        else { return .horizontal }
+        let ifHorizontal = min(r.width / 2, r.height)   // new column
+        let ifVertical   = min(r.width, r.height / 2)   // new row
+        return ifVertical > ifHorizontal ? .vertical : .horizontal
     }
 
     /// Create a session and place it next to `id` by splitting that pane along `axis`

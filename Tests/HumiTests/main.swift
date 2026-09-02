@@ -556,6 +556,21 @@ suite("PaneTree") {
     check(grid.focusNeighbor(of: a, direction: .up, in: box) == nil, "focusNeighbor: nothing above an edge")
     check(grid.focusNeighbor(of: e, direction: .right, in: box) == nil, "focusNeighbor: unknown id → nil")
 
+    // appendAxis — the `+` flow picks top/bottom for a tall-narrow pane, a new column otherwise
+    check(SessionStore.appendAxis(for: a, in: .leaf(a), paneAreaSize: CGSize(width: 260, height: 900)) == .vertical,
+          "appendAxis: portrait pane → vertical (top/bottom)")
+    check(SessionStore.appendAxis(for: a, in: .leaf(a), paneAreaSize: CGSize(width: 1300, height: 320)) == .horizontal,
+          "appendAxis: landscape pane → horizontal (new column)")
+    check(SessionStore.appendAxis(for: a, in: .leaf(a), paneAreaSize: CGSize(width: 600, height: 600)) == .horizontal,
+          "appendAxis: square → horizontal (default)")
+    check(SessionStore.appendAxis(for: a, in: .leaf(a), paneAreaSize: .zero) == .horizontal,
+          "appendAxis: unknown size → horizontal")
+    let twoWide = PaneNode.split(axis: .horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5])
+    check(SessionStore.appendAxis(for: b, in: twoWide, paneAreaSize: CGSize(width: 1600, height: 500)) == .horizontal,
+          "appendAxis: wide two-column, add beside last → still a column")
+    check(SessionStore.appendAxis(for: b, in: twoWide, paneAreaSize: CGSize(width: 560, height: 900)) == .vertical,
+          "appendAxis: narrow two-column, add beside last → row (top/bottom)")
+
     // Codable — discriminated round trips + forgiving decode
     let enc = JSONEncoder()
     let dec = JSONDecoder()

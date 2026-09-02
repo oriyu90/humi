@@ -10,6 +10,9 @@ struct PaneTreeView: View {
     @ObservedObject var store: SessionStore
     @ObservedObject var settings: AppSettings
     var onNew: () -> Void
+    /// The pane area's current pixel size — RootView uses it to pick the split axis
+    /// for the `+` flow (tall-narrow pane → top/bottom instead of a new column).
+    var onPaneAreaSize: (CGSize) -> Void = { _ in }
 
     @State private var focusedID: UUID?
 
@@ -33,6 +36,13 @@ struct PaneTreeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Hum.paper2)
+        .background(
+            GeometryReader { g in
+                Color.clear
+                    .onAppear { onPaneAreaSize(g.size) }
+                    .onChange(of: g.size) { _, s in onPaneAreaSize(s) }
+            }
+        )
         .onAppear { focusedID = TerminalRegistry.shared.lastFocusedID }
         .onReceive(NotificationCenter.default.publisher(for: .humiFocusChanged)) { note in
             focusedID = note.object as? UUID

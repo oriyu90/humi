@@ -55,10 +55,27 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>ja</string>
+    <string>zh-Hans</string>
+    <string>pt-BR</string>
+    <string>es</string>
+  </array>
   $ICON_LINE
 </dict>
 </plist>
 PLIST
+
+# Empty .lproj markers so AppKit/SwiftUI treat the *main* bundle as localised and
+# localise the standard menu bar (File / Edit / Window / Help, About / Hide / Quit,
+# Cut / Copy / Paste …) to the user's language. Our own strings live in
+# Humi_HumiKit.bundle and are resolved via `L(...)`; these dirs just flip the switch.
+for lang in en ja zh-Hans pt-BR es; do
+  mkdir -p "$APP/Contents/Resources/$lang.lproj"
+done
 
 cat > "$APP/Contents/PkgInfo" <<< "APPL????"
 
