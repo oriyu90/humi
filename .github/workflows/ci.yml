@@ -36,4 +36,5 @@ jobs:
         run: |
           test -x dist/Humi.app/Contents/MacOS/Humi
           /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' dist/Humi.app/Contents/Info.plist
+          lipo -verify_arch arm64 x86_64 dist/Humi.app/Contents/MacOS/Humi
           codesign --verify --verbose dist/Humi.app
