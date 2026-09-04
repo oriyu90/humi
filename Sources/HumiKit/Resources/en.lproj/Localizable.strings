@@ -156,6 +156,7 @@
 "tile.on_exit.keep" = "Keep the tile";
 "tile.on_exit.restart" = "Restart automatically";
 "tile.on_exit.close" = "Close automatically";
+"tile.copy_selection" = "Copy selection";
 "tile.open_selection" = "Open selection (URL / path)";
 "tile.reveal" = "Reveal working folder in Finder";
 "tile.logging" = "Log this session";

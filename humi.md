@@ -3,8 +3,8 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.4.4（メニューバー多言語化 + `+` の分割軸可変化。
-§3「v1.4.4」/「v1.4.3」/…/「リソースバンドルの解決」いずれも必読）
+対象バージョン: v1.5.0（マウス選択コピー、6言語対応、出力監視のメモリ上限修正。
+§3「v1.5.0」/「v1.4.4」/…/「リソースバンドルの解決」いずれも必読）
 
 ---
 
@@ -102,8 +102,8 @@ gh release create vX.Y.Z \
   - `keymap.json` … `KeymapStore`（アクション rawValue → `KeyChord`。未登録は `defaults`）。
   - スカラーは従来どおり `AppSettings`（`UserDefaults`）。
   - モデルはすべて **カスタム `init(from:)`** を持ち、旧 JSON / 部分 JSON でも復号できる。壊さない。
-- **多言語化。** `Sources/HumiKit/Resources/{ja,en,zh-Hans,pt-BR,es}.lproj/Localizable.strings`。
-  文字列は `L("key")` / `T("key")`（`Sources/HumiKit/UI/L10n.swift`）経由。**新規文字列は必ず 5 言語へ。**
+- **多言語化。** `Sources/HumiKit/Resources/{ja,en,zh-Hans,pt-BR,es,de}.lproj/Localizable.strings`。
+  文字列は `L("key")` / `T("key")`（`Sources/HumiKit/UI/L10n.swift`）経由。**新規文字列は必ず 6 言語へ。**
   `bash Scripts/test.sh` の `L10n` スイートがキー一致・プレースホルダ数一致を検査する。
   SwiftPM は `.lproj` の地域サフィックスを小文字化する（`zh-Hans`→`zh-hans`）ので `Localization.lprojBundle`
   は大小無視で探す。言語切替は `AppSettings.appLanguage` → `Localization.shared.apply()` で**即時**（再起動不要）。
@@ -325,6 +325,16 @@ gh release create vX.Y.Z \
   明示軸。`PaneTreeView` が `.background(GeometryReader)` でペイン領域サイズを `onPaneAreaSize` 経由で
   `RootView` へ渡し、`RootView` が 3 つの `store.add` 呼び出しに渡す。self-test に `appendAxis` 6 ケース。
 - self-test 1555 → 1561。
+
+### v1.5.0 で増えた構造・変更
+
+- **選択文字列のコピーは `TerminalSelectionClipboard.copy` に集約。** 選択即コピーとタイルの
+  右クリックメニューが同じ経路を使う。`nil` / 空文字では既存クリップボードを消さない。
+- SwiftTerm の通常のドラッグ選択 + `⌘C` はそのまま利用できる。マウスレポート有効中の TUI は
+  SwiftTerm 標準どおり `Shift` ドラッグでアプリへのマウス送信を回避して選択する。
+- **言語は 6 言語。** `Localization.supported` と `L10n` テストの言語配列を同時に更新する。
+- **`OutputMonitor.pending` は全出口で 8 KB 上限。** 改行を含むチャンクの末尾に巨大な未終端行が
+  続く場合も、完了行の切り出し後に `maxPendingBytes` を適用する。
 
 ## 4. 既知の未対応事項・今後の予定
 

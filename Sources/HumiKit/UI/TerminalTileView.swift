@@ -168,6 +168,12 @@ struct TerminalTileView: View {
 
         Divider()
 
+        Button(L("tile.copy_selection")) {
+            guard TerminalRegistry.shared.existing(session.id)?.copySelection() == true else {
+                NSSound.beep()
+                return
+            }
+        }
         Button(L("tile.open_selection")) {
             _ = TerminalRegistry.shared.existing(session.id)?.openSelection()
         }

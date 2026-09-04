@@ -41,3 +41,14 @@ final class HumiTerminalView: LocalProcessTerminalView {
         onSelectionChanged?(selectionActive ? getSelection() : nil)
     }
 }
+
+/// One clipboard path for both copy-on-select and the explicit context-menu action.
+/// An empty selection must not erase clipboard contents the user may still need.
+enum TerminalSelectionClipboard {
+    @discardableResult
+    static func copy(_ text: String?, to pasteboard: NSPasteboard = .general) -> Bool {
+        guard let text, !text.isEmpty else { return false }
+        pasteboard.clearContents()
+        return pasteboard.setString(text, forType: .string)
+    }
+}

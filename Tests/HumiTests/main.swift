@@ -39,13 +39,13 @@ suite("Persistence isolation") {
 
 MainActor.assumeIsolated {
     suite("L10n") {
-        let langs = ["ja", "en", "zh-Hans", "pt-BR", "es"]
+        let langs = ["ja", "en", "zh-Hans", "pt-BR", "es", "de"]
         var tables: [String: [String: String]] = [:]
         for lang in langs {
             if let t = Localization.loadStrings(lang) { tables[lang] = t }
             else { check(false, "\(lang): Localizable.strings loads") }
         }
-        check(tables.count == langs.count, "all 5 language files present")
+        check(tables.count == langs.count, "all 6 language files present")
 
         if let base = tables["ja"] {
             let baseKeys = Set(base.keys)
@@ -66,6 +66,18 @@ MainActor.assumeIsolated {
             }
         }
     }
+}
+
+suite("Terminal selection clipboard") {
+    let pasteboard = NSPasteboard(name: NSPasteboard.Name("com.studiorizi.humi.tests.\(UUID())"))
+    pasteboard.clearContents()
+    pasteboard.setString("keep", forType: .string)
+    check(!TerminalSelectionClipboard.copy(nil, to: pasteboard), "nil selection is ignored")
+    check(pasteboard.string(forType: .string) == "keep", "nil selection preserves clipboard")
+    check(!TerminalSelectionClipboard.copy("", to: pasteboard), "empty selection is ignored")
+    check(pasteboard.string(forType: .string) == "keep", "empty selection preserves clipboard")
+    check(TerminalSelectionClipboard.copy("mouse-selected text", to: pasteboard), "selection is copied")
+    check(pasteboard.string(forType: .string) == "mouse-selected text", "clipboard contains exact selection")
 }
 
 // MARK: ShellResolver
@@ -831,6 +843,13 @@ suite("OutputMonitor") {
     let long = String(repeating: "z", count: OutputMonitor.maxLineLength + 500)
     check(d.ingest(bytes(long + "\n")).first?.count == OutputMonitor.maxLineLength,
           "ingest: line capped at maxLineLength")
+
+    // A newline in the same chunk used to skip the unterminated-tail cap.
+    var e = OutputMonitor()
+    let oversizedTail = "ok\n" + String(repeating: "t", count: OutputMonitor.maxPendingBytes * 4)
+    _ = e.ingest(bytes(oversizedTail))
+    check(e.pendingByteCount == OutputMonitor.maxPendingBytes,
+          "ingest: unterminated tail after a newline stays memory-bounded")
 }
 
 suite("Trigger + TriggerEngine") {

@@ -156,6 +156,7 @@
 "tile.on_exit.keep" = "Manter o bloco";
 "tile.on_exit.restart" = "Reiniciar automaticamente";
 "tile.on_exit.close" = "Fechar automaticamente";
+"tile.copy_selection" = "Copiar seleção";
 "tile.open_selection" = "Abrir seleção (URL / caminho)";
 "tile.reveal" = "Mostrar pasta de trabalho no Finder";
 "tile.logging" = "Registrar esta sessão";

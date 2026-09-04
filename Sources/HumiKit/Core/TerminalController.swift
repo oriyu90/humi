@@ -48,9 +48,8 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
                               editorCommand: AppSettings.shared.editorCommand)
         }
         terminalView.onSelectionChanged = { text in
-            guard AppSettings.shared.copyOnSelect, let text, !text.isEmpty else { return }
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(text, forType: .string)
+            guard AppSettings.shared.copyOnSelect else { return }
+            TerminalSelectionClipboard.copy(text)
         }
         terminalView.onInteracted = { [weak self] in
             guard let self else { return }
@@ -186,6 +185,12 @@ final class TerminalController: NSObject, LocalProcessTerminalViewDelegate {
     // MARK: Selection actions (context menu)
 
     var selectedText: String? { terminalView.selectionActive ? terminalView.getSelection() : nil }
+
+    /// Copy the mouse-selected terminal text without changing or clearing the selection.
+    @discardableResult
+    func copySelection() -> Bool {
+        TerminalSelectionClipboard.copy(selectedText)
+    }
 
     @discardableResult
     func openSelection() -> Bool {

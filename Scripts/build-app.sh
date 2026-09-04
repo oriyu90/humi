@@ -63,6 +63,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <string>zh-Hans</string>
     <string>pt-BR</string>
     <string>es</string>
+    <string>de</string>
   </array>
   $ICON_LINE
 </dict>
@@ -73,7 +74,7 @@ PLIST
 # localise the standard menu bar (File / Edit / Window / Help, About / Hide / Quit,
 # Cut / Copy / Paste …) to the user's language. Our own strings live in
 # Humi_HumiKit.bundle and are resolved via `L(...)`; these dirs just flip the switch.
-for lang in en ja zh-Hans pt-BR es; do
+for lang in en ja zh-Hans pt-BR es de; do
   mkdir -p "$APP/Contents/Resources/$lang.lproj"
 done
 

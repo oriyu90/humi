@@ -5,9 +5,9 @@
 **タイル型の macOS ターミナルワークスペース。**
 `+` を押してフォルダを選ぶと、そのフォルダで開いたターミナルセッションがウィンドウ内のタイルに並びます。セッションはいくつでも。
 
-Version 1.4.4 · macOS 14+ · Apple Silicon / Intel
+Version 1.5.0 · macOS 14+ · Apple Silicon / Intel
 Author: Yuki_Orita · MIT License
-日本語 / English / 中文 / Português / Español（OS 言語で自動選択）
+日本語 / English / 中文 / Português / Español / Deutsch（OS 言語で自動選択）
 
 </div>
 
@@ -24,6 +24,12 @@ Humi は、複数のターミナルセッションを 1 枚のウィンドウに
 - 右側に Markdown 対応のメモ欄（タブで用途ごとに分けられる／再起動しても内容が残る）
 
 ターミナルは [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) による**内蔵エミュレータ**です（実 PTY + 実シェル）。外部の iTerm / ターミナル.app を Humi のウィンドウ内に埋め込むことは macOS の仕様上できないため、内蔵エミュレータのみを提供します。
+
+## v1.5.0 の変更
+
+- **マウス選択とコピー** — ターミナル出力をドラッグして `⌘C` でコピーできます。右クリックメニューの「選択部分をコピー」からもコピーでき、設定では選択即コピーも利用できます。マウス入力を受け取る TUI では `Shift` を押しながらドラッグします。
+- **6 言語対応** — 従来の日本語 / English / 中文 / Português / Español に Deutsch を追加。OS 言語で自動選択し、設定から再起動なしで切り替えられます。
+- **大量出力の安定性** — 改行の直後に巨大な未終端データが続く場合も、出力監視の保留バッファを 8 KB に制限します。
 
 ## v1.4.4 の変更
 
@@ -58,7 +64,6 @@ Humi は、複数のターミナルセッションを 1 枚のウィンドウに
 - **メモ欄のコードブロックにコピーボタン** — プレビュー表示で ```` ``` ```` 囲みのコードブロックごとに、コード上部の帯にコピーボタンを表示。押すとブロックをそのままクリップボードへ（末尾改行は除去）。
 - **ウィンドウ上部の「Humi」二重表示を解消** — ツールバーのブランドマークと OS のタイトルバー文字で 2 回出ていたのを、タイトルバー文字を非表示に。
 - **UI の細かな修正** — 新規セッションシートのフォルダ行がプレースホルダを切り詰めていた問題、メモの「編集／プレビュー」切替が pt/es で見切れる問題を修正。
-
 ## v1.3 の変更
 
 - **安定性・安全性の精査** — タイル閉じ→即 ⌘Q の孤児シェル、出力トリガー有効時のフラッド、テキスト編集中のショートカット横取り、ステータスバーのタイマー多重化、`git` ハングを修正。詳細は `docs/AUDIT_2026-08-28.md` / `CHANGELOG.md`。
@@ -81,7 +86,7 @@ Humi は、複数のターミナルセッションを 1 枚のウィンドウに
 
 ## v1.1 の機能
 
-- **多言語対応（5 言語）** — 日本語 / English / 中文 / Português / Español。OS 言語で自動選択、設定で手動切替（再起動不要）。
+- **多言語対応（現在 6 言語）** — 日本語 / English / 中文 / Português / Español / Deutsch。OS 言語で自動選択、設定で手動切替（再起動不要）。
 - **フルテーマ** — 6 プリセット（Hum Light/Dark、Solarized Light/Dark、Nord、Terminal Basic）、自作テーマ、`.humitheme` の読み書き、ANSI 16 色エディタ、カーソル形状／点滅、等幅フォント＋日本語フォント指定、Light / Dark / **System** モード（アプリ本体のダークモードも含む）。
 - **ターミナル内検索**（`⌘F`）— 件数表示・前後移動・ハイライト。
 - **URL / パス連携** — 出力内の URL・ファイルパス・`パス:行番号` を、⌘クリックまたは右クリックメニューでブラウザ / Finder / 任意のエディタ（既定 `code -g`）で開く。
@@ -144,7 +149,7 @@ Sources/HumiKit/Core/
   TerminalRegistry     セッション id → Controller のプロセス全体キャッシュ
   PathActioner / GitStatus / SessionLogger
 Sources/HumiKit/UI/    SwiftUI（RootView / SessionGridView / TerminalTileView / Settings/*Pane …）
-Sources/HumiKit/Resources/{ja,en,zh-Hans,pt-BR,es}.lproj/
+Sources/HumiKit/Resources/{ja,en,zh-Hans,pt-BR,es,de}.lproj/
 ```
 
 SwiftUI ビューは `TerminalRegistry` から Controller を**参照するだけ**で、生成はしません。これにより再レンダリングで PTY が二重に生成されることを防いでいます。

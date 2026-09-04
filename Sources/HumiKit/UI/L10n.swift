@@ -11,8 +11,8 @@ import SwiftUI
 public final class Localization: ObservableObject {
     public static let shared = Localization()
 
-    /// `"system"` or a language code that has an `.lproj` (`ja`, `en`, `zh-Hans`, `pt-BR`, `es`).
-    public static let supported = ["system", "ja", "en", "zh-Hans", "pt-BR", "es"]
+    /// `"system"` or a language code that has an `.lproj`.
+    public static let supported = ["system", "ja", "en", "zh-Hans", "pt-BR", "es", "de"]
 
     private(set) var bundle: Bundle = .humiResources
     private(set) var languageCode = "system"
@@ -76,6 +76,7 @@ public final class Localization: ObservableObject {
         case "zh-Hans": return "中文"
         case "pt-BR":   return "Português"
         case "es":      return "Español"
+        case "de":      return "Deutsch"
         default:        return code
         }
     }

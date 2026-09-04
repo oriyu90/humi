@@ -7,6 +7,8 @@ import Foundation
 struct OutputMonitor {
     /// Undecoded tail (bytes seen since the last newline).
     private var pending: [UInt8] = []
+    /// Internal diagnostic used by the self-test to keep the memory bound enforceable.
+    var pendingByteCount: Int { pending.count }
     /// Lines dropped because a single ingest produced more than `maxLinesPerIngest`.
     /// Diagnostic only — never surfaced in the UI.
     private(set) var droppedLines = 0
@@ -57,6 +59,12 @@ struct OutputMonitor {
             }
         }
         pending.removeSubrange(pending.startIndex ..< lastBreakEnd)
+        // A chunk can contain an early newline followed by an enormous unterminated
+        // tail. The no-newline fast path above does not cover that case, so enforce the
+        // same bound after consuming completed lines as well.
+        if pending.count > Self.maxPendingBytes {
+            pending.removeFirst(pending.count - Self.maxPendingBytes)
+        }
         return lines
     }
 

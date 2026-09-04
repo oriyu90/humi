@@ -3,6 +3,23 @@
 All notable changes to Humi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [1.5.0] - 2026-09-04
+
+### Added
+- **Explicit mouse-selection copy.** Drag across terminal output and use `⌘C`,
+  or choose **Copy Selection** from the tile's context menu. Copy-on-select remains
+  available in Settings. Hold Shift while dragging in a TUI that has enabled mouse
+  reporting.
+- **German localization.** Humi now includes Japanese, English, Simplified Chinese,
+  Brazilian Portuguese, Spanish, and German. The OS can select German automatically,
+  and the live language picker switches to it without relaunching.
+
+### Fixed
+- Empty selection actions no longer clear existing clipboard contents.
+- Output monitoring now enforces its 8 KB unterminated-tail limit even when the same
+  PTY chunk contains an earlier newline, preventing a malformed or extremely long
+  output chunk from retaining an oversized buffer.
+
 ## [1.4.4] - 2026-09-02
 
 ### Fixed
@@ -130,7 +147,6 @@ A small UI pass over the notes sidebar and the window chrome.
   priority and the sheet is a touch wider (480 → 520).
 - **Notes Edit/Preview segmented control clipped** "Pré-visualizar" / "Vista
   previa" at its fixed 150 pt width. It now sizes to its content.
-
 ## [1.3.1] - 2026-08-29
 
 ### Fixed

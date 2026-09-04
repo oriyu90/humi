@@ -156,6 +156,7 @@
 "tile.on_exit.keep" = "そのまま残す";
 "tile.on_exit.restart" = "自動で再起動";
 "tile.on_exit.close" = "自動で閉じる";
+"tile.copy_selection" = "選択部分をコピー";
 "tile.open_selection" = "選択部分を開く（URL / パス）";
 "tile.reveal" = "作業フォルダを Finder で開く";
 "tile.logging" = "このセッションを記録";
