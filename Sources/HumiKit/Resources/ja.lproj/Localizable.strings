@@ -61,6 +61,9 @@
 "notes.export_zip" = "ZIP で書き出し";
 "notes.import_zip" = "ZIP を読み込み";
 "notes.export.filename" = "Humi メモ";
+"notes.export.error" = "メモを書き出せませんでした";
+"notes.import.error" = "メモを読み込めませんでした";
+"notes.archive.error.message" = "詳細: %@";
 
 "settings.tab.general" = "一般";
 "settings.tab.shell" = "シェル";
@@ -70,6 +73,7 @@
 "settings.general.lines" = "%d 行";
 "settings.general.scrollback_hint" = "スクロールバックの変更は次に開くセッションから反映されます。";
 "settings.general.language" = "表示言語";
+"settings.general.language.menu_hint" = "メニューバーとシステムダイアログは Humi の再起動後に反映されます。";
 "settings.shell.shell" = "シェル";
 "settings.shell.custom_path" = "実行パス";
 "settings.shell.custom_args" = "引数（スペース区切り）";
@@ -164,6 +168,7 @@
 "tile.close_confirm.message" = "このセッションではまだプロセスが実行中です。";
 "tile.close_confirm.close" = "閉じる";
 "common.cancel" = "キャンセル";
+"common.ok" = "OK";
 "paste.confirm.title" = "複数行を貼り付けますか？";
 "paste.confirm.message" = "%d 行を貼り付けようとしています。";
 "paste.confirm.paste" = "貼り付け";

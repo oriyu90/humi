@@ -60,6 +60,9 @@
 "notes.export_zip" = "Als ZIP exportieren";
 "notes.import_zip" = "ZIP importieren";
 "notes.export.filename" = "Humi-Notizen";
+"notes.export.error" = "Notizen konnten nicht exportiert werden";
+"notes.import.error" = "Notizen konnten nicht importiert werden";
+"notes.archive.error.message" = "Details: %@";
 
 "settings.tab.general" = "Allgemein";
 "settings.tab.shell" = "Shell";
@@ -69,6 +72,7 @@
 "settings.general.lines" = "%d Zeilen";
 "settings.general.scrollback_hint" = "Änderungen am Verlauf gelten für neu geöffnete Sitzungen.";
 "settings.general.language" = "Anzeigesprache";
+"settings.general.language.menu_hint" = "Menüleiste und Systemdialoge werden nach einem Neustart von Humi aktualisiert.";
 "settings.shell.shell" = "Shell";
 "settings.shell.custom_path" = "Pfad zur ausführbaren Datei";
 "settings.shell.custom_args" = "Argumente (durch Leerzeichen getrennt)";
@@ -163,6 +167,7 @@
 "tile.close_confirm.message" = "In dieser Sitzung läuft noch ein Prozess.";
 "tile.close_confirm.close" = "Schließen";
 "common.cancel" = "Abbrechen";
+"common.ok" = "OK";
 "paste.confirm.title" = "Mehrere Zeilen einfügen?";
 "paste.confirm.message" = "Du bist dabei, %d Zeilen einzufügen.";
 "paste.confirm.paste" = "Einfügen";

@@ -67,6 +67,7 @@ struct NewSessionSheet: View {
                             systemImage: "square.split.2x2")
             }
             .buttonStyle(.hum(.push, accent: Hum.accent(0)))
+            .keyboardShortcut(.defaultAction)
 
             HStack {
                 Spacer()

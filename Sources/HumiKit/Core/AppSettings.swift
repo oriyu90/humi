@@ -201,7 +201,7 @@ public final class AppSettings: ObservableObject {
         get { defaults.bool(forKey: Keys.notesPreview) }
         set { set(newValue, Keys.notesPreview) }
     }
-    /// `"system"` or a code with an `.lproj` (`ja`, `en`, `zh-Hans`, `pt-BR`, `es`).
+    /// `"system"` or a code with an `.lproj` (`ja`, `en`, `zh-Hans`, `pt-BR`, `es`, `de`).
     var appLanguage: String {
         get { defaults.string(forKey: Keys.appLanguage) ?? "system" }
         set {

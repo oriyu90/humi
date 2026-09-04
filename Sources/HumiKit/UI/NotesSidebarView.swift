@@ -13,6 +13,9 @@ struct NotesSidebarView: View {
     @State private var deletingID: UUID?
     @State private var renamingID: UUID?
     @State private var draftTitle = ""
+    @State private var archiveErrorTitle = ""
+    @State private var archiveErrorMessage = ""
+    @State private var showingArchiveError = false
 
     private var editorFont: NSFont {
         NSFont(name: Hum.Font.monoName, size: 12.5) ?? .monospacedSystemFont(ofSize: 12.5, weight: .regular)
@@ -53,6 +56,11 @@ struct NotesSidebarView: View {
                 renamingID = nil
             }
         }
+        .alert(archiveErrorTitle, isPresented: $showingArchiveError) {
+            Button(L("common.ok"), role: .cancel) {}
+        } message: {
+            Text(archiveErrorMessage)
+        }
     }
 
     // MARK: tab strip
@@ -70,37 +78,46 @@ struct NotesSidebarView: View {
 
             Divider().frame(height: 16).padding(.horizontal, Hum.Space.xs)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Hum.Space.xs) {
-                    ForEach(notes.notes) { note in
-                        tabChip(
-                            selected: notes.activeID == note.id,
-                            label: {
-                                HStack(spacing: 5) {
-                                    Text(note.title)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                        .frame(maxWidth: 150)
-                                        .font(Hum.Font.body(12, weight: .medium))
-                                    Button {
-                                        deletingID = note.id
-                                    } label: {
-                                        Image(systemName: "xmark")
-                                            .font(.system(size: 8, weight: .bold))
-                                            .frame(width: 16, height: 16)
-                                            .contentShape(Rectangle())
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Hum.Space.xs) {
+                        ForEach(notes.notes) { note in
+                            tabChip(
+                                selected: notes.activeID == note.id,
+                                label: {
+                                    HStack(spacing: 5) {
+                                        Text(note.title)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                            .frame(maxWidth: 150)
+                                            .font(Hum.Font.body(12, weight: .medium))
+                                        Button {
+                                            deletingID = note.id
+                                        } label: {
+                                            Image(systemName: "xmark")
+                                                .font(.system(size: 8, weight: .bold))
+                                                .frame(width: 16, height: 16)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .buttonStyle(.plain)
+                                        .foregroundStyle(Hum.ink2)
+                                        .help(L("notes.delete"))
+                                        .accessibilityLabel(L("notes.delete"))
                                     }
-                                    .buttonStyle(.plain)
-                                    .foregroundStyle(Hum.ink2)
-                                    .help(L("notes.delete"))
-                                    .accessibilityLabel(L("notes.delete"))
-                                }
-                            },
-                            action: { withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) { notes.open(note.id) } }
-                        )
+                                },
+                                action: { withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) { notes.open(note.id) } }
+                            )
+                            .id(note.id)
+                        }
+                    }
+                    .padding(.trailing, Hum.Space.sm)
+                }
+                .onChange(of: notes.activeID) { _, id in
+                    guard let id else { return }
+                    withAnimation(Hum.Motion.considerate(Hum.Motion.snap)) {
+                        proxy.scrollTo(id, anchor: .trailing)
                     }
                 }
-                .padding(.trailing, Hum.Space.sm)
             }
         }
         .padding(.vertical, Hum.Space.sm)
@@ -284,8 +301,8 @@ struct NotesSidebarView: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do { try NotesArchive.export(notes.notes, to: url) }
         catch {
-            NSSound.beep()
             NSLog("Humi: notes export failed — \(error.localizedDescription)")
+            showArchiveError(title: L("notes.export.error"), error: error)
         }
     }
 
@@ -301,8 +318,15 @@ struct NotesSidebarView: View {
             let result = notes.merge(imported: incoming)
             if result.added == 0 && result.replaced == 0 { NSSound.beep() }
         } catch {
-            NSSound.beep()
             NSLog("Humi: notes import failed — \(error.localizedDescription)")
+            showArchiveError(title: L("notes.import.error"), error: error)
         }
+    }
+
+    private func showArchiveError(title: String, error: Error) {
+        NSSound.beep()
+        archiveErrorTitle = title
+        archiveErrorMessage = L("notes.archive.error.message", error.localizedDescription)
+        showingArchiveError = true
     }
 }

@@ -3,7 +3,7 @@
 > common-rules `ルール6` に基づく備考ファイル。README や紹介サイト等の公開物には出さない
 > 「次回以降の開発向けメモ」をここへ集約する。公開 Web サイトには記載しないこと。
 
-対象バージョン: v1.5.0（マウス選択コピー、6言語対応、出力監視のメモリ上限修正。
+対象バージョン: v1.5.0（マウス選択コピー、6言語対応、安定性監査の `[fix]` 8 件を解消。
 §3「v1.5.0」/「v1.4.4」/…/「リソースバンドルの解決」いずれも必読）
 
 ---
@@ -32,6 +32,7 @@ bash Scripts/test.sh
 swift build -c release
 
 # 3. アプリ生成（ad-hoc 署名）
+#    release は arm64 + x86_64 の両方を cross-build して lipo で Universal 化する
 bash Scripts/build-app.sh release
 
 # 4. 動作確認（TEST_PLAN の手動項目）
@@ -276,8 +277,8 @@ gh release create vX.Y.Z \
 - Humi は非サンドボックスなので `.fileImporter` の URL `.path` はそのまま使える
   （`startAccessingSecurityScopedResource` 不要）。
 - **`.windowStyle(.hiddenTitleBar)` を追加。** sheet / `.fileImporter` の提示・解除まわりで
-  SwiftUI が `titleVisibility` を戻し、`TitleTextHider` の再適用が間に合わず「Humi」が二重表示に
-  なることがあった。タイトルバー文字自体を無くして根本解決。`TitleTextHider` は保険で残置。
+  SwiftUI が `titleVisibility` を戻し、「Humi」が二重表示になることがあった。タイトルバー文字
+  自体を無くして根本解決。v1.5.0 では冗長になった `TitleTextHider` も削除し、この scene 設定に一本化。
   `Window("Humi", …)` のタイトル文字列はウィンドウメニュー等のために残る。
 - 未使用の `panel.choose` / `panel.message` を 5 言語から削除。self-test 1562 → 1552。
 
@@ -328,13 +329,26 @@ gh release create vX.Y.Z \
 
 ### v1.5.0 で増えた構造・変更
 
-- **選択文字列のコピーは `TerminalSelectionClipboard.copy` に集約。** 選択即コピーとタイルの
-  右クリックメニューが同じ経路を使う。`nil` / 空文字では既存クリップボードを消さない。
-- SwiftTerm の通常のドラッグ選択 + `⌘C` はそのまま利用できる。マウスレポート有効中の TUI は
-  SwiftTerm 標準どおり `Shift` ドラッグでアプリへのマウス送信を回避して選択する。
-- **言語は 6 言語。** `Localization.supported` と `L10n` テストの言語配列を同時に更新する。
-- **`OutputMonitor.pending` は全出口で 8 KB 上限。** 改行を含むチャンクの末尾に巨大な未終端行が
-  続く場合も、完了行の切り出し後に `maxPendingBytes` を適用する。
+- **ターミナル選択コピー。** `HumiTerminalView.selectionChanged` →
+  `TerminalController.copySelection()` → `TerminalSelectionClipboard.copy`。空／nil 選択では既存の
+  クリップボードを消さない。SwiftTerm 標準のドラッグ選択・`⌘C` に加え、タイルのコンテキスト
+  メニューに `tile.copy_selection`。TUI が mouse reporting を有効にしている間は Shift+drag。
+- **言語は 6 種。** `Localization.supported`、`build-app.sh` の `CFBundleLocalizations` と空
+  `.lproj` マーカーに `de` を追加。Humi 独自 UI は即時、標準メニュー／システムダイアログは
+  再起動後に切り替わるため、設定に `settings.general.language.menu_hint` を表示する。
+- **release app は Universal。** `build-app.sh release` が macOS 14 を target に arm64 / x86_64 を
+  別々に SwiftPM build し、実行ファイルを `lipo -create` する。resources は arm64 側（内容は同一）を使用。
+- **`NotesArchive.runProcess` は stdout を `FileHandle.nullDevice`、stderr をバックグラウンドで
+  先読みする。** 30 秒で SIGTERM、さらに 0.5 秒後は SIGKILL。大容量 stderr とタイムアウトを
+  self-test で再現する。ZIP エラーは `NotesSidebarView` のローカライズ済み alert で表示。
+- **ペイン領域サイズは `PaneAreaMetrics`（非 publish の `ObservableObject`）へ保持。**
+  `GeometryReader` のフレームごとの報告で `RootView.body` を再評価しない。セッション追加時だけ読む。
+- **`StatusBarClock` の購読は `Set<UUID>`。** 同じ View の onAppear/onDisappear が重複しても
+  カウントを壊さず、最後の購読解除でタイマーを止める。
+- **ノートタブ列は `ScrollViewReader`。** `activeID` 変更時に選択タブへ自動スクロール。
+- **`TitleTextHider` は削除。** v1.4.2 以降の `.windowStyle(.hiddenTitleBar)` に一本化。
+- **`OutputMonitor` は行処理後にも pending tail を 8 KB へ切り詰める。** 同一 PTY chunk 内に
+  改行と巨大な未終端 tail が共存するケースを self-test で固定。
 
 ## 4. 既知の未対応事項・今後の予定
 
@@ -342,8 +356,8 @@ gh release create vX.Y.Z \
 - **Developer ID 署名 + 公証（notarization）が未対応。** 現状 ad-hoc 署名なので初回起動に
   ユーザー操作が要る。Apple Developer Program 加入後、`build-app.sh` の署名部へ
   `--options runtime` + `xcrun notarytool submit` + `xcrun stapler staple` を追加する。
-- **アプリアイコンが未作成。** `Assets/AppIcon.icns` を置けば `build-app.sh` が同梱する。
-  Hum テーマ（クリーム地 + 洋梨色ドット）に合わせた 1024px 原画から `iconutil` で生成。
+- ~~アプリアイコンが未作成~~ → **v1.4.3 で対応済み。** `Assets/AppIcon.icns` と
+  再生成用 `Assets/AppIcon-source-1024.png` / `Scripts/make-icns.sh` を保持する。
 
 ### v1.3 以降ロードマップ（v1.2 で骨格は入ったが MVP 止まり / 未着手）
 

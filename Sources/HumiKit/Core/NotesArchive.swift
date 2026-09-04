@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 /// ZIP export / import for the notes sidebar, for moving notes between machines.
 ///
@@ -14,12 +15,14 @@ public enum NotesArchive {
 
     public enum ArchiveError: LocalizedError {
         case ditto(Int32, String)
+        case timedOut
         case noNotesFound
         case notReadable
 
         public var errorDescription: String? {
             switch self {
             case let .ditto(code, msg): return "ditto exited \(code): \(msg)"
+            case .timedOut:             return "the archive operation timed out"
             case .noNotesFound:         return "no notes found in the archive"
             case .notReadable:          return "the file could not be read"
             }
@@ -122,17 +125,73 @@ public enum NotesArchive {
     }
 
     private static func runDitto(_ args: [String]) throws {
+        let result = try runProcess(executable: URL(fileURLWithPath: "/usr/bin/ditto"),
+                                    arguments: args,
+                                    timeout: 30)
+        if result.status != 0 {
+            throw ArchiveError.ditto(result.status, result.stderr)
+        }
+    }
+
+    /// Runs an archive helper without letting either output pipe block the child.
+    /// Internal so the deadlock and timeout paths can be covered by the self-test.
+    static func runProcess(executable: URL,
+                           arguments: [String],
+                           timeout: TimeInterval) throws -> (status: Int32, stderr: String) {
         let proc = Process()
-        proc.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-        proc.arguments = args
+        proc.executableURL = executable
+        proc.arguments = arguments
         let err = Pipe()
         proc.standardError = err
-        proc.standardOutput = Pipe()
-        try proc.run()
-        proc.waitUntilExit()
-        if proc.terminationStatus != 0 {
-            let msg = String(data: err.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-            throw ArchiveError.ditto(proc.terminationStatus, msg.trimmingCharacters(in: .whitespacesAndNewlines))
+        // Archive output is never consumed. A pipe here can fill and deadlock.
+        proc.standardOutput = FileHandle.nullDevice
+
+        final class DataBox: @unchecked Sendable {
+            private let lock = NSLock()
+            private var value = Data()
+            func set(_ data: Data) { lock.lock(); value = data; lock.unlock() }
+            func get() -> Data { lock.lock(); defer { lock.unlock() }; return value }
         }
+
+        let stderrData = DataBox()
+        let stderrRead = DispatchGroup()
+        stderrRead.enter()
+        DispatchQueue.global(qos: .utility).async {
+            stderrData.set(err.fileHandleForReading.readDataToEndOfFile())
+            stderrRead.leave()
+        }
+
+        let terminated = DispatchSemaphore(value: 0)
+        proc.terminationHandler = { _ in terminated.signal() }
+        do {
+            try proc.run()
+        } catch {
+            try? err.fileHandleForWriting.close()
+            _ = stderrRead.wait(timeout: .now() + 1)
+            throw error
+        }
+        // The child owns a duplicated descriptor. Closing the parent's writer lets
+        // the background reader observe EOF as soon as the child exits.
+        try? err.fileHandleForWriting.close()
+
+        var didTimeOut = false
+        if terminated.wait(timeout: .now() + max(0.01, timeout)) == .timedOut {
+            didTimeOut = true
+            proc.terminate()
+            if terminated.wait(timeout: .now() + 0.5) == .timedOut {
+                kill(proc.processIdentifier, SIGKILL)
+                _ = terminated.wait(timeout: .now() + 1)
+            }
+        }
+
+        if stderrRead.wait(timeout: .now() + 1) == .timedOut {
+            try? err.fileHandleForReading.close()
+            throw ArchiveError.timedOut
+        }
+        if didTimeOut { throw ArchiveError.timedOut }
+
+        let message = String(data: stderrData.get(), encoding: .utf8) ?? ""
+        return (proc.terminationStatus,
+                message.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 }

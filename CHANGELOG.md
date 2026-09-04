@@ -19,6 +19,23 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions
 - Output monitoring now enforces its 8 KB unterminated-tail limit even when the same
   PTY chunk contains an earlier newline, preventing a malformed or extremely long
   output chunk from retaining an oversized buffer.
+- Notes ZIP import/export can no longer deadlock on a full subprocess pipe, and a
+  30-second timeout prevents a stuck archive helper from blocking Humi indefinitely.
+- Notes ZIP failures now show a localized alert instead of only beeping and logging.
+- Repeated status-bar appearance/disappearance callbacks no longer over-count the
+  shared clock subscription, so its timer reliably stops when unused.
+- Window resizing no longer invalidates the entire root view on every frame merely
+  to retain the latest pane size.
+
+### Changed
+- Release builds now assemble a universal arm64 + x86_64 app, matching Humi's
+  documented Apple Silicon and Intel support.
+- The active notes tab automatically scrolls into view when a tab is created or opened.
+- Return activates the primary action in the new-session sheet.
+- The language setting now explains that Humi's own UI changes immediately while the
+  standard menu bar and system dialogs finish switching after restart.
+- Removed the obsolete title-hiding bridge; `.hiddenTitleBar` is now the single source
+  of truth for the main window.
 
 ## [1.4.4] - 2026-09-02
 

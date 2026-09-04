@@ -80,6 +80,23 @@ suite("Terminal selection clipboard") {
     check(pasteboard.string(forType: .string) == "mouse-selected text", "clipboard contains exact selection")
 }
 
+MainActor.assumeIsolated {
+    suite("StatusBarClock subscriptions") {
+        let clock = StatusBarClock()
+        let first = UUID(), second = UUID()
+        clock.subscribe(first)
+        clock.subscribe(first)
+        check(clock.subscriberCount == 1, "duplicate appearance is idempotent")
+        clock.subscribe(second)
+        check(clock.subscriberCount == 2, "distinct status bars are tracked")
+        clock.unsubscribe(first)
+        clock.unsubscribe(first)
+        check(clock.subscriberCount == 1, "duplicate disappearance is idempotent")
+        clock.unsubscribe(second)
+        check(clock.subscriberCount == 0, "last status bar unsubscribes")
+    }
+}
+
 // MARK: ShellResolver
 
 suite("ShellResolver") {
@@ -241,6 +258,33 @@ MainActor.assumeIsolated {
             check(false, "archive round-trip threw: \(error)")
         }
         check(NotesArchive.slug("Claude Code 用!!") == "Claude-Code", "archive: slug is filesystem-safe")
+
+        // stderr is drained while the child runs, so output larger than a pipe
+        // buffer cannot wedge the archive flow.
+        do {
+            let result = try NotesArchive.runProcess(
+                executable: URL(fileURLWithPath: "/bin/sh"),
+                arguments: ["-c", "yes x | head -c 131072 >&2; exit 7"],
+                timeout: 3
+            )
+            check(result.status == 7, "archive helper: non-zero status is returned")
+            check(result.stderr.utf8.count > 65_536, "archive helper: large stderr is drained")
+        } catch {
+            check(false, "archive helper large-stderr test threw: \(error)")
+        }
+
+        do {
+            _ = try NotesArchive.runProcess(
+                executable: URL(fileURLWithPath: "/bin/sleep"),
+                arguments: ["2"],
+                timeout: 0.05
+            )
+            check(false, "archive helper: timeout should throw")
+        } catch NotesArchive.ArchiveError.timedOut {
+            check(true, "archive helper: timeout terminates the child")
+        } catch {
+            check(false, "archive helper timeout returned wrong error: \(error)")
+        }
     }
 }
 

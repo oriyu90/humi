@@ -15,6 +15,9 @@ struct GeneralPane: View {
                 .labelsHidden()
                 .frame(width: 200)
             }
+            if settings.appLanguage != "system" {
+                settingsHint(L("settings.general.language.menu_hint"))
+            }
 
             Toggle(L("settings.general.notes_on_launch"), isOn: settings.bind(\.notesVisible))
 

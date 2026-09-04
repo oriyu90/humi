@@ -9,20 +9,22 @@ final class StatusBarClock: ObservableObject {
     @Published private(set) var now = Date()
 
     private var timer: AnyCancellable?
-    private var subscribers = 0
+    private var subscribers: Set<UUID> = []
 
-    func subscribe() {
-        subscribers += 1
+    func subscribe(_ id: UUID) {
+        guard subscribers.insert(id).inserted else { return }
         guard timer == nil else { return }
         timer = Timer.publish(every: 12, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] date in self?.now = date }
     }
 
-    func unsubscribe() {
-        subscribers = max(0, subscribers - 1)
-        if subscribers == 0 { timer?.cancel(); timer = nil }
+    func unsubscribe(_ id: UUID) {
+        guard subscribers.remove(id) != nil else { return }
+        if subscribers.isEmpty { timer?.cancel(); timer = nil }
     }
+
+    var subscriberCount: Int { subscribers.count }
 }
 
 /// A thin per-tile status strip: cwd · shell · git branch/dirty · process · clock.
@@ -34,6 +36,7 @@ struct StatusBarView: View {
     @ObservedObject private var clock = StatusBarClock.shared
 
     @State private var git: GitStatus.Info?
+    @State private var clockSubscriptionID = UUID()
 
     private var now: Date { clock.now }
 
@@ -74,8 +77,8 @@ struct StatusBarView: View {
         .background(Hum.paper2)
         .task(id: cwd) { await refreshGit() }
         .onChange(of: clock.now) { _, _ in Task { await refreshGit() } }
-        .onAppear { clock.subscribe() }
-        .onDisappear { clock.unsubscribe() }
+        .onAppear { clock.subscribe(clockSubscriptionID) }
+        .onDisappear { clock.unsubscribe(clockSubscriptionID) }
     }
 
     private func label(_ icon: String, _ text: String) -> some View {

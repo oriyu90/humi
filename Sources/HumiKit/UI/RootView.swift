@@ -58,7 +58,9 @@ public struct RootView: View {
     @ObservedObject private var arrangements = ArrangementStore.shared
 
     @State private var showingNewSheet = false
-    @State private var paneAreaSize: CGSize = .zero
+    /// Non-publishing storage: resize frames update this measurement without
+    /// invalidating all of RootView. It is read only when a session is added.
+    @StateObject private var paneArea = PaneAreaMetrics()
     @State private var searchVisible = false
     @State private var savingArrangement = false
     @State private var restoringArrangement = false
@@ -68,7 +70,7 @@ public struct RootView: View {
     public var body: some View {
         HSplitView {
             PaneTreeView(store: store, settings: settings, onNew: beginNewSession,
-                         onPaneAreaSize: { paneAreaSize = $0 })
+                         onPaneAreaSize: { paneArea.size = $0 })
                 .frame(minWidth: 420)
                 .overlay(alignment: .top) {
                     if searchVisible {
@@ -84,10 +86,6 @@ public struct RootView: View {
             }
         }
         .background(Hum.paper2)
-        // The toolbar already carries the brand mark ("Humi" + CharacterMark), so the
-        // OS title-bar text is a second, redundant "Humi". Keep hiding it — SwiftUI
-        // re-asserts `.visible` on scene updates, so this runs on every update pass.
-        .background(TitleTextHider())
         .environment(\.locale, loc.locale)
         .preferredColorScheme(themes.resolvedTheme.appAppearance == .dark ? .dark : .light)
         .toolbar {
@@ -113,7 +111,7 @@ public struct RootView: View {
                         ForEach(profiles.profiles) { p in
                             Button {
                                 withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
-                                    _ = store.add(workingDirectory: p.cwd, profileID: p.id, paneAreaSize: paneAreaSize)
+                                    _ = store.add(workingDirectory: p.cwd, profileID: p.id, paneAreaSize: paneArea.size)
                                 }
                             } label: { Label(p.name, systemImage: p.icon) }
                         }
@@ -136,7 +134,7 @@ public struct RootView: View {
                 onCreate: { dir, pid in
                     showingNewSheet = false
                     withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
-                        _ = store.add(workingDirectory: dir, profileID: pid, paneAreaSize: paneAreaSize)
+                        _ = store.add(workingDirectory: dir, profileID: pid, paneAreaSize: paneArea.size)
                     }
                 },
                 onCancel: { showingNewSheet = false }
@@ -176,19 +174,6 @@ public struct RootView: View {
         }
     }
 
-    /// Hides the redundant window-title text. `updateNSView` re-applies it because
-    /// SwiftUI resets `titleVisibility` to `.visible` whenever the scene updates
-    /// (e.g. the first session opens).
-    private struct TitleTextHider: NSViewRepresentable {
-        func makeNSView(context: Context) -> NSView { NSView() }
-        func updateNSView(_ nsView: NSView, context: Context) {
-            DispatchQueue.main.async {
-                guard let window = nsView.window else { return }
-                if window.titleVisibility != .hidden { window.titleVisibility = .hidden }
-            }
-        }
-    }
-
     private var actionPublisher: AnyPublisher<Notification, Never> {
         Publishers.MergeMany(
             Notification.Name.humiAllActions.map { NotificationCenter.default.publisher(for: $0) }
@@ -222,7 +207,7 @@ public struct RootView: View {
         case .humiProfileLauncher:
             if let p = profiles.defaultProfile ?? profiles.profiles.first {
                 withAnimation(Hum.Motion.considerate(Hum.Motion.spring)) {
-                    _ = store.add(workingDirectory: p.cwd, profileID: p.id, paneAreaSize: paneAreaSize)
+                    _ = store.add(workingDirectory: p.cwd, profileID: p.id, paneAreaSize: paneArea.size)
                 }
             } else { beginNewSession() }
         case .humiSplitH: splitFocused(.horizontal, focusedID: focusedID)
@@ -331,4 +316,9 @@ public struct RootView: View {
     private func beginNewSession() {
         showingNewSheet = true
     }
+}
+
+@MainActor
+private final class PaneAreaMetrics: ObservableObject {
+    var size: CGSize = .zero
 }

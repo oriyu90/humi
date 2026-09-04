@@ -8,19 +8,34 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="Humi"
 BUNDLE_ID="com.studiorizi.humi"
 VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || echo 0.1.0)"
-BUILD_DIR="$ROOT/.build/$CONFIG"
 DIST="$ROOT/dist"
 APP="$DIST/$APP_NAME.app"
 
-echo "▸ swift build -c $CONFIG"
 cd "$ROOT"
-swift build -c "$CONFIG" --product "$APP_NAME"
+if [ "$CONFIG" = "release" ] && [ "$(uname -s)" = "Darwin" ]; then
+  echo "▸ swift build -c release (arm64 + x86_64)"
+  swift build -c release --triple arm64-apple-macosx14.0 --product "$APP_NAME"
+  swift build -c release --triple x86_64-apple-macosx14.0 --product "$APP_NAME"
+  BUILD_DIR="$ROOT/.build/arm64-apple-macosx/release"
+  ARM_BIN="$BUILD_DIR/$APP_NAME"
+  INTEL_BIN="$ROOT/.build/x86_64-apple-macosx/release/$APP_NAME"
+  UNIVERSAL=true
+else
+  echo "▸ swift build -c $CONFIG"
+  swift build -c "$CONFIG" --product "$APP_NAME"
+  BUILD_DIR="$(swift build -c "$CONFIG" --show-bin-path)"
+  UNIVERSAL=false
+fi
 
 echo "▸ Assembling $APP"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-cp "$BUILD_DIR/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
+if [ "$UNIVERSAL" = true ]; then
+  lipo -create "$ARM_BIN" "$INTEL_BIN" -output "$APP/Contents/MacOS/$APP_NAME"
+else
+  cp "$BUILD_DIR/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
+fi
 
 # SwiftPM resource bundles (HumiKit's fonts + .lproj, SwiftTerm's). These go in the
 # standard Contents/Resources/. NOTE: the Command Line Tools toolchain's generated

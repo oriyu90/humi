@@ -61,6 +61,9 @@
 "notes.export_zip" = "导出为 ZIP";
 "notes.import_zip" = "导入 ZIP";
 "notes.export.filename" = "Humi 备忘";
+"notes.export.error" = "无法导出备忘";
+"notes.import.error" = "无法导入备忘";
+"notes.archive.error.message" = "详细信息：%@";
 
 "settings.tab.general" = "通用";
 "settings.tab.shell" = "Shell";
@@ -70,6 +73,7 @@
 "settings.general.lines" = "%d 行";
 "settings.general.scrollback_hint" = "回滚缓冲的更改将在下次打开的会话中生效。";
 "settings.general.language" = "显示语言";
+"settings.general.language.menu_hint" = "菜单栏和系统对话框将在重新启动 Humi 后更新。";
 "settings.shell.shell" = "Shell";
 "settings.shell.custom_path" = "可执行文件路径";
 "settings.shell.custom_args" = "参数（以空格分隔）";
@@ -164,6 +168,7 @@
 "tile.close_confirm.message" = "此会话中仍有进程在运行。";
 "tile.close_confirm.close" = "关闭";
 "common.cancel" = "取消";
+"common.ok" = "确定";
 "paste.confirm.title" = "粘贴多行？";
 "paste.confirm.message" = "你将要粘贴 %d 行。";
 "paste.confirm.paste" = "粘贴";

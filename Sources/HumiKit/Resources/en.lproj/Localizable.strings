@@ -61,6 +61,9 @@
 "notes.export_zip" = "Export as ZIP";
 "notes.import_zip" = "Import ZIP";
 "notes.export.filename" = "Humi Notes";
+"notes.export.error" = "Couldn’t export notes";
+"notes.import.error" = "Couldn’t import notes";
+"notes.archive.error.message" = "Details: %@";
 
 "settings.tab.general" = "General";
 "settings.tab.shell" = "Shell";
@@ -70,6 +73,7 @@
 "settings.general.lines" = "%d lines";
 "settings.general.scrollback_hint" = "Scrollback changes take effect for sessions opened next.";
 "settings.general.language" = "Display language";
+"settings.general.language.menu_hint" = "The menu bar and system dialogs update after you restart Humi.";
 "settings.shell.shell" = "Shell";
 "settings.shell.custom_path" = "Executable path";
 "settings.shell.custom_args" = "Arguments (space-separated)";
@@ -164,6 +168,7 @@
 "tile.close_confirm.message" = "A process is still running in this session.";
 "tile.close_confirm.close" = "Close";
 "common.cancel" = "Cancel";
+"common.ok" = "OK";
 "paste.confirm.title" = "Paste multiple lines?";
 "paste.confirm.message" = "You're about to paste %d lines.";
 "paste.confirm.paste" = "Paste";
