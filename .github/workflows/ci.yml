@@ -12,7 +12,7 @@ jobs:
     # Swift 5.10, which can't read this package's swift-tools-version:6.0 manifest.
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select Xcode 16
         run: sudo xcode-select -s /Applications/Xcode_16.app || true

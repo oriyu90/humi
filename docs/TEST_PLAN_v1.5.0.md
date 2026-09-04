@@ -35,10 +35,10 @@
 
 | # | 内容 | 結果 |
 |---|---|---|
-| 3-1 | GitHub Actions (macos-15) | PUSH_PENDING |
-| 3-2 | GitHub Release のタグ・添付 4 ファイル・本文 | RELEASE_PENDING |
-| 3-3 | studio-rizi 4 言語ページ、canonical / hreflang、公開 URL | DEPLOY_PENDING |
+| 3-1 | GitHub Actions (macos-15) | ✅ [run 33837143599](https://github.com/oriyu90/humi/actions/runs/33837143599) — debug / release / self-tests / Universal bundle 検証 |
+| 3-2 | GitHub Release のタグ・添付 4 ファイル・本文 | ✅ [v1.5.0](https://github.com/oriyu90/humi/releases/tag/v1.5.0) — DMG / app.zip / SHA-256 × 2 |
+| 3-3 | studio-rizi 4 言語ページ、canonical / hreflang、公開 URL | ✅ [公開ページ](https://studio-rizi.pages.dev/projects/humi/) — ja / en / zh / pt、v1.5.0、IndexNow 通知成功 |
 
 ## 4. 判定
 
-**ローカル成果物は release 可。** GitHub Actions、Release 添付、公開サイトは push 後に確認する。
+**v1.5.0 のリリースと公開を完了。** ローカル検証、GitHub Actions、Release 添付、公開サイトをすべて確認済み。
